@@ -26,12 +26,12 @@ StrictDimension:addConstructor({
         { type = 'number', name = 'width' },
         { type = 'number', name = 'height' },
     },
-    --- @param o Dimension
+    --- @param self Dimension
     --- @param width number
     --- @param height number
-    function(o, width, height)
-        o.width = width;
-        o.height = height;
+    function(self, width, height)
+        self.width = width;
+        self.height = height;
     end
 );
 
@@ -53,7 +53,7 @@ StrictDimension:addMethod({ name = 'getHeight', returns = 'number' },
 
 StrictDimension:addMethod({ name = 'toString', returns = 'string' },
     function(self)
-        return self:getWidth() .. ', ' .. self:getHeight();
+        return tostring(self:getWidth()) .. ', ' .. tostring(self:getHeight());
     end
 );
 
@@ -70,7 +70,7 @@ StrictDimension:addMethod({
     --- @param self Dimension
     --- @param other any
     function(self, other)
-        if not other.__type or self.__type ~= other.__type then
+        if not other.__type__ or self.__type__ ~= other.__type__ then
             return false;
         end
         --- @cast other Dimension

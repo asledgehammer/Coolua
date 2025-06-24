@@ -9,7 +9,7 @@ if run then
 
     print('ClassDefinition tests:\n');
     print('\tClassDefinition:__tostring()', Dimension);
-    print('\tClassDefinition:__type\t\t', Dimension.__type);
+    print('\tClassDefinition:__type__\t\t', Dimension.__type__);
     print('\nInstance tests:\n');
     print('\tobject:getWidth(): ', dim1:getWidth());
     print('\tobject:toString(): ', dim1);

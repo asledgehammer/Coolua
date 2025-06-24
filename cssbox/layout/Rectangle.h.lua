@@ -9,6 +9,8 @@ function RectangleDefinition.new() end
 --- @param y number
 --- @param width number
 --- @param height number
+--- 
+--- @return Rectangle
 function RectangleDefinition.new(x, y, width, height) end
 
 --- @class Rectangle: Dimension

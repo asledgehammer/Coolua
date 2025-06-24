@@ -3,9 +3,9 @@
 --- @alias LuaClassScope 'private'|'protected'|'package'|'public'
 
 --- @class ClassContext The ClassContext is used to monitor and audit calls for scope-visible methods and fields.
---- @field class ClassDefinition|nil The current class in the stack.
---- @field context 'constructor'|'method'|nil The current context. (Final fields can be set here)
---- @field executable ExecutableDefinition|nil The definition of the context.
+--- @field class ClassDefinition The current class in the stack.
+--- @field context 'constructor'|'method' The current context. (Final fields can be set here)
+--- @field executable ExecutableDefinition The definition of the context.
 local ClassContext = {};
 
 --- @class ClassDefinitionParameter
@@ -85,6 +85,9 @@ local ClassContext = {};
 
 --- @class ClassDefinition
 --- @field __type__ 'ClassDefinition'
+--- @field __middleConstructor function
+--- @field __middleMethods table<string, function>
+--- @field printHeader string
 --- @field type string
 --- @field path string
 --- @field methods table<string, MethodDefinition[]>
@@ -136,12 +139,12 @@ function ClassDefinition:addConstructor(definition, func) end
 
 --- @param args any[]
 ---
---- @return function|nil constructorWithArgs
+--- @return ConstructorDefinition|nil constructorDefinition
 function ClassDefinition:getConstructor(args) end
 
 --- @param args any[]
 ---
---- @return function|nil constructorWithArgs
+--- @return ConstructorDefinition|nil constructorDefinition
 function ClassDefinition:getDeclaredConstructor(args) end
 
 -- MARK: - Method
@@ -160,6 +163,12 @@ function ClassDefinition:addMethod(definition, func) end
 --- @return MethodDefinition[]? methods
 function ClassDefinition:getMethods(name) end
 
+--- @param name string
+--- @param args any[]
+---
+--- @return MethodDefinition|nil methodDefinition
+function ClassDefinition:getMethod(name, args) end
+
 --- Attempts to resolve a MethodDefinition in the ClassDefinition. If the method isn't defined in the class, nil
 --- is returned.
 ---
@@ -167,6 +176,12 @@ function ClassDefinition:getMethods(name) end
 ---
 --- @return MethodDefinition[]? methods
 function ClassDefinition:getDeclaredMethods(name) end
+
+--- @param name string
+--- @param args any[]
+---
+--- @return MethodDefinition|nil methodDefinition
+function ClassDefinition:getDeclaredMethod(name, args) end
 
 --- @returns ClassDefinition
 function ClassDefinition:finalize() end

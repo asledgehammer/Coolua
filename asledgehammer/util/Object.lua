@@ -40,6 +40,7 @@ Object:addMethod({
     },
     returns = 'boolean'
 }, function(self, other)
+    print('Object.equals');
     return self == other;
 end);
 

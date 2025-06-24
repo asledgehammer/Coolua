@@ -10,12 +10,25 @@ local printf = OOPUtils.printf;
 local debugf = OOPUtils.debugf;
 local errorf = OOPUtils.errorf;
 
+-- DEBUG FLAGS --
 local DEBUG_INTERNAL = false;
-local DEBUG_METHODS = true;
+local DEBUG_METHODS = false;
+-- ----------- --
 
+---
+--- @type table
+---
 --- Internal value to process definitions not yet assigned.
-local UNINITIALIZED_VALUE = { _X_UNIQUE_X__ = true };
+local UNINITIALIZED_VALUE = { __X_UNIQUE_X__ = true };
 
+--- @type boolean
+---
+--- This private switch flag helps shadow attempts to get super outside the class framework.
+local canGetSuper = false;
+
+--- @type boolean
+---
+--- This private switch flag helps shadow attempts to set super outside the class framework.
 local canSetSuper = false;
 
 --- @type ClassContext[]
@@ -169,6 +182,8 @@ getMethodNames = function(classDef, methodNames)
     return methodNames;
 end
 
+local EMPTY_TABLE = {};
+
 --- Defined for all classes so that __eq actually fires.
 --- Reference: http://lua-users.org/wiki/MetatableEvents
 ---
@@ -177,7 +192,7 @@ end
 ---
 --- @return boolean result
 local function __class__eq(a, b)
-    return a:equals(b);
+    return a:getClass().__middleMethods['equals'](a, b);
 end
 
 --- @param cd ClassDefinition
@@ -196,65 +211,61 @@ local function createInstanceMetatable(cd, o)
 
     fields.__class = cd;
 
-    mt.__index = fields;
+    mt.__index = function(tbl, field)
+        if field == '__super' then
+            if not canGetSuper then
+                errorf(2, '%s Cannot get __super. (Internal field)');
+            end
+        end
+
+        local val = fields[field];
+        local fd = cd:getField(field);
+        -- printf('GET FieldDefinition(%s).%s = %s', o.__type__, field, tostring(val));
+
+        return val;
+    end
 
     mt.__newindex = function(tbl, field, value)
         -- TODO: Visibility scope analysis.
         -- TODO: Type-checking.
 
-        local fd = cd:getField(field);
-
         if field == 'super' then
             if canSetSuper then
                 fields.super = value;
             else
-                error('Cannot set super(). (Reserved method)');
+                errorf(2, '%s Cannot set super(). (Reserved method)', cd.printHeader);
+            end
+            return;
+        elseif field == '__super' then
+            if canSetSuper then
+                fields.__super = value;
+            else
+                errorf(2, '%s Cannot set __super. (Internal field)', cd.printHeader);
             end
             return;
         end
 
+        local fd = cd:getField(field);
+        -- printf('SET FieldDefinition(%s).%s = %s', o.__type__, field, value);
+
         if not fd then
-            error(
-                string.format('%s: Field does not exist: %s',
-                    cd.name,
-                    field
-                ),
-                2
-            );
+            errorf(2, '%s: Field does not exist: %s', cd.name, field);
         end
 
         -- (Just in-case)
         if value == UNINITIALIZED_VALUE then
-            error('INTERNAL ERROR: Cannot set as UNINITIALIZED_VALUE.');
+            errorf(2, '%s Cannot set %s as UNINITIALIZED_VALUE. (Internal Error)', cd.printHeader, field);
         end
 
         local context = getContext();
 
         if fd.final then
             if not context or context.class ~= cd then
-                error(
-                    string.format('%s: Attempt to assign final field %s outside of Class scope.',
-                        cd.name,
-                        field
-                    ),
-                    2
-                );
+                errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
             elseif not context or context.context ~= 'constructor' then
-                error(
-                    string.format('%s: Attempt to assign final field %s outside of constructor scope.',
-                        cd.name,
-                        field
-                    ),
-                    2
-                );
+                errorf(2, '%s Attempt to assign final field %s outside of constructor scope.', cd.printHeader, field);
             elseif fd.assignedOnce then
-                error(
-                    string.format('%s: Attempt to assign final field %s. (Already defined)',
-                        cd.name,
-                        field
-                    ),
-                    2
-                )
+                errorf(2, '%s Attempt to assign final field %s. (Already defined)', cd.printHeader, field);
             end
         end
 
@@ -275,10 +286,6 @@ local function createInstanceMetatable(cd, o)
 
     setmetatable(o, mt);
 end
-
-local function noSuperMethod()
-    error('No Super-Method exists.', 2);
-end;
 
 --- @param paramsA ParameterDefinition[]
 --- @param paramsB ParameterDefinition[]
@@ -337,10 +344,7 @@ local function createMiddleMethod(cd, name, methods)
         local errHeader = string.format('Class(%s):%s():', cd.name, name);
 
         if not md then
-            error(
-                string.format('%s No method signature exists: %s', errHeader, argsToString(args)),
-                2
-            );
+            errorf(2, '%s No method signature exists: %s', errHeader, argsToString(args));
         end
 
         pushContext({
@@ -349,16 +353,12 @@ local function createMiddleMethod(cd, name, methods)
             executable = md
         });
 
+        --- Apply super.
+        canGetSuper = true;
         canSetSuper = true;
-
         local lastSuper = o.super;
-
-        if md.super then
-            o.super = cd.superClass.__methodsWrapper[name];
-        else
-            o.super = noSuperMethod;
-        end
-
+        o.super = o.__super;
+        canGetSuper = false;
         canSetSuper = false;
 
         local retVal = nil;
@@ -368,6 +368,7 @@ local function createMiddleMethod(cd, name, methods)
 
         popContext();
 
+        --- Revert super.
         canSetSuper = true;
         o.super = lastSuper;
         canSetSuper = false;
@@ -384,7 +385,7 @@ local function createMiddleMethod(cd, name, methods)
         end
 
         -- Throw the error after applying context.
-        if not result then error(errMsg or '') end
+        if not result then error(tostring(errMsg) or '') end
 
         return retVal;
     end;
@@ -393,34 +394,140 @@ end
 
 local function createMiddleConstructor(cd)
     return function(o, ...)
-        local args = { ... };
+        local args = { ... } or {};
         local cons = cd:getDeclaredConstructor(args);
 
         if not cons then
-            errorf(2, '%s No constructor signature exists: %s', cd.errHeader, argsToString(args));
+            errorf(2, '%s No constructor signature exists: %s', cd.printHeader, argsToString(args));
         end
 
-        local lastSuper = o.super;
+        --- Apply super.
+        canGetSuper = true;
         canSetSuper = true;
-
-        if cd.superClass then
-            o.super = cd.superClass.__middleConstructor;
-        else
-            errorf(2, '%s No super constructor exists. (No superclass)', cd.errorHeader);
-        end
-
+        local lastSuper = o.super;
+        o.super = o.__super;
+        canGetSuper = false;
         canSetSuper = false;
 
-        local result, errMsg = xpcall(function() cons(o, unpack(args)) end, debug.traceback);
+        pushContext({ class = cd, executable = cons, context = 'constructor' });
 
+        local result, errMsg = xpcall(function()
+            cons.func(o, unpack(args));
+        end, debug.traceback);
+
+        popContext();
+
+        --- Revert super.
         canSetSuper = true;
         o.super = lastSuper;
         canSetSuper = false;
 
-        if not result then
-            error(errMsg, 2);
+        if not result then error(errMsg) end
+    end
+end
+
+--- MiddleSuper instances are created formatted the ClassInstance, not ClassDefinition. This simplifies calls providing
+--- the instance as the first argument.
+---
+--- @param cd ClassDefinition
+--- @param o ClassInstance
+---
+--- @return SuperTable
+local function createSuperTable(cd, o)
+    local super = {};
+    local mt = getmetatable(super) or {};
+
+    -- Assign all middle-functions for the super-class here.
+    local properties = {};
+
+    mt.__tostring = function()
+        return string.format('SuperTable(%s)', cd.path);
+    end
+
+    mt.__index = function(_, key)
+        if not properties.__middleMethods[key] then
+            errorf(2, '%s No super-method exists: %s', cd.printHeader, tostring(key));
+        end
+        return properties.__middleMethods[key];
+    end;
+
+    -- Make SuperTables readonly.
+
+    function mt.__newindex()
+        errorf(2, '%s Cannot modify SuperTable. (readonly)', cd.printHeader);
+    end
+
+    local superClass = cd.superClass;
+    -- This would only apply to `lua.lang.Object` and any modifications made to it.
+    if not superClass then
+        -- Nothing to call. Let the implementation know.
+        function mt.__call()
+            errorf(2, '%s No superclass.', cd.printHeader);
+        end
+
+        setmetatable(super, mt);
+        return super;
+    end
+
+    -- Copy middle-constructor.
+    properties.super = super;
+    properties.__middleConstructor = cd.__middleConstructor;
+
+    -- Copy middle-methods.
+    properties.__middleMethods = {};
+    local ssd = superClass;
+    while ssd do
+        for k, v in pairs(cd.superClass.__middleMethods) do
+            properties.__middleMethods[k] = v;
+        end
+        ssd = ssd.superClass;
+    end
+
+    -- Assign / discover the inferred method in the super-class.
+
+    local function __callConstructor(o, args)
+        local ed = superClass:getConstructor(args);
+        if not ed then
+            errorf(2, '%s Unknown super-constructor: %s', cd.printHeader, argsToString(args));
+            return;
+        end
+        ed.func(o, unpack(args));
+    end
+
+    local function __callMethod(name, args)
+
+        --- @type ExecutableDefinition|nil
+        local ed = superClass:getMethod(name, args);
+
+        if not ed then
+            errorf(2, '%s Unknown super-method: %s %s', cd.printHeader, name, argsToString(args));
+            return;
+        end
+        -- TODO: Implement static method calls.
+        return ed.func(o, unpack(args));
+    end
+
+    function mt.__call(_, ...)
+
+        local args = {...};
+        table.remove(args, 1);
+
+        local context = getContext();
+
+        -- Make sure that super can only be called in the context of the class.
+        if not context then
+            errorf(2, '%s No super context.', cd.printHeader);
+        end
+
+        if context.context == 'constructor' then
+            __callConstructor(o, args);
+        elseif context.context == 'method' then
+            return __callMethod(context.executable.name, args);
         end
     end
+
+    setmetatable(super, mt);
+    return super;
 end
 
 --- @param definition ClassDefinitionParameter
@@ -437,13 +544,13 @@ local ClassDefinition = function(definition)
         path = definition.package .. '.' .. definition.name,
     };
 
-    cd.__middleConstructor = createMiddleConstructor(cd);
-
-    cd.debugHeader = string.format('### LuaClass (%s):', cd.path);
+    cd.printHeader = string.format('LuaClass(%s):', cd.path);
     cd.declaredFields = {};
     cd.declaredMethods = {};
     cd.declaredConstructors = {};
     cd.lock = false;
+
+    cd.__middleConstructor = createMiddleConstructor(cd);
 
     if not cd.superClass and cd.path ~= 'lua.lang.Object' then
         cd.superClass = forName('lua.lang.Object');
@@ -458,10 +565,7 @@ local ClassDefinition = function(definition)
         local errHeader = string.format('Class(%s):new():', cd.name);
 
         if not cd.lock then
-            error(
-                string.format('%s Cannot invoke constructor. (ClassDefinition is not finalized!)', errHeader),
-                2
-            );
+            errorf(2, '%s Cannot invoke constructor. (ClassDefinition is not finalized!)', errHeader);
         end
 
         -- TODO: Check if package-class exists.
@@ -469,9 +573,17 @@ local ClassDefinition = function(definition)
         local o = { __class = cd, __type__ = cd.type };
 
         --- Assign the middle-functions to the object.
-        for name, func in pairs(cd.__methodsWrapper) do
+        for name, func in pairs(cd.__middleMethods) do
             o[name] = func;
         end
+
+        -- for name, decField in pairs(cd.declaredFields) do
+        --     o[name] = decField;
+        -- end
+
+        canSetSuper = true;
+        o.__super = createSuperTable(cd, o);
+        canSetSuper = false;
 
         createInstanceMetatable(cd, o);
 
@@ -480,6 +592,7 @@ local ClassDefinition = function(definition)
         local result, errMsg = xpcall(function()
             cd.__middleConstructor(o, unpack(args));
         end, debug.traceback);
+
         if not result then error(errMsg, 2) end
 
         return o;
@@ -760,7 +873,7 @@ local ClassDefinition = function(definition)
 
     --- @param args any[]
     ---
-    --- @return function|nil constructorWithArgs
+    --- @return ConstructorDefinition|nil constructorDefinition
     function cd:getConstructor(args)
         local cons = self:getDeclaredConstructor(args);
         if not cons and self.superClass then
@@ -771,20 +884,20 @@ local ClassDefinition = function(definition)
 
     --- @param args any[]
     ---
-    --- @return function|nil constructorWithArgs
+    --- @return ConstructorDefinition|nil constructorDefinition
     function cd:getDeclaredConstructor(args)
+        args = args or EMPTY_TABLE;
         local argsLen = #args;
-
         local cons = nil;
-        for consParameters, func in pairs(cd.__constructors) do
-            if cons then break end
-
+        for i = 1, #cd.declaredConstructors do
+            local decCons = cd.declaredConstructors[i];
+            local consParameters = decCons.parameters;
             local consLen = #consParameters;
             if argsLen == consLen then
-                cons = func;
-                for i = 1, #consParameters do
-                    local arg = args[i];
-                    local parameter = consParameters[i];
+                cons = decCons;
+                for j = 1, #consParameters do
+                    local arg = args[j];
+                    local parameter = consParameters[j];
                     if not isAssignableFromType(arg, parameter.types) then
                         cons = nil;
                         break;
@@ -809,20 +922,15 @@ local ClassDefinition = function(definition)
         if not mdef.name then
             errorf(2, '%s string property "name" is not provided.', errHeader);
         elseif type(mdef.name) ~= 'string' then
-            errorf(2,
-                '%s property "name" is not a valid string. {type=%s, value=%s}',
-                errHeader,
-                type(mdef.name),
-                tostring(mdef.name)
+            errorf(2, '%s property "name" is not a valid string. {type=%s, value=%s}',
+                errHeader, type(mdef.name), tostring(mdef.name)
             );
         elseif mdef.name == '' then
             errorf(2, '%s property "name" is an empty string.', errHeader);
         elseif not isValidName(mdef.name) then
-            errorf(
-                2,
+            errorf(2,
                 '%s property "name" is invalid. (value = %s) (Should only contain A-Z, a-z, 0-9, _, or $ characters)',
-                errHeader,
-                mdef.name
+                errHeader, mdef.name
             );
         elseif mdef.name == 'super' then
             errorf(2, '%s cannot name method "super".', errHeader);
@@ -834,11 +942,8 @@ local ClassDefinition = function(definition)
         elseif type(returns) == 'table' then
             --- @cast returns table
             if not isArray(returns) then
-                errorf(2,
-                    '%s The property "returns" is not a string[] or string[]. {type = %s, value = %s}',
-                    errHeader,
-                    getType(returns),
-                    tostring(returns)
+                errorf(2, '%s The property "returns" is not a string[] or string[]. {type = %s, value = %s}',
+                    errHeader, getType(returns), tostring(returns)
                 );
             end
             --- @cast returns string[]
@@ -866,11 +971,8 @@ local ClassDefinition = function(definition)
 
         if args.parameters then
             if type(args.parameters) ~= 'table' or not isArray(args.parameters) then
-                errorf(2,
-                    '%s property "parameters" is not a ParameterDefinition[]. {type=%s, value=%s}',
-                    errHeader,
-                    getType(args.parameters),
-                    tostring(args.parameters)
+                errorf(2, '%s property "parameters" is not a ParameterDefinition[]. {type=%s, value=%s}',
+                    errHeader, getType(args.parameters), tostring(args.parameters)
                 );
             end
 
@@ -882,26 +984,15 @@ local ClassDefinition = function(definition)
 
                     -- Validate parameter name.
                     if not param.name then
-                        errorf(2,
-                            '%s Parameter #%i doesn\'t have a defined name string.',
-                            errHeader,
-                            i
-                        );
+                        errorf(2, '%s Parameter #%i doesn\'t have a defined name string.', errHeader, i);
                     elseif param.name == '' then
-                        errorf(2,
-                            '%s Parameter #%i has an empty name string.',
-                            errHeader,
-                            i
-                        );
+                        errorf(2, '%s Parameter #%i has an empty name string.', errHeader, i);
                     end
 
                     -- Validate parameter type(s).
                     if not param.type and not param.types then
-                        errorf(2,
-                            '%s Parameter #%i doesn\'t have a defined type string or types string[]. (name = %s)',
-                            errHeader,
-                            i,
-                            param.name
+                        errorf(2, '%s Parameter #%i doesn\'t have a defined type string or types string[]. (name = %s)',
+                            errHeader, i, param.name
                         );
                     else
                         if param.type and not param.types then
@@ -927,7 +1018,7 @@ local ClassDefinition = function(definition)
     end
 
     function cd:compileMethods()
-        debugf(DEBUG_METHODS, '%s Compiling method(s)..', self.debugHeader);
+        debugf(DEBUG_METHODS, '%s Compiling method(s)..', self.printHeader);
 
         --- @type table<string, MethodDefinition[]>
         self.methods = {};
@@ -942,25 +1033,25 @@ local ClassDefinition = function(definition)
             keysCount = keysCount + 1;
         end
 
-        debugf(DEBUG_METHODS, '%s Compiled %i method(s).', self.debugHeader, keysCount);
+        debugf(DEBUG_METHODS, '%s Compiled %i method(s).', self.printHeader, keysCount);
     end
 
     function cd:compileMethod(name)
         local debugName = self.name .. '.' .. name .. '(...)';
 
         if not self.superClass then
-            debugf(DEBUG_METHODS, '%s Compiling original method(s): %s', self.debugHeader, debugName);
+            debugf(DEBUG_METHODS, '%s Compiling original method(s): %s', self.printHeader, debugName);
             self.methods[name] = OOPUtils.copyArray(self.declaredMethods[name]);
             return;
         end
 
-        debugf(DEBUG_METHODS, '%s Compiling compound method(s): %s', self.debugHeader, debugName);
+        debugf(DEBUG_METHODS, '%s Compiling compound method(s): %s', self.printHeader, debugName);
 
         local decMethods = self.declaredMethods[name];
 
         -- The current class doesn't have any definitions at all.
         if not decMethods then
-            debugf(DEBUG_METHODS, '%s \tUsing super-class array: %s', self.debugHeader, debugName);
+            debugf(DEBUG_METHODS, '%s \tUsing super-class array: %s', self.printHeader, debugName);
 
             -- Copy the super-class array.
             self.methods[name] = OOPUtils.copyArray(self.superClass.methods[name]);
@@ -969,7 +1060,7 @@ local ClassDefinition = function(definition)
 
         -- In this case, all methods with this name are original.
         if not cd.superClass.methods[name] then
-            debugf(DEBUG_METHODS, '%s \tUsing class declaration array: %s', self.debugHeader, debugName);
+            debugf(DEBUG_METHODS, '%s \tUsing class declaration array: %s', self.printHeader, debugName);
             self.methods[name] = OOPUtils.copyArray(decMethods);
             return;
         end
@@ -987,7 +1078,7 @@ local ClassDefinition = function(definition)
                     local method = methods[j];
 
                     if methodParamsAreCompatable(decMethod.parameters, method.parameters) then
-                        debugf(DEBUG_METHODS, '%s \t\t@override detected: %s', self.debugHeader, debugName);
+                        debugf(DEBUG_METHODS, '%s \t\t@override detected: %s', self.printHeader, debugName);
                         isOverride = true;
                         decMethod.super = method;
                         decMethod.override = true;
@@ -998,7 +1089,7 @@ local ClassDefinition = function(definition)
 
                 --- No overrided method. Add it instead.
                 if not isOverride then
-                    debugf(DEBUG_METHODS, '%s \t\tAdding class method: %s', self.debugHeader, debugName);
+                    debugf(DEBUG_METHODS, '%s \t\tAdding class method: %s', self.printHeader, debugName);
                     table.insert(methods, decMethod);
                 end
             end
@@ -1016,30 +1107,73 @@ local ClassDefinition = function(definition)
         return cd.declaredMethods[name];
     end
 
+    --- @param name string
+    --- @param args any[]
+    ---
+    --- @return MethodDefinition|nil methodDefinition
+    function cd:getMethod(name, args)
+        local method = self:getDeclaredMethod(name, args);
+        if not method and self.superClass then
+            method = self.superClass:getMethod(name, args);
+        end
+        return method;
+    end
+
+    --- @param name string
+    --- @param args any[]
+    ---
+    --- @return MethodDefinition|nil methodDefinition
+    function cd:getDeclaredMethod(name, args)
+        local argsLen = #args;
+        local methods = cd.declaredMethods[name];
+
+        -- No declared methods with name.
+        if not methods then
+            return nil;
+        end
+
+        for i = 1, #methods do
+            local method = methods[i];
+            local methodParams = method.parameters;
+            local paramsLen = #methodParams;
+            if argsLen == paramsLen then
+                --- Empty args methods.
+                if argsLen == 0 then
+                    return method;
+                else
+                    for j = 1, #methodParams do
+                        local arg = args[j];
+                        local parameter = methodParams[j];
+                        if not isAssignableFromType(arg, parameter.types) then
+                            method = nil;
+                            break;
+                        end
+                    end
+                    if method then return method end
+                end
+            end
+        end
+        return nil;
+    end
+
     -- MARK: - finalize()
 
     --- @return ClassDefinition class
     function cd:finalize()
-        local errHeader = string.format('ClassDefinition(%s):finalize():', cd.path);
+        local errHeader = string.format('Class(%s):finalize():', cd.path);
 
         if self.lock then
-            error(
-                string.format('%s Cannot finalize. (ClassDefinition is already finalized!)', errHeader),
-                2
-            );
+            errorf(2, '%s Cannot finalize. (Class is already finalized!)', errHeader);
         elseif self.superClass and not self.superClass.lock then
-            error(
-                string.format('%s Cannot finalize. (SuperClass %s is not finalized!)', errHeader, self.superClass.path),
-                2
-            );
+            errorf(2, '%s Cannot finalize. (SuperClass %s is not finalized!)', errHeader, self.superClass.path);
         end
 
         -- TODO: Audit everything.
 
         -- Change methods.
-        self.addMethod = function() error('ClassDefinition: Cannot add methods. (Class is final!)') end
-        self.addField = function() error('ClassDefinition: Cannot add fields. (Class is final!)') end
-        self.addConstructor = function() error('ClassDefinition: Cannot add constructors. (Class is final!)') end
+        self.addMethod = function() errorf(2, '%s Cannot add methods. (Class is final!)', errHeader) end
+        self.addField = function() errorf(2, '%s Cannot add fields. (Class is final!)', errHeader) end
+        self.addConstructor = function() errorf(2, '%s Cannot add constructors. (Class is final!)', errHeader) end
 
         --- @type table<ParameterDefinition[], function>
         self.__constructors = {};
@@ -1060,15 +1194,11 @@ local ClassDefinition = function(definition)
             end
         end
 
-        self.__methodsWrapper = {};
+        self.__middleMethods = {};
 
         -- Insert boilerplate method invoker function.
         for name, methods in pairs(self.methods) do
-            self.__methodsWrapper[name] = createMiddleMethod(cd, name, methods);
-        end
-
-        for k, v in pairs(self.declaredMethods) do
-            self.declaredMethods[k] = readonly(v);
+            self.__middleMethods[name] = createMiddleMethod(cd, name, methods);
         end
 
         local mt = getmetatable(cd) or {};
