@@ -23,7 +23,6 @@
 -- TODO: Implement addSubEnum()
 
 -- FIELDS:
--- TODO: Implement static fields.
 
 -- METHODS:
 -- TODO: Make addMethod() check for override with flags like static, final, and visibility reduction.
@@ -93,6 +92,25 @@ local function paramsToString(params)
     end
 
     return s;
+end
+
+--- @param md MethodDefinition
+--- @return string
+local function printMethod(md)
+    local sStatic = '';
+    if md.static then sStatic = 'static ' end
+    local sFinal = '';
+    if md.final then sFinal = 'final ' end
+    local sParams;
+    local callSyntax;
+    if md.static then
+        sParams = paramsToString(md.parameters);
+        callSyntax = '.';
+    else
+        sParams = paramsToString(md.parameters);
+        callSyntax = ':';
+    end
+    return string.format('%s%s%s%s%s(%s)', sStatic, sFinal, md.class.name, callSyntax, md.name, sParams);
 end
 
 --- @type ClassContext[]
@@ -1751,6 +1769,28 @@ local ClassDefinition = function(definition)
 
         -- Insert boilerplate method invoker function.
         for name, methods in pairs(self.methods) do
+            for i, md in pairs(methods) do
+                if md.override then
+                    -- RULE: Cannot override method if super-method is final.
+                    if md.super.final then
+                        local sMethod = printMethod(md);
+                        errorf(2, '%s Method cannot override final method in super-class: %s',
+                            errHeader,
+                            md.super.class.name,
+                            sMethod
+                        );
+                        return cd;
+                        -- RULE: Cannot reduce scope of overrided super-method.
+                    elseif not canAccessScope(md.scope, md.super.scope) then
+                        local sMethod = printMethod(md);
+                        errorf(2, '%s Method cannot reduce scope of super-class: %s (super-scope = %s, class-scope = %s)',
+                            errHeader,
+                            sMethod, md.super.scope, md.scope
+                        );
+                        return cd;
+                    end
+                end
+            end
             self.__middleMethods[name] = createMiddleMethod(cd, name, methods);
         end
 
@@ -1762,7 +1802,7 @@ local ClassDefinition = function(definition)
         mt.__tostring = function() return 'Class ' .. cd.path end
 
         mt.__index = __properties;
-        
+
         mt.__newindex = function(tbl, field, value)
             -- TODO: Visibility scope analysis.
             -- TODO: Type-checking.

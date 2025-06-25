@@ -66,7 +66,8 @@ Object:addMethod({
     function(self, other)
         print('Object.equals');
         return self == other;
-    end);
+    end
+);
 
 -- MARK: - toString()
 
@@ -80,7 +81,8 @@ Object:addMethod({
     --- @return string
     function(self)
         return 'LuaClass: ' .. self.__type__;
-    end);
+    end
+);
 
 -- MARK: - getClass()
 
@@ -95,7 +97,8 @@ Object:addMethod({
     --- @return ClassDefinition classDef
     function(self)
         return self.__class__;
-    end);
+    end
+);
 
 Object:finalize();
 
