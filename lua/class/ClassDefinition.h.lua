@@ -16,8 +16,7 @@
 local ClassContext = {};
 
 --- @class ClassDefinitionParameter
---- @field package string
---- @field name string
+--- @field name string? (Default: The name of the file)
 --- @field final boolean? (Default: false)
 --- @field scope ClassScope? (Default: public)
 --- @field superClass ClassDefinition? (Default: nil)
@@ -44,7 +43,6 @@ local ClassContext = {};
 
 --- @class (exact) ConstructorDefinitionParameter
 --- @field scope ClassScope? (Default: "package")
---- @field final boolean? (Default: false)
 --- @field parameters ParameterDefinitionParameter[]?
 
 --- @class (exact) ConstructorDefinition

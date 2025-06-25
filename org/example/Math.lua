@@ -5,19 +5,12 @@
 local LuaClass = require 'lua/LuaClass';
 local Class = LuaClass.ClassDefinition;
 
-local Math = Class({
-    scope = 'public',
-    package = 'org.example',
-    name = 'Math'
-});
+local Math = Class({ scope = 'public' });
 
 Math:addConstructor({
-        scope = 'public',
-        parameters = {}
-    },
-    --- @param self Math
-    function(self) end
-)
+    scope = 'public',
+    parameters = {}
+}, function() end);
 
 Math:addMethod({
         scope = 'public',
@@ -27,10 +20,8 @@ Math:addMethod({
         parameters = {},
         returns = 'number'
     },
-    function(...)
-        return math.pi;
-    end
-)
+    function() return math.pi end
+);
 
 Math:finalize();
 

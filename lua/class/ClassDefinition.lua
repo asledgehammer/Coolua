@@ -15,7 +15,6 @@
 -- TODO: Implement static methods.
 
 -- CLASS:
--- TODO: Implement implicit packages from folders.
 -- TODO: Implement visibility-scope.
 -- TODO: Implement abstract flag.
 
@@ -987,19 +986,31 @@ end
 
 --- @param definition ClassDefinitionParameter
 local ClassDefinition = function(definition)
+    -- Generate the path and name to use.
+    local path = DebugUtils.getPath(3, true);
+    local split = path:split('.');
+    local inferredName = table.remove(split, #split);
+    local package = string.join(split, '.');
+
     local cd = {
         __type__ = 'ClassDefinition',
-        package = definition.package,
+        package = package,
         scope = definition.scope,
-        name = definition.name,
+        name = definition.name or inferredName,
         superClass = definition.superClass,
         subClasses = {},
-        --- Generated type.
-        type = 'class:' .. definition.package .. '.' .. definition.name,
-        path = definition.package .. '.' .. definition.name,
     };
 
-    cd.printHeader = string.format('LuaClass(%s):', cd.path);
+    cd.path = cd.package .. '.' .. cd.name;
+
+    -- Make sure that no class is made twice.
+    if forName(cd.path) then
+        errorf(2, 'Class is already defined: %s', cd.path);
+        return cd; -- NOTE: Useless return. Makes sure the method doesn't say it'll define something as nil.
+    end
+
+    cd.type = 'class:' .. cd.path;
+    cd.printHeader = string.format('Class(%s):', cd.path);
     cd.declaredFields = {};
     cd.declaredMethods = {};
     cd.declaredConstructors = {};

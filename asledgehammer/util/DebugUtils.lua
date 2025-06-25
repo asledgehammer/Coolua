@@ -16,8 +16,8 @@ else                        -- Native Lua Environment.
 
     local function modifyPath(path)
         path = string.gsub(path, '\\', '/');
-        path = string.gsub(path, '.lua', '');
-        path = string.gsub(path, './', '', 1);
+        path = string.gsub(path, '%.lua', '');
+        path = string.gsub(path, '%./', '', 1);
         path = string.gsub(path, '/', '.');
         return path;
     end

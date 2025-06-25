@@ -4,6 +4,39 @@
 
 local OOPUtils = {};
 
+--- @class string
+--- @field split fun(self, delimiter: string): string[]
+--- @field join fun(array: string[], delimiter: string): string
+
+--- @param self string
+--- @param delimiter string
+--- @return string[]
+function string.split(self, delimiter)
+    if self == '' then return {} end
+    local t = {};
+    for str in string.gmatch(self, "([^" .. delimiter .. "]+)") do
+        table.insert(t, str);
+    end
+    return t;
+end
+
+--- @param array string[]
+--- @param delimiter string|any
+---
+--- @return string
+function string.join(array, delimiter)
+    if not array or #array == 0 then error('string[] is nil or empty.', 2) end
+    local s = '';
+    for i = 1, #array do
+        if s == '' then
+            s = array[i];
+        else
+            s = s .. tostring(delimiter) .. array[i];
+        end
+    end
+    return s;
+end
+
 --- A common printf implementation in modern compiled languages. Takes 2nd -> Nth arguments as `string.format(...)`
 --- arguments.
 ---

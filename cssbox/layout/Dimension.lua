@@ -6,27 +6,25 @@ local LuaClass = require 'lua/LuaClass';
 local ClassDefinition = LuaClass.ClassDefinition;
 
 --- @type DimensionDefinition
-local StrictDimension = ClassDefinition({
-    package = 'cssbox.layout',
+local Dimension = ClassDefinition({
     scope = 'public',
-    name = 'Dimension',
 });
 
-StrictDimension:addField({
+Dimension:addField({
     scope = 'private',
     type = 'number',
     name = 'width',
     value = 0
 });
 
-StrictDimension:addField({
+Dimension:addField({
     scope = 'private',
     type = 'number',
     name = 'height',
     value = 0
 });
 
-StrictDimension:addConstructor({
+Dimension:addConstructor({
         scope = 'public',
         parameters = {
             { type = 'number', name = 'width' },
@@ -42,7 +40,11 @@ StrictDimension:addConstructor({
     end
 );
 
-StrictDimension:addMethod({ scope = 'public', name = 'getWidth', returns = 'number' },
+Dimension:addMethod({
+        scope = 'public',
+        name = 'getWidth',
+        returns = 'number'
+    },
     --- @param self Dimension
     ---
     --- @return number width
@@ -51,14 +53,18 @@ StrictDimension:addMethod({ scope = 'public', name = 'getWidth', returns = 'numb
     end
 );
 
-StrictDimension:addMethod({ scope = 'public', name = 'getHeight', returns = 'number' },
+Dimension:addMethod({
+        scope = 'public',
+        name = 'getHeight',
+        returns = 'number'
+    },
     --- @param self Dimension
     ---
     --- @return number height
     function(self) return self.height end
 );
 
-StrictDimension:addMethod({
+Dimension:addMethod({
         scope = 'public',
         name = 'toString',
         returns = 'string'
@@ -68,7 +74,7 @@ StrictDimension:addMethod({
     end
 );
 
-StrictDimension:addMethod({
+Dimension:addMethod({
         scope = 'public',
         name = 'equals',
         parameters = {
@@ -90,6 +96,6 @@ StrictDimension:addMethod({
     end
 );
 
-StrictDimension:finalize();
+Dimension:finalize();
 
-return StrictDimension;
+return Dimension;
