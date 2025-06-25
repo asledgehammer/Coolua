@@ -5,6 +5,7 @@
 -- GENERAL:
 -- TODO: Cleanup Code.
 -- TODO: (Future) Migrate StackTrace code to Class.
+-- TODO: Migrate `string.join()` to `table.join`.
 
 -- ENUM:
 -- TODO: Implement.
@@ -17,6 +18,9 @@
 -- CLASS:
 -- TODO: Implement visibility-scope.
 -- TODO: Implement abstract flag.
+-- TODO: Implement addSubClass()
+-- TODO: Implement addSubInterface()
+-- TODO: Implement addSubEnum()
 
 -- FIELDS:
 -- TODO: Implement static fields.
@@ -26,7 +30,6 @@
 -- TODO: Implement abstract flag.
 
 -- CONSTRUCTORS:
-
 
 local readonly = require 'asledgehammer/util/readonly';
 local DebugUtils = require 'asledgehammer/util/DebugUtils';
@@ -456,8 +459,11 @@ local function createInstanceMetatable(cd, o)
 
         popContext();
 
-        local val = fields[field];
-        return val;
+        if fd.static then
+            return cd[field];
+        else
+            return fields[field];
+        end
     end
 
     mt.__newindex = function(tbl, field, value)
@@ -548,7 +554,11 @@ local function createInstanceMetatable(cd, o)
         end
 
         -- Set the value.
-        fields[field] = value;
+        if fd.static then
+            cd[field] = value;
+        else
+            fields[field] = value;
+        end
 
         -- Apply forward the value metrics.
         fd.assignedOnce = true;
@@ -1053,6 +1063,15 @@ local ClassDefinition = function(definition)
 
         createInstanceMetatable(cd, o);
 
+        -- Assign non-static default values of fields.
+        local fields = cd:getFields();
+        for i = 1, #fields do
+            local fd = fields[i];
+            if not fd.static then
+                o[fd.name] = fd.value;
+            end
+        end
+
         -- Invoke constructor context.
         local args = { ... };
         local result, errMsg = xpcall(function()
@@ -1222,6 +1241,22 @@ local ClassDefinition = function(definition)
         return cd.declaredFields[name];
     end
 
+    --- @return FieldDefinition[]
+    function cd:getFields()
+        --- @type FieldDefinition[]
+        local array = {};
+
+        local next = cd;
+        while next do
+            for _, fd in pairs(next.declaredFields) do
+                table.insert(array, fd);
+            end
+            next = next.superClass;
+        end
+
+        return array;
+    end
+
     -- MARK: - Constructor
 
     --- @param constructorDefinition ConstructorDefinitionParameter
@@ -1254,7 +1289,6 @@ local ClassDefinition = function(definition)
             __type__ = 'ConstructorDefinition',
             class = cd,
             scope = constructorDefinition.scope or 'package',
-            final = constructorDefinition.final or false,
             parameters = constructorDefinition.parameters or {},
             func = func
         };
@@ -1693,6 +1727,13 @@ local ClassDefinition = function(definition)
         --- @type table<string, MethodDefinition[]>
         self:compileMethods();
 
+        -- Set default value(s) for static fields.
+        for name, fd in pairs(cd.declaredFields) do
+            if fd.static then
+                cd[name] = fd.value;
+            end
+        end
+
         -- Set all definitions as read-only.
         local constructorsLen = #self.declaredConstructors;
         if constructorsLen ~= 0 then
@@ -1719,7 +1760,98 @@ local ClassDefinition = function(definition)
         mt.__metatable = false;
         mt.__index = __properties;
         mt.__tostring = function() return 'Class ' .. cd.path end
-        mt.__newindex = function() errorf(2, '%s Cannot alter ClassDefinition. It is read-only!', self.errorHeader) end
+
+        mt.__index = __properties;
+        
+        mt.__newindex = function(tbl, field, value)
+            -- TODO: Visibility scope analysis.
+            -- TODO: Type-checking.
+
+            if field == 'super' or field == '__super__' then
+                errorf(2, '%s Cannot set super. (Static context)', cd.printHeader);
+                return;
+            end
+
+            local fd = cd:getField(field);
+            if not fd then
+                errorf(2, 'FieldNotFoundException: Cannot set new field or method: %s.%s',
+                    cd.path, field
+                );
+                return;
+            elseif not fd.static then
+                errorf(2, 'StaticFieldException: Assigning non-static field in static context: %s.%s',
+                    cd.path, field
+                );
+                return;
+            end
+
+            local level = 1;
+            local relPath = DebugUtils.getPath(level, true);
+
+            while
+                relPath == '[C]' or
+                relPath == 'asledgehammer.util.DebugUtils' or
+                relPath == 'class.ClassDefinition'
+            do
+                level = level + 1;
+                relPath = DebugUtils.getPath(level, true);
+            end
+
+            pushContext({
+                class = cd,
+                field = fd,
+                context = 'field-set',
+                line = DebugUtils.getCurrentLine(level),
+                file = DebugUtils.getPath(level)
+            });
+
+            local callInfo = DebugUtils.getCallInfo(level, true);
+            callInfo.path = relPath;
+            local scopeAllowed = getScopeForCall(fd.class, callInfo);
+
+            if not canAccessScope(fd.scope, scopeAllowed) then
+                local errMsg = string.format(
+                    'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
+                    cd.name, fd.name,
+                    fd.scope, scopeAllowed,
+                    printStackTrace()
+                );
+                popContext();
+                print(errMsg);
+                error('', 2);
+                return;
+            end
+
+            -- (Just in-case)
+            if value == UNINITIALIZED_VALUE then
+                local errMsg = string.format('%s Cannot set %s as UNINITIALIZED_VALUE. (Internal Error)\n%s',
+                    cd.printHeader, field, printStackTrace()
+                );
+                popContext();
+                error(errMsg, 2);
+                return;
+            end
+
+            local context = getContext();
+
+            if fd.final then
+                if not context or context.class ~= cd then
+                    errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
+                elseif not context or context.context ~= 'constructor' then
+                    errorf(2, '%s Attempt to assign final field %s outside of constructor scope.', cd.printHeader, field);
+                elseif fd.assignedOnce then
+                    errorf(2, '%s Attempt to assign final field %s. (Already defined)', cd.printHeader, field);
+                end
+            end
+
+            -- Set the value.
+            __properties[field] = value;
+
+            -- Apply forward the value metrics.
+            fd.assignedOnce = true;
+            fd.value = value;
+        end
+
         setmetatable(cd, mt);
 
         self.lock = true;

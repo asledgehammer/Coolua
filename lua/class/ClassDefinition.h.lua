@@ -108,6 +108,7 @@ local ClassContext = {};
 --- @field declaredFields table<string, FieldDefinition>
 --- @field declaredMethods table<string, MethodDefinition>
 --- @field declaredConstructors ConstructorDefinition[]
+--- @field staticFields table<string, any> Stores the static values for classes.
 local ClassDefinition = {};
 
 -- MARK: - Field

@@ -7,6 +7,15 @@ local Class = LuaClass.ClassDefinition;
 
 local Math = Class({ scope = 'public' });
 
+Math:addField({
+    scope = 'public',
+    static = true,
+    final = true,
+    name = 'PI',
+    type = 'number',
+    value = math.pi
+})
+
 Math:addConstructor({
     scope = 'public',
     parameters = {}
@@ -20,7 +29,7 @@ Math:addMethod({
         parameters = {},
         returns = 'number'
     },
-    function() return math.pi end
+    function() return Math.PI end
 );
 
 Math:finalize();
