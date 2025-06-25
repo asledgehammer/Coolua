@@ -1,20 +1,38 @@
-local LuaClass = require 'asledgehammer/util/LuaClass';
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
+local LuaClass = require 'lua/LuaClass';
 local ClassDefinition = LuaClass.ClassDefinition;
 
 local Dimension = require 'cssbox/layout/Dimension';
 
 --- @type RectangleDefinition
 local Rectangle = ClassDefinition({
+    scope = 'public',
     package = 'cssbox.layout',
     name = 'Rectangle',
     superClass = Dimension
 });
 
-Rectangle:addField({ name = 'x', type = 'number', value = 0 });
-Rectangle:addField({ name = 'y', type = 'number', value = 0 });
+Rectangle:addField({
+    scope = 'private',
+    type = 'number',
+    name = 'x',
+    value = 0
+});
+Rectangle:addField({
+    scope = 'private',
+    type = 'number',
+    name = 'y',
+    value = 0
+});
 
-Rectangle:addConstructor(
---- @param o Rectangle
+Rectangle:addConstructor({
+        scope = 'public',
+        parameters = {}
+    },
+    --- @param o Rectangle
     function(o)
         o:super();
         o.x = 0;
@@ -23,10 +41,13 @@ Rectangle:addConstructor(
 );
 
 Rectangle:addConstructor({
-        { name = 'x',      type = 'number' },
-        { name = 'y',      type = 'number' },
-        { name = 'width',  type = 'number' },
-        { name = 'height', type = 'number' }
+        scope = 'public',
+        parameters = {
+            { name = 'x',      type = 'number' },
+            { name = 'y',      type = 'number' },
+            { name = 'width',  type = 'number' },
+            { name = 'height', type = 'number' }
+        }
     },
     --- @param self Rectangle
     --- @param x number
@@ -40,33 +61,53 @@ Rectangle:addConstructor({
     end
 );
 
-Rectangle:addMethod({ name = 'getX', returns = 'number' },
+Rectangle:addMethod({
+        scope = 'public',
+        name = 'getX',
+        returns = 'number'
+    },
     --- @param self Rectangle
     ---
     --- @return number x
     function(self) return self.x end
 );
 
-Rectangle:addMethod({ name = 'setX', returns = 'number' },
+Rectangle:addMethod({
+        scope = 'public',
+        name = 'setX',
+        returns = 'number'
+    },
     --- @param self Rectangle
     --- @param x number
     function(self, x) self.x = x end
 );
 
-Rectangle:addMethod({ name = 'getY', returns = 'number' },
+Rectangle:addMethod({
+        scope = 'public',
+        name = 'getY',
+        returns = 'number'
+    },
     --- @param self Rectangle
     ---
     --- @return number y
     function(self) return self.y end
 );
 
-Rectangle:addMethod({ name = 'setY', returns = 'number' },
+Rectangle:addMethod({
+        scope = 'public',
+        name = 'setY',
+        returns = 'number'
+    },
     --- @param self Rectangle
     --- @param y number
     function(self, y) self.x = y end
 );
 
-Rectangle:addMethod({ name = 'toString', returns = 'string' },
+Rectangle:addMethod({
+        scope = 'public',
+        name = 'toString',
+        returns = 'string'
+    },
     function(self)
         return self:getX() .. ', ' .. self:getY() .. ', ' .. self:super();
     end

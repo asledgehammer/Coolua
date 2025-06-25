@@ -1,4 +1,16 @@
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
+-- TODO: Implement Interfaces.
+-- TODO: Implement default interface methods.
+-- TODO: Implement Enums.
+-- TODO: Implement abstract methods / classes.
+-- TODO: Cleanup Code.
+-- TODO: Abstract StackTrace code to pseudo-Thread object.
+
 local readonly = require 'asledgehammer/util/readonly';
+local DebugUtils = require 'asledgehammer/util/DebugUtils';
 local OOPUtils = require 'asledgehammer/util/OOPUtils';
 local isArray = OOPUtils.isArray;
 local anyToString = OOPUtils.anyToString;
@@ -13,6 +25,7 @@ local errorf = OOPUtils.errorf;
 -- DEBUG FLAGS --
 local DEBUG_INTERNAL = false;
 local DEBUG_METHODS = false;
+local DEBUG_SCOPE = false;
 -- ----------- --
 
 ---
@@ -31,8 +44,95 @@ local canGetSuper = false;
 --- This private switch flag helps shadow attempts to set super outside the class framework.
 local canSetSuper = false;
 
+--- @param params ParameterDefinition[]
+---
+--- @return string
+local function paramsToString(params)
+    local s = '';
+
+    if not params or #params == 0 then return s end
+
+    for i = 1, #params do
+        local param = params[i];
+        local sTypes = '';
+        for j = 1, #param.types do
+            if sTypes == '' then
+                sTypes = param.types[j];
+            else
+                sTypes = sTypes .. '|' .. param.types[j];
+            end
+        end
+        local sParam = string.format('%s: %s', param.name, sTypes);
+        if s == '' then
+            s = sParam;
+        else
+            s = s .. ', ' .. sParam;
+        end
+    end
+
+    return s;
+end
+
 --- @type ClassContext[]
 local ContextStack = {};
+
+--- @param context ClassContext
+local function printContext(context)
+    if context.executable then
+        if context.executable.__type__ == 'MethodDefinition' then
+            local callSyntax;
+            if context.executable.static then
+                callSyntax = '.';
+            else
+                callSyntax = ':';
+            end
+            return string.format('%s:%s: calling %s%s%s(%s)',
+                context.file,
+                context.line,
+                context.executable.class.name,
+                callSyntax,
+                context.executable.name,
+                paramsToString(context.executable.parameters)
+            );
+        else
+            return string.format('%s:%s: calling %s.new(%s)',
+                context.file,
+                context.line,
+                context.executable.class.name,
+                paramsToString(context.executable.parameters)
+            );
+        end
+    elseif context.field then
+        if context.context == 'field-get' then
+            return string.format('%s:%s: accessing field %s.%s',
+                context.file,
+                context.line,
+                context.field.class.name,
+                context.field.name
+            );
+        elseif context.context == 'field-set' then
+            return string.format('%s:%s: assigning field %s.%s',
+                context.file,
+                context.line,
+                context.field.class.name,
+                context.field.name
+            );
+        end
+    end
+    return string.format('%s:%s:',
+        context.file,
+        context.line
+    );
+end
+
+--- @return string stackTrace
+local function printStackTrace()
+    local s = 'Class StackTrace:\n\t(Lua Script)';
+    for i = 1, #ContextStack do
+        s = s .. '\n\t' .. printContext(ContextStack[i]);
+    end
+    return s;
+end
 
 --- Grabs the current context.
 local function getContext()
@@ -47,13 +147,15 @@ end
 ---
 --- @param context ClassContext
 local function pushContext(context)
+    debugf(DEBUG_SCOPE, 'pushContext(%s)', printContext(context));
     table.insert(ContextStack, context);
 end
 
 local function popContext()
+    debugf(DEBUG_SCOPE, 'popContext()');
     local stackLen = #ContextStack;
     if stackLen == 0 then
-        error('The ContextStack is empty.');
+        error('The ContextStack is empty.', 2);
     end
     return table.remove(ContextStack, stackLen);
 end
@@ -84,6 +186,71 @@ local function getType(val)
 
     return valType;
 end
+
+--- @param class ClassDefinition The class called.
+--- @param callInfo CallInfo
+---
+--- @return LuaClassScope
+local function getScopeForCall(class, callInfo)
+    local value = 'public';
+
+    -- Classes are locked to their package path and name.
+    local cd = forName(callInfo.path);
+
+    -- - If the class is nil, the call is coming from code outside of a class file entirely.
+    -- - If the executable is nil, then the call is coming from code inside of a class but not in a defined method or
+    --   constructor.
+    if cd then
+        -- Grab an executable definition that might be where the call comes from.
+        --   NOTE: This allows private access to anonymous functions within the scope of a method.
+        --         This is to mimic Java / C# lamda functions getting scoped access to private fields.
+        -- local ed = cd:getExecutableFromLine(callInfo.currentLine);
+        -- if ed then
+        if cd.path == class.path then
+            -- The classes match. You have full access to everything.
+            value = 'private'
+        elseif class:isAssignableFromType(cd) then
+            -- The class calling the function is a sub-class and can access protected-scope properties.
+            value = 'protected';
+        elseif cd.package == class.package then
+            -- The class calling the function is in the same package and can access package-scope properties.
+            value = 'package';
+        end
+        -- else
+        --     -- We allow anonymous code outside the class system in-file to have package-level access.
+        --     if cd.package == class.package then
+        --         -- The class calling the function is in the same package and can access package-scope properties.
+        --         value = 'package';
+        --     end
+        -- end
+    end
+
+    debugf(DEBUG_SCOPE, 'getScopeCall(%s, %s) = %s',
+        class.path, anyToString(callInfo), value
+    );
+
+    -- Nothing matches. Only public access.
+    return value;
+end
+
+--- @param expected LuaClassScope
+--- @param given LuaClassScope
+---
+--- @return boolean evaluation
+local function canAccessScope(expected, given)
+    if expected == given then
+        return true;
+    else
+        if expected == 'public' then
+            return true;                  -- Everything allowed.
+        elseif expected == 'package' then -- Only protected or private allowed.
+            return given == 'protected' or given == 'private';
+        else                              -- Only private allowed.
+            return given == 'private';
+        end
+    end
+end
+
 
 local function isAssignableFromType(value, typeOrTypes)
     if getType(typeOrTypes) == 'table' then
@@ -209,19 +376,68 @@ local function createInstanceMetatable(cd, o)
         end
     end
 
-    fields.__class = cd;
+    fields.__class__ = cd;
 
-    mt.__index = function(tbl, field)
-        if field == '__super' then
+    mt.__index = function(_, field)
+        -- Super is to be treated differently / internally.
+        if field == '__super__' then
             if not canGetSuper then
-                errorf(2, '%s Cannot get __super. (Internal field)');
+                errorf(2, '%s Cannot get __super__. (Internal field)');
             end
+            return fields[field];
+        elseif field == 'super' then
+            return rawget(o, '__super__');
         end
 
-        local val = fields[field];
         local fd = cd:getField(field);
-        -- printf('GET FieldDefinition(%s).%s = %s', o.__type__, field, tostring(val));
+        if not fd then
+            errorf(2, 'FieldNotFoundException: Field doesn\'t exist: %s.%s',
+                cd.path, field
+            );
+            return;
+        end
 
+        local level = 0;
+        local relPath = DebugUtils.getPath(level, true);
+
+        while
+            relPath == '[C]' or
+            relPath == 'asledgehammer.util.DebugUtils' or
+            relPath == 'class.ClassDefinition' or
+            relPath == 'class.ClassDefinition.lua'
+        do
+            level = level + 1;
+            relPath = DebugUtils.getPath(level, true);
+        end
+
+        pushContext({
+            class = cd,
+            field = fd,
+            context = 'field-get',
+            line = DebugUtils.getCurrentLine(level),
+            file = DebugUtils.getPath(level)
+        });
+
+        local callInfo = DebugUtils.getCallInfo(level, true);
+        -- callInfo.path = relPath;
+        local scopeAllowed = getScopeForCall(fd.class, callInfo);
+
+        if not canAccessScope(fd.scope, scopeAllowed) then
+            local errMsg = string.format(
+                'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
+                cd.name, fd.name,
+                fd.scope, scopeAllowed,
+                printStackTrace()
+            );
+            popContext();
+            print(errMsg);
+            error('', 2);
+            return;
+        end
+
+        popContext();
+
+        local val = fields[field];
         return val;
     end
 
@@ -236,25 +452,68 @@ local function createInstanceMetatable(cd, o)
                 errorf(2, '%s Cannot set super(). (Reserved method)', cd.printHeader);
             end
             return;
-        elseif field == '__super' then
+        elseif field == '__super__' then
             if canSetSuper then
-                fields.__super = value;
+                fields.__super__ = value;
             else
-                errorf(2, '%s Cannot set __super. (Internal field)', cd.printHeader);
+                errorf(2, '%s Cannot set __super__. (Internal field)', cd.printHeader);
             end
             return;
         end
 
         local fd = cd:getField(field);
-        -- printf('SET FieldDefinition(%s).%s = %s', o.__type__, field, value);
-
         if not fd then
-            errorf(2, '%s: Field does not exist: %s', cd.name, field);
+            errorf(2, 'FieldNotFoundException: Field doesn\'t exist: %s.%s',
+                cd.path, field
+            );
+            return;
+        end
+
+        local level = 1;
+        local relPath = DebugUtils.getPath(level, true);
+
+        while
+            relPath == '[C]' or
+            relPath == 'asledgehammer.util.DebugUtils' or
+            relPath == 'class.ClassDefinition'
+        do
+            level = level + 1;
+            relPath = DebugUtils.getPath(level, true);
+        end
+
+        pushContext({
+            class = cd,
+            field = fd,
+            context = 'field-set',
+            line = DebugUtils.getCurrentLine(level),
+            file = DebugUtils.getPath(level)
+        });
+
+        local callInfo = DebugUtils.getCallInfo(level, true);
+        callInfo.path = relPath;
+        local scopeAllowed = getScopeForCall(fd.class, callInfo);
+
+        if not canAccessScope(fd.scope, scopeAllowed) then
+            local errMsg = string.format(
+                'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
+                cd.name, fd.name,
+                fd.scope, scopeAllowed,
+                printStackTrace()
+            );
+            popContext();
+            print(errMsg);
+            error('', 2);
+            return;
         end
 
         -- (Just in-case)
         if value == UNINITIALIZED_VALUE then
-            errorf(2, '%s Cannot set %s as UNINITIALIZED_VALUE. (Internal Error)', cd.printHeader, field);
+            local errMsg = string.format('%s Cannot set %s as UNINITIALIZED_VALUE. (Internal Error)\n%s',
+                cd.printHeader, field, printStackTrace()
+            );
+            popContext();
+            error(errMsg, 2);
+            return;
         end
 
         local context = getContext();
@@ -314,9 +573,8 @@ end
 ---
 --- @return fun(o: ClassInstance, ...): (any?)
 local function createMiddleMethod(cd, name, methods)
-    -- TODO: Implement scope-visibility.
-
-    local __callMethod = function(o, ...)
+    -- TODO: Implement static invocation.
+    return function(o, ...)
         local args = { ... };
         local argsLen = #args;
 
@@ -345,51 +603,101 @@ local function createMiddleMethod(cd, name, methods)
 
         if not md then
             errorf(2, '%s No method signature exists: %s', errHeader, argsToString(args));
+            return;
         end
 
         pushContext({
             class = cd,
+            executable = md,
             context = 'method',
-            executable = md
+            line = DebugUtils.getCurrentLine(3),
+            file = DebugUtils.getPath(3)
         });
 
-        --- Apply super.
-        canGetSuper = true;
-        canSetSuper = true;
-        local lastSuper = o.super;
-        o.super = o.__super;
-        canGetSuper = false;
-        canSetSuper = false;
+        local level = 2;
+        local relPath = DebugUtils.getPath(1, true);
+
+        while
+            relPath == '[C]' or
+            relPath == 'asledgehammer.util.DebugUtils' or
+            relPath == 'class.ClassDefinition'
+        do
+            level = level + 1;
+            relPath = DebugUtils.getPath(level, true);
+        end
+
+        local callInfo = DebugUtils.getCallInfo(3, true);
+        callInfo.path = relPath;
+        local scopeAllowed = getScopeForCall(md.class, callInfo);
+
+        if not canAccessScope(md.scope, scopeAllowed) then
+            local sParams;
+            local callSyntax;
+            if md.static then
+                sParams = paramsToString(md.parameters);
+                callSyntax = '.';
+            else
+                sParams = paramsToString(md.parameters);
+                callSyntax = ':';
+            end
+
+            local errMsg = string.format(
+                'IllegalAccessException: The method %s%s%s(%s) is set as "%s" access level. (Access Level from call: "%s")\n%s',
+                cd.name, callSyntax, md.name, sParams,
+                md.scope, scopeAllowed,
+                printStackTrace()
+            );
+            popContext();
+            print(errMsg);
+            error('', 2);
+            return;
+        end
+
+        if o then
+            --- Apply super.
+            canGetSuper = true;
+            canSetSuper = true;
+            local lastSuper = o.super;
+            o.super = o.__super__;
+            canGetSuper = false;
+            canSetSuper = false;
+        end
 
         local retVal = nil;
         local result, errMsg = xpcall(function()
-            retVal = md.func(o, unpack(args));
+            if md.static then
+                retVal = md.func(unpack(args));
+            else
+                retVal = md.func(o, unpack(args));
+            end
         end, debug.traceback);
 
-        popContext();
-
-        --- Revert super.
-        canSetSuper = true;
-        o.super = lastSuper;
-        canSetSuper = false;
+        if o then
+            --- Revert super.
+            canSetSuper = true;
+            o.super = lastSuper;
+            canSetSuper = false;
+        end
 
         -- Audit void type methods.
         if retVal ~= nil and md.returns == 'void' then
-            error(
-                string.format('Invoked Method is void and returned value: {type = %s, value = %s}',
-                    type(retVal),
-                    tostring(retVal)
-                ),
-                2
+            local errMsg = string.format('Invoked Method is void and returned value: {type = %s, value = %s}',
+                type(retVal),
+                tostring(retVal)
             );
+            print(errMsg);
+            popContext();
+            error('', 2);
+            return;
         end
+
+        popContext();
 
         -- Throw the error after applying context.
         if not result then error(tostring(errMsg) or '') end
 
         return retVal;
     end;
-    return __callMethod;
 end
 
 local function createMiddleConstructor(cd)
@@ -401,27 +709,62 @@ local function createMiddleConstructor(cd)
             errorf(2, '%s No constructor signature exists: %s', cd.printHeader, argsToString(args));
         end
 
+        pushContext({
+            class = cd,
+            executable = cons,
+            context = 'constructor',
+            line = DebugUtils.getCurrentLine(3),
+            file = DebugUtils.getPath(3)
+        });
+
+        local level = 1;
+        local relPath = DebugUtils.getPath(0, true);
+
+        while
+            relPath == '[C]' or
+            relPath == 'asledgehammer.util.DebugUtils' or
+            relPath == 'class.ClassDefinition'
+        do
+            level = level + 1;
+            relPath = DebugUtils.getPath(level, true);
+        end
+
+        local callInfo = DebugUtils.getCallInfo(3, true);
+        callInfo.path = relPath;
+        local scopeAllowed = getScopeForCall(cons.class, callInfo);
+
+        if not canAccessScope(cons.scope, scopeAllowed) then
+            local errMsg = string.format(
+                'IllegalAccessException: The constructor %s.new(%s) is set as "%s" access level. (Access Level from call: "%s")\n%s',
+                cons.class.name, paramsToString(cons.parameters),
+                cons.scope, scopeAllowed,
+                printStackTrace()
+            );
+            popContext();
+            print(errMsg);
+            error('', 2);
+            return;
+        end
+
         --- Apply super.
         canGetSuper = true;
         canSetSuper = true;
         local lastSuper = o.super;
-        o.super = o.__super;
+        o.super = o.__super__;
         canGetSuper = false;
         canSetSuper = false;
-
-        pushContext({ class = cd, executable = cons, context = 'constructor' });
 
         local result, errMsg = xpcall(function()
             cons.func(o, unpack(args));
         end, debug.traceback);
 
-        popContext();
 
         --- Revert super.
         canSetSuper = true;
         o.super = lastSuper;
         canSetSuper = false;
 
+        popContext();
         if not result then error(errMsg) end
     end
 end
@@ -486,30 +829,122 @@ local function createSuperTable(cd, o)
     -- Assign / discover the inferred method in the super-class.
 
     local function __callConstructor(o, args)
-        local ed = superClass:getConstructor(args);
-        if not ed then
+        local cons = superClass:getConstructor(args);
+        if not cons then
             errorf(2, '%s Unknown super-constructor: %s', cd.printHeader, argsToString(args));
             return;
         end
-        ed.func(o, unpack(args));
+
+        pushContext({
+            class = cd,
+            executable = cons,
+            context = 'constructor',
+            line = DebugUtils.getCurrentLine(3),
+            file = DebugUtils.getPath(3)
+        });
+
+        local level = 2;
+        local relPath = DebugUtils.getPath(level, true);
+
+        while
+            relPath == '[C]' or
+            relPath == 'asledgehammer.util.DebugUtils' or
+            relPath == 'class.ClassDefinition'
+        do
+            level = level + 1;
+            relPath = DebugUtils.getPath(level, true);
+        end
+
+        local callInfo = DebugUtils.getCallInfo(3, true);
+        callInfo.path = relPath;
+        local scopeAllowed = getScopeForCall(cons.class, callInfo);
+
+        if not canAccessScope(cons.scope, scopeAllowed) then
+            local errMsg = string.format(
+                'IllegalAccessException: The constructor %s.new(%s) is set as "%s" access level. (Access Level from call: "%s")\n%s',
+                cons.class.name, paramsToString(cons.parameters),
+                cons.scope, scopeAllowed,
+                printStackTrace()
+            );
+            popContext();
+            print(errMsg);
+            error('', 2);
+            return;
+        end
+
+        local result, errMsg = xpcall(function()
+            cons.func(o, unpack(args))
+        end, debug.traceback);
+
+        popContext();
+        if not result then error(errMsg) end
     end
 
     local function __callMethod(name, args)
+        --- @type MethodDefinition|nil
+        local md = superClass:getMethod(name, args);
 
-        --- @type ExecutableDefinition|nil
-        local ed = superClass:getMethod(name, args);
-
-        if not ed then
+        if not md then
             errorf(2, '%s Unknown super-method: %s %s', cd.printHeader, name, argsToString(args));
             return;
         end
-        -- TODO: Implement static method calls.
-        return ed.func(o, unpack(args));
+
+        local level = 2;
+        local relPath = DebugUtils.getPath(1, true);
+
+        while
+            relPath == '[C]' or
+            relPath == 'asledgehammer.util.DebugUtils' or
+            relPath == 'class.ClassDefinition'
+        do
+            level = level + 1;
+            relPath = DebugUtils.getPath(level, true);
+        end
+
+        local callInfo = DebugUtils.getCallInfo(3, true);
+        callInfo.path = relPath;
+        local scopeAllowed = getScopeForCall(md.class, callInfo);
+
+        if not canAccessScope(md.scope, scopeAllowed) then
+            local sParams;
+            local callSyntax;
+            if md.static then
+                sParams = paramsToString(md.parameters);
+                callSyntax = '.';
+            else
+                sParams = paramsToString(md.parameters);
+                callSyntax = ':';
+            end
+
+            local errMsg = string.format(
+                'IllegalAccessException: The method %s%s%s(%s) is set as "%s" access level. (Access Level from call: "%s")\n%s',
+                md.class.name, callSyntax, md.name, sParams,
+                md.scope, scopeAllowed,
+                printStackTrace()
+            );
+            popContext();
+            print(errMsg);
+            error('', 2);
+            return;
+        end
+
+        local retVal;
+        local result, errMsg = xpcall(function()
+            if md.static then
+                retVal = md.func(unpack(args));
+            else
+                retVal = md.func(o, unpack(args));
+            end
+        end, debug.traceback);
+
+        popContext();
+        if not result then error(errMsg) end
+
+        return retVal;
     end
 
     function mt.__call(_, ...)
-
-        local args = {...};
+        local args = { ... };
         table.remove(args, 1);
 
         local context = getContext();
@@ -570,7 +1005,7 @@ local ClassDefinition = function(definition)
 
         -- TODO: Check if package-class exists.
 
-        local o = { __class = cd, __type__ = cd.type };
+        local o = { __class__ = cd, __type__ = cd.type };
 
         --- Assign the middle-functions to the object.
         for name, func in pairs(cd.__middleMethods) do
@@ -582,7 +1017,7 @@ local ClassDefinition = function(definition)
         -- end
 
         canSetSuper = true;
-        o.__super = createSuperTable(cd, o);
+        o.__super__ = createSuperTable(cd, o);
         canSetSuper = false;
 
         createInstanceMetatable(cd, o);
@@ -604,9 +1039,18 @@ local ClassDefinition = function(definition)
     ---
     --- @return FieldDefinition
     function cd:addField(fd)
+        -- Friendly check for implementation.
+        if not self or not fd then
+            error(
+                'Improper method call. (Not instanced) Use MyClass:addField() instead of MyClass.addField()',
+                2
+            );
+        end
+
         --- @type FieldDefinition
         local args = {
             __type__ = 'FieldDefinition',
+            class = cd,
             types = fd.types,
             type = fd.type,
             name = fd.name,
@@ -749,14 +1193,22 @@ local ClassDefinition = function(definition)
 
     -- MARK: - Constructor
 
-    --- @param definitionOrFunc ParameterDefinitionParameter[]|function
-    --- @param func function?
+    --- @param constructorDefinition ConstructorDefinitionParameter
+    --- @param func function
     ---
     --- @return ConstructorDefinition
-    function cd:addConstructor(definitionOrFunc, func)
+    function cd:addConstructor(constructorDefinition, func)
+        -- Friendly check for implementation.
+        if not self or type(constructorDefinition) == 'function' then
+            error(
+                'Improper method call. (Not instanced) Use MyClass:addConstructor() instead of MyClass.addConstructor()',
+                2
+            );
+        end
+
         local errHeader = string.format('ClassDefinition(%s):addConstructor():', cd.name);
 
-        if not definitionOrFunc then
+        if not constructorDefinition then
             error(
                 string.format(
                     '%s The constructor definition is not provided.',
@@ -766,28 +1218,13 @@ local ClassDefinition = function(definition)
             );
         end
 
-        if not func then
-            if type(definitionOrFunc) ~= 'function' then
-                error(
-                    string.format(
-                        '%s Only one argument was provided and it is not of type "function". (type = %s, value = %s)',
-                        errHeader,
-                        type(func),
-                        tostring(func)
-                    ),
-                    2
-                );
-            end
-            func = definitionOrFunc;
-            definitionOrFunc = {};
-        end
-
-        --- @cast definitionOrFunc ParameterDefinitionParameter[]
-
         --- @type ConstructorDefinition
         local args = {
             __type__ = 'ConstructorDefinition',
-            parameters = definitionOrFunc,
+            class = cd,
+            scope = constructorDefinition.scope or 'package',
+            final = constructorDefinition.final or false,
+            parameters = constructorDefinition.parameters or {},
             func = func
         };
 
@@ -908,31 +1345,54 @@ local ClassDefinition = function(definition)
         return cons;
     end
 
+    --- @param line integer
+    ---
+    --- @return ConstructorDefinition|nil method
+    function cd:getConstructorFromLine(line)
+        --- @type ConstructorDefinition
+        local cons;
+        for i = 1, #self.declaredConstructors do
+            cons = self.declaredConstructors[i];
+            if line >= cons.lineRange.start and line <= cons.lineRange.stop then
+                return cons;
+            end
+        end
+        return nil;
+    end
+
     -- MARK: - Method
 
-    --- @param mdef MethodDefinitionParameter
+    --- @param methodDefinition MethodDefinitionParameter
     --- @param func function
-    function cd:addMethod(mdef, func)
+    function cd:addMethod(methodDefinition, func)
+        -- Friendly check for implementation.
+        if not self or type(methodDefinition) == 'function' then
+            error(
+                'Improper method call. (Not instanced) Use MyClass:addMethod() instead of MyClass.addMethod()',
+                2
+            );
+        end
+
         local errHeader = string.format('Class(%s):addMethod():', cd.name);
 
         local types = {};
-        local returns = mdef.returns;
+        local returns = methodDefinition.returns;
 
         -- Validate name.
-        if not mdef.name then
+        if not methodDefinition.name then
             errorf(2, '%s string property "name" is not provided.', errHeader);
-        elseif type(mdef.name) ~= 'string' then
+        elseif type(methodDefinition.name) ~= 'string' then
             errorf(2, '%s property "name" is not a valid string. {type=%s, value=%s}',
-                errHeader, type(mdef.name), tostring(mdef.name)
+                errHeader, type(methodDefinition.name), tostring(methodDefinition.name)
             );
-        elseif mdef.name == '' then
+        elseif methodDefinition.name == '' then
             errorf(2, '%s property "name" is an empty string.', errHeader);
-        elseif not isValidName(mdef.name) then
+        elseif not isValidName(methodDefinition.name) then
             errorf(2,
                 '%s property "name" is invalid. (value = %s) (Should only contain A-Z, a-z, 0-9, _, or $ characters)',
-                errHeader, mdef.name
+                errHeader, methodDefinition.name
             );
-        elseif mdef.name == 'super' then
+        elseif methodDefinition.name == 'super' then
             errorf(2, '%s cannot name method "super".', errHeader);
         end
 
@@ -948,25 +1408,29 @@ local ClassDefinition = function(definition)
             end
             --- @cast returns string[]
             types = returns;
-        elseif type(mdef.returns) == 'string' then
+        elseif type(methodDefinition.returns) == 'string' then
             --- @cast returns string
             types = { returns };
         end
 
         -- TODO: Implement all definition property checks.
 
+        local lineStart, lineStop = DebugUtils.getFuncRange(func);
+
         --- @type MethodDefinition
         local args = {
             __type__ = 'MethodDefinition',
-            scope = mdef.scope or 'package',
-            static = mdef.static or false,
-            final = mdef.final or false,
-            parameters = mdef.parameters or {},
-            name = mdef.name,
+            class = cd,
+            scope = methodDefinition.scope or 'package',
+            static = methodDefinition.static or false,
+            final = methodDefinition.final or false,
+            parameters = methodDefinition.parameters or {},
+            name = methodDefinition.name,
             returns = types,
             override = false,
             super = nil,
-            func = func
+            func = func,
+            lineRange = { start = lineStart, stop = lineStop },
         };
 
         if args.parameters then
@@ -1156,6 +1620,23 @@ local ClassDefinition = function(definition)
         return nil;
     end
 
+    --- @param line integer
+    ---
+    --- @return MethodDefinition|nil method
+    function cd:getMethodFromLine(line)
+        --- @type MethodDefinition
+        local md;
+        for _, mdc in pairs(self.declaredMethods) do
+            for i = 1, #mdc do
+                md = mdc[i];
+                if line >= md.lineRange.start and line <= md.lineRange.stop then
+                    return md;
+                end
+            end
+        end
+        return nil;
+    end
+
     -- MARK: - finalize()
 
     --- @return ClassDefinition class
@@ -1221,6 +1702,13 @@ local ClassDefinition = function(definition)
         return cd;
     end
 
+    --- @param line integer
+    ---
+    --- @return ConstructorDefinition|MethodDefinition|nil method
+    function cd:getExecutableFromLine(line)
+        return self:getMethodFromLine(line) or self:getConstructorFromLine(line) or nil;
+    end
+
     --- @param class ClassDefinition
     ---
     --- @return boolean
@@ -1228,6 +1716,7 @@ local ClassDefinition = function(definition)
         local next = self.superClass;
         while next do
             if next == class then return true end
+            next = next.superClass;
         end
         return false;
     end

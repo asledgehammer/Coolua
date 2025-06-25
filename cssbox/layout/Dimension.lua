@@ -1,4 +1,8 @@
-local LuaClass = require 'asledgehammer/util/LuaClass';
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
+local LuaClass = require 'lua/LuaClass';
 local ClassDefinition = LuaClass.ClassDefinition;
 
 --- @type DimensionDefinition
@@ -23,8 +27,11 @@ StrictDimension:addField({
 });
 
 StrictDimension:addConstructor({
-        { type = 'number', name = 'width' },
-        { type = 'number', name = 'height' },
+        scope = 'public',
+        parameters = {
+            { type = 'number', name = 'width' },
+            { type = 'number', name = 'height' },
+        }
     },
     --- @param self Dimension
     --- @param width number
@@ -35,7 +42,7 @@ StrictDimension:addConstructor({
     end
 );
 
-StrictDimension:addMethod({ name = 'getWidth', returns = 'number' },
+StrictDimension:addMethod({ scope = 'public', name = 'getWidth', returns = 'number' },
     --- @param self Dimension
     ---
     --- @return number width
@@ -44,20 +51,25 @@ StrictDimension:addMethod({ name = 'getWidth', returns = 'number' },
     end
 );
 
-StrictDimension:addMethod({ name = 'getHeight', returns = 'number' },
+StrictDimension:addMethod({ scope = 'public', name = 'getHeight', returns = 'number' },
     --- @param self Dimension
     ---
     --- @return number height
     function(self) return self.height end
 );
 
-StrictDimension:addMethod({ name = 'toString', returns = 'string' },
+StrictDimension:addMethod({
+        scope = 'public',
+        name = 'toString',
+        returns = 'string'
+    },
     function(self)
         return tostring(self:getWidth()) .. ', ' .. tostring(self:getHeight());
     end
 );
 
 StrictDimension:addMethod({
+        scope = 'public',
         name = 'equals',
         parameters = {
             {

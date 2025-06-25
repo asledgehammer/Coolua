@@ -1,11 +1,18 @@
 --- @meta
 
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
 --- @alias LuaClassScope 'private'|'protected'|'package'|'public'
 
 --- @class ClassContext The ClassContext is used to monitor and audit calls for scope-visible methods and fields.
 --- @field class ClassDefinition The current class in the stack.
---- @field context 'constructor'|'method' The current context. (Final fields can be set here)
---- @field executable ExecutableDefinition The definition of the context.
+--- @field context 'constructor'|'method'|'field-get'|'field-set' The current context. (Final fields can be set here)
+--- @field executable MethodDefinition|ConstructorDefinition? The definition of the context.
+--- @field field FieldDefinition?
+--- @field file string
+--- @field line integer
 local ClassContext = {};
 
 --- @class ClassDefinitionParameter
@@ -17,6 +24,7 @@ local ClassContext = {};
 
 --- @class (exact) FieldDefinition
 --- @field __type__ 'FieldDefinition'
+--- @field class ClassDefinition
 --- @field name string
 --- @field types string[]
 --- @field scope LuaClassScope
@@ -40,6 +48,8 @@ local ClassContext = {};
 --- @field func function
 
 --- @class (exact) ConstructorDefinitionParameter
+--- @field scope LuaClassScope? (Default: "package")
+--- @field final boolean? (Default: false)
 --- @field parameters ParameterDefinitionParameter[]?
 
 --- @class (exact) ConstructorDefinition: ExecutableDefinition
@@ -53,6 +63,7 @@ local ClassContext = {};
 
 --- @class (exact) ParameterDefinition
 --- @field __type__ 'ParameterDefinition'
+--- @field class ClassDefinition
 --- @field name string
 --- @field types string[]
 
@@ -66,6 +77,7 @@ local ClassContext = {};
 
 --- @class (exact) MethodDefinition: ExecutableDefinition
 --- @field __type__ 'MethodDefinition'
+--- @field class ClassDefinition
 --- @field scope LuaClassScope
 --- @field static boolean
 --- @field final boolean
@@ -74,6 +86,7 @@ local ClassContext = {};
 --- @field super MethodDefinition? (Internally assigned. If none, this is nil)
 --- @field returns string[]
 --- @field func fun(o: any, ...): (any?)
+--- @field lineRange {start: number, stop: number} The function's start and stop line.
 
 --- @class (exact) ReturnsDefinitionParameter
 --- @field types string[]?
@@ -131,11 +144,11 @@ function ClassDefinition:getDeclaredField(name) end
 --- @return ConstructorDefinition
 function ClassDefinition:addConstructor(func) end
 
---- @param definition ConstructorDefinitionParameter
+--- @param constructorDefinition ConstructorDefinitionParameter
 --- @param func function
 ---
 --- @return ConstructorDefinition
-function ClassDefinition:addConstructor(definition, func) end
+function ClassDefinition:addConstructor(constructorDefinition, func) end
 
 --- @param args any[]
 ---
@@ -190,3 +203,18 @@ function ClassDefinition:finalize() end
 ---
 --- @return boolean
 function ClassDefinition:isAssignableFromType(class) end
+
+--- @param line integer
+---
+--- @return ConstructorDefinition|nil method
+function ClassDefinition:getExecutableFromLine(line) end
+
+--- @param line integer
+---
+--- @return MethodDefinition|nil method
+function ClassDefinition:getMethodFromLine(line) end
+
+--- @param line integer
+---
+--- @return ConstructorDefinition|nil method
+function ClassDefinition:getConstructorFromLine(line) end

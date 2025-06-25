@@ -1,3 +1,7 @@
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
 local OOPUtils = {};
 
 --- A common printf implementation in modern compiled languages. Takes 2nd -> Nth arguments as `string.format(...)`
@@ -70,11 +74,11 @@ function OOPUtils.typeValueString(o)
     return string.format('{type = %s, value = %s}', type(o), tostring(o));
 end
 
-function OOPUtils.anyToString(v, level, useLevel)
-    useLevel = useLevel or false;
-    if level == nil then level = 0 end
+function OOPUtils.anyToString(v, level, pretty)
+    pretty = pretty or false;
+    if level == nil or level < 0 then level = 0 end
     local indent = '';
-    if useLevel then
+    if pretty then
         indent = string.rep('  ', level);
     end
     local type = type(v);
@@ -85,48 +89,50 @@ function OOPUtils.anyToString(v, level, useLevel)
     elseif type == 'nil' then
         return indent .. 'nil';
     elseif type == 'table' then
-        return indent .. OOPUtils.tableToString(v, level + 1);
+        return indent .. OOPUtils.tableToString(v, level, pretty);
     else
         return indent .. '"' .. tostring(v) .. '"';
     end
 end
 
-function OOPUtils.tableToString(t, level, useLevel)
-    if level == nil then level = 0 end
-    local indent0 = string.rep('  ', math.max(level - 2, 0));
-    local indent = string.rep('  ', math.max(level - 1, 0));
+function OOPUtils.tableToString(t, level, pretty)
+    if level == nil or level < 0 then level = 0 end
+    local indent_n2 = string.rep('    ', math.max(level - 2, 0));
+    local indent_n1 = string.rep('    ', math.max(level - 1, 0));
+    local indent_0 = string.rep('    ', math.max(level, 0));
+    local indent_p1 = string.rep('    ', math.max(level + 1, 0));
     local s = '';
     if OOPUtils.isArray(t) then
         return OOPUtils.arrayToString(t, level + 1);
     else
         for k, v in pairs(t) do
-            local vStr = OOPUtils.anyToString(v, level + 1);
+            local vStr = OOPUtils.anyToString(v, level + 1, pretty);
             if s == '' then
                 s = k .. ' = ' .. vStr;
             else
-                s = s .. ',\n' .. indent .. k .. ' = ' .. vStr;
+                s = s .. ',\n' .. indent_p1 .. k .. ' = ' .. vStr;
             end
         end
     end
     if s == '' then return '{}' end
-    return '{\n' .. indent .. s .. '\n' .. indent0 .. '}';
+    return '{\n' .. indent_p1 .. s .. '\n' .. indent_0 .. '}';
 end
 
-function OOPUtils.arrayToString(array, level, useLevel)
+function OOPUtils.arrayToString(array, level, pretty)
     if #array == 0 then return '[]' end
 
     if level == nil then level = 0 end
-    local indent0 = string.rep('  ', math.max(level - 2, 0));
-    local indent = string.rep('  ', math.max(level - 1, 0));
+    local indent_0 = string.rep('    ', math.max(level, 0));
+    local indent_p1 = string.rep('    ', math.max(level + 1, 0));
     local s = '';
     for i = 1, #array do
         if s == '' then
             s = OOPUtils.anyToString(array[i], level + 1);
         else
-            s = s .. ',\n' .. indent .. OOPUtils.anyToString(array[i], level + 1);
+            s = s .. ',\n' .. indent_p1 .. OOPUtils.anyToString(array[i], level + 1, pretty);
         end
     end
-    return '[\n' .. indent .. s .. '\n' .. indent0 .. ']';
+    return '[\n' .. indent_p1 .. s .. '\n' .. indent_0 .. ']';
 end
 
 function OOPUtils.isValidName(name)
@@ -182,8 +188,8 @@ function OOPUtils.getType(val)
     local valType = type(val);
 
     -- Support for Lua-Class types.
-    if valType == 'table' and val.__classType then
-        valType = 'class:' .. val.__classType;
+    if valType == 'table' and val.__type__ then
+        valType = 'class:' .. val.__type__;
     end
 
     return valType;
