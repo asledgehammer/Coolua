@@ -678,19 +678,10 @@ local function createMiddleMethod(cd, name, methods)
         local scopeAllowed = getScopeForCall(md.class, callInfo);
 
         if not canAccessScope(md.scope, scopeAllowed) then
-            local sParams;
-            local callSyntax;
-            if md.static then
-                sParams = paramsToString(md.parameters);
-                callSyntax = '.';
-            else
-                sParams = paramsToString(md.parameters);
-                callSyntax = ':';
-            end
-
+            local sMethod = printMethod(md);
             local errMsg = string.format(
-                'IllegalAccessException: The method %s%s%s(%s) is set as "%s" access level. (Access Level from call: "%s")\n%s',
-                cd.name, callSyntax, md.name, sParams,
+                'IllegalAccessException: The method %s is set as "%s" access level. (Access Level from call: "%s")\n%s',
+                sMethod,
                 md.scope, scopeAllowed,
                 printStackTrace()
             );
@@ -953,19 +944,10 @@ local function createSuperTable(cd, o)
         local scopeAllowed = getScopeForCall(md.class, callInfo);
 
         if not canAccessScope(md.scope, scopeAllowed) then
-            local sParams;
-            local callSyntax;
-            if md.static then
-                sParams = paramsToString(md.parameters);
-                callSyntax = '.';
-            else
-                sParams = paramsToString(md.parameters);
-                callSyntax = ':';
-            end
-
+            local sMethod = printMethod(md);
             local errMsg = string.format(
-                'IllegalAccessException: The method %s%s%s(%s) is set as "%s" access level. (Access Level from call: "%s")\n%s',
-                md.class.name, callSyntax, md.name, sParams,
+                'IllegalAccessException: The method %s is set as "%s" access level. (Access Level from call: "%s")\n%s',
+                sMethod,
                 md.scope, scopeAllowed,
                 printStackTrace()
             );
@@ -1786,6 +1768,15 @@ local ClassDefinition = function(definition)
                         errorf(2, '%s Method cannot reduce scope of super-class: %s (super-scope = %s, class-scope = %s)',
                             errHeader,
                             sMethod, md.super.scope, md.scope
+                        );
+                        return cd;
+                        -- RULE: override Methods must either be consistently static (or not) with their super-method(s).
+                    elseif md.static ~= md.super.static then
+                        local sMethod = printMethod(md);
+                        errorf(2,
+                            '%s All method(s) with identical signatures must either be static or not: %s (super.static = %s, class.static = %s)',
+                            errHeader,
+                            sMethod, tostring(md.super.static), tostring(md.static)
                         );
                         return cd;
                     end
