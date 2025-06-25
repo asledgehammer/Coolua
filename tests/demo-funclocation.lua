@@ -1,5 +1,5 @@
 -- Define a function
-function my_function()
+local function my_function()
     -- Some code...
 end
 

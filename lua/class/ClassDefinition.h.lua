@@ -4,7 +4,7 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
---- @alias LuaClassScope 'private'|'protected'|'package'|'public'
+--- @alias ClassScope 'private'|'protected'|'package'|'public'
 
 --- @class ClassContext The ClassContext is used to monitor and audit calls for scope-visible methods and fields.
 --- @field class ClassDefinition The current class in the stack.
@@ -19,7 +19,7 @@ local ClassContext = {};
 --- @field package string
 --- @field name string
 --- @field final boolean? (Default: false)
---- @field scope LuaClassScope? (Default: public)
+--- @field scope ClassScope? (Default: public)
 --- @field superClass ClassDefinition? (Default: nil)
 
 --- @class (exact) FieldDefinition
@@ -27,7 +27,7 @@ local ClassContext = {};
 --- @field class ClassDefinition
 --- @field name string
 --- @field types string[]
---- @field scope LuaClassScope
+--- @field scope ClassScope
 --- @field value any
 --- @field static boolean
 --- @field final boolean
@@ -37,22 +37,19 @@ local ClassContext = {};
 --- @field name string
 --- @field types string[]?
 --- @field type string?
---- @field scope LuaClassScope?
+--- @field scope ClassScope?
 --- @field static boolean?
 --- @field final boolean?
 --- @field value any?
 
---- @class (exact) ExecutableDefinition
---- @field __type__ 'ExecutableDefinition'
---- @field parameters ParameterDefinition[]
---- @field func function
-
 --- @class (exact) ConstructorDefinitionParameter
---- @field scope LuaClassScope? (Default: "package")
+--- @field scope ClassScope? (Default: "package")
 --- @field final boolean? (Default: false)
 --- @field parameters ParameterDefinitionParameter[]?
 
---- @class (exact) ConstructorDefinition: ExecutableDefinition
+--- @class (exact) ConstructorDefinition
+--- @field scope ClassScope
+--- @field parameters ParameterDefinition[]
 --- @field __type__ 'ConstructorDefinition'
 --- @field func fun(o: any, ...)
 
@@ -68,22 +65,23 @@ local ClassContext = {};
 --- @field types string[]
 
 --- @class (exact) MethodDefinitionParameter
---- @field scope LuaClassScope? (Default: public)
+--- @field scope ClassScope? (Default: public)
 --- @field static boolean? (Default: false)
 --- @field final boolean? (Default: false)
 --- @field name string
 --- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
 --- @field returns (string[]|string)? (Default: void)
 
---- @class (exact) MethodDefinition: ExecutableDefinition
+--- @class (exact) MethodDefinition
 --- @field __type__ 'MethodDefinition'
 --- @field class ClassDefinition
---- @field scope LuaClassScope
+--- @field scope ClassScope
 --- @field static boolean
 --- @field final boolean
 --- @field name string
 --- @field override boolean (Default: false)
 --- @field super MethodDefinition? (Internally assigned. If none, this is nil)
+--- @field parameters ParameterDefinition[]
 --- @field returns string[]
 --- @field func fun(o: any, ...): (any?)
 --- @field lineRange {start: number, stop: number} The function's start and stop line.

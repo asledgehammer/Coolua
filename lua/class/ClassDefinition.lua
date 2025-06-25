@@ -2,12 +2,32 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
--- TODO: Implement Interfaces.
--- TODO: Implement default interface methods.
--- TODO: Implement Enums.
--- TODO: Implement abstract methods / classes.
+-- GENERAL:
 -- TODO: Cleanup Code.
--- TODO: Abstract StackTrace code to pseudo-Thread object.
+-- TODO: (Future) Migrate StackTrace code to Class.
+
+-- ENUM:
+-- TODO: Implement.
+
+-- INTERFACE:
+-- TODO: Implement.
+-- TODO: Implement default methods.
+-- TODO: Implement static methods.
+
+-- CLASS:
+-- TODO: Implement implicit packages from folders.
+-- TODO: Implement visibility-scope.
+-- TODO: Implement abstract flag.
+
+-- FIELDS:
+-- TODO: Implement static fields.
+
+-- METHODS:
+-- TODO: Make addMethod() check for override with flags like static, final, and visibility reduction.
+-- TODO: Implement abstract flag.
+
+-- CONSTRUCTORS:
+
 
 local readonly = require 'asledgehammer/util/readonly';
 local DebugUtils = require 'asledgehammer/util/DebugUtils';
@@ -190,7 +210,7 @@ end
 --- @param class ClassDefinition The class called.
 --- @param callInfo CallInfo
 ---
---- @return LuaClassScope
+--- @return ClassScope
 local function getScopeForCall(class, callInfo)
     local value = 'public';
 
@@ -233,8 +253,8 @@ local function getScopeForCall(class, callInfo)
     return value;
 end
 
---- @param expected LuaClassScope
---- @param given LuaClassScope
+--- @param expected ClassScope
+--- @param given ClassScope
 ---
 --- @return boolean evaluation
 local function canAccessScope(expected, given)
@@ -653,11 +673,12 @@ local function createMiddleMethod(cd, name, methods)
             return;
         end
 
+        local lastSuper;
         if o then
             --- Apply super.
             canGetSuper = true;
             canSetSuper = true;
-            local lastSuper = o.super;
+            lastSuper = o.super;
             o.super = o.__super__;
             canGetSuper = false;
             canSetSuper = false;
@@ -758,7 +779,6 @@ local function createMiddleConstructor(cd)
             cons.func(o, unpack(args));
         end, debug.traceback);
 
-
         --- Revert super.
         canSetSuper = true;
         o.super = lastSuper;
@@ -829,15 +849,15 @@ local function createSuperTable(cd, o)
     -- Assign / discover the inferred method in the super-class.
 
     local function __callConstructor(o, args)
-        local cons = superClass:getConstructor(args);
-        if not cons then
+        local constructorDefinition = superClass:getConstructor(args);
+        if not constructorDefinition then
             errorf(2, '%s Unknown super-constructor: %s', cd.printHeader, argsToString(args));
             return;
         end
 
         pushContext({
             class = cd,
-            executable = cons,
+            executable = constructorDefinition,
             context = 'constructor',
             line = DebugUtils.getCurrentLine(3),
             file = DebugUtils.getPath(3)
@@ -857,13 +877,13 @@ local function createSuperTable(cd, o)
 
         local callInfo = DebugUtils.getCallInfo(3, true);
         callInfo.path = relPath;
-        local scopeAllowed = getScopeForCall(cons.class, callInfo);
+        local scopeAllowed = getScopeForCall(constructorDefinition.class, callInfo);
 
-        if not canAccessScope(cons.scope, scopeAllowed) then
+        if not canAccessScope(constructorDefinition.scope, scopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The constructor %s.new(%s) is set as "%s" access level. (Access Level from call: "%s")\n%s',
-                cons.class.name, paramsToString(cons.parameters),
-                cons.scope, scopeAllowed,
+                constructorDefinition.class.name, paramsToString(constructorDefinition.parameters),
+                constructorDefinition.scope, scopeAllowed,
                 printStackTrace()
             );
             popContext();
@@ -873,7 +893,7 @@ local function createSuperTable(cd, o)
         end
 
         local result, errMsg = xpcall(function()
-            cons.func(o, unpack(args))
+            constructorDefinition.func(o, unpack(args))
         end, debug.traceback);
 
         popContext();
@@ -1139,7 +1159,7 @@ local ClassDefinition = function(definition)
         -- Validate scope:
         if args.scope ~= 'private' and args.scope ~= 'protected' and args.scope ~= 'package' and args.scope ~= 'public' then
             error(string.format(
-                'FieldDefinition: LuaClassScope property "scope" given invalid: %s (Can only be: "private", "protected", "package", or "public")',
+                'FieldDefinition: ClassScope property "scope" given invalid: %s (Can only be: "private", "protected", "package", or "public")',
                 args.scope
             ), 2);
         end

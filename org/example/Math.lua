@@ -11,7 +11,7 @@ local Math = Class({
     name = 'Math'
 });
 
-Math.addConstructor({
+Math:addConstructor({
         scope = 'public',
         parameters = {}
     },
@@ -28,7 +28,6 @@ Math:addMethod({
         returns = 'number'
     },
     function(...)
-        print('Args Passed: ', unpack(...));
         return math.pi;
     end
 )
