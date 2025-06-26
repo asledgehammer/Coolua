@@ -1081,10 +1081,8 @@ local ClassDefinition = function(definition)
         for i = 1, #fields do
             local fd = fields[i];
             if not fd.static then
-                bypassFieldSet = true;
                 -- TODO: Make unique.
                 o[fd.name] = fd.value;
-                bypassFieldSet = false;
             end
         end
 
