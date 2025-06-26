@@ -49,6 +49,9 @@ local DEBUG_METHODS = false;
 local DEBUG_SCOPE = false;
 -- ----------- --
 
+-- Used to internally assign values.
+local bypassFieldSet = false;
+
 ---
 --- @type table
 ---
@@ -187,12 +190,13 @@ end
 ---
 --- @param context ClassContext
 local function pushContext(context)
-    debugf(DEBUG_SCOPE, 'pushContext(%s)', printContext(context));
+    debugf(DEBUG_SCOPE, 'line %i ContextStack[%i] pushContext(%s)', DebugUtils.getCurrentLine(3), #ContextStack + 1,
+        printContext(context));
     table.insert(ContextStack, context);
 end
 
 local function popContext()
-    debugf(DEBUG_SCOPE, 'popContext()');
+    debugf(DEBUG_SCOPE, 'line %i ContextStack[%i] popContext()', DebugUtils.getCurrentLine(3), #ContextStack - 1);
     local stackLen = #ContextStack;
     if stackLen == 0 then
         error('The ContextStack is empty.', 2);
@@ -443,8 +447,7 @@ local function createInstanceMetatable(cd, o)
         while
             relPath == '[C]' or
             relPath == 'asledgehammer.util.DebugUtils' or
-            relPath == 'class.ClassDefinition' or
-            relPath == 'class.ClassDefinition.lua'
+            relPath == 'lua.class.ClassDefinition'
         do
             level = level + 1;
             relPath = DebugUtils.getPath(level, true);
@@ -462,7 +465,7 @@ local function createInstanceMetatable(cd, o)
         -- callInfo.path = relPath;
         local scopeAllowed = getScopeForCall(fd.class, callInfo);
 
-        if not canAccessScope(fd.scope, scopeAllowed) then
+        if not bypassFieldSet and not canAccessScope(fd.scope, scopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
                 cd.name, fd.name,
@@ -518,11 +521,15 @@ local function createInstanceMetatable(cd, o)
         while
             relPath == '[C]' or
             relPath == 'asledgehammer.util.DebugUtils' or
-            relPath == 'class.ClassDefinition'
+            relPath == 'lua.class.ClassDefinition'
         do
+            -- printf('# LEVEL %i: %s', level, relPath);
             level = level + 1;
             relPath = DebugUtils.getPath(level, true);
         end
+
+        -- printf('# USING LEVEL %i: %s', level, relPath);
+
 
         pushContext({
             class = cd,
@@ -536,7 +543,7 @@ local function createInstanceMetatable(cd, o)
         callInfo.path = relPath;
         local scopeAllowed = getScopeForCall(fd.class, callInfo);
 
-        if not canAccessScope(fd.scope, scopeAllowed) then
+        if not bypassFieldSet and not canAccessScope(fd.scope, scopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
                 cd.name, fd.name,
@@ -662,18 +669,18 @@ local function createMiddleMethod(cd, name, methods)
         });
 
         local level = 2;
-        local relPath = DebugUtils.getPath(1, true);
+        local relPath = DebugUtils.getPath(level, true);
 
         while
             relPath == '[C]' or
             relPath == 'asledgehammer.util.DebugUtils' or
-            relPath == 'class.ClassDefinition'
+            relPath == 'lua.class.ClassDefinition'
         do
             level = level + 1;
             relPath = DebugUtils.getPath(level, true);
         end
 
-        local callInfo = DebugUtils.getCallInfo(3, true);
+        local callInfo = DebugUtils.getCallInfo(level, true);
         callInfo.path = relPath;
         local scopeAllowed = getScopeForCall(md.class, callInfo);
 
@@ -762,7 +769,7 @@ local function createMiddleConstructor(cd)
         while
             relPath == '[C]' or
             relPath == 'asledgehammer.util.DebugUtils' or
-            relPath == 'class.ClassDefinition'
+            relPath == 'lua.class.ClassDefinition'
         do
             level = level + 1;
             relPath = DebugUtils.getPath(level, true);
@@ -887,7 +894,7 @@ local function createSuperTable(cd, o)
         while
             relPath == '[C]' or
             relPath == 'asledgehammer.util.DebugUtils' or
-            relPath == 'class.ClassDefinition'
+            relPath == 'lua.class.ClassDefinition'
         do
             level = level + 1;
             relPath = DebugUtils.getPath(level, true);
@@ -927,13 +934,21 @@ local function createSuperTable(cd, o)
             return;
         end
 
+        pushContext({
+            class = cd,
+            executable = md,
+            context = 'method',
+            line = DebugUtils.getCurrentLine(3),
+            file = DebugUtils.getPath(3)
+        });
+
         local level = 2;
         local relPath = DebugUtils.getPath(1, true);
 
         while
             relPath == '[C]' or
             relPath == 'asledgehammer.util.DebugUtils' or
-            relPath == 'class.ClassDefinition'
+            relPath == 'lua.class.ClassDefinition'
         do
             level = level + 1;
             relPath = DebugUtils.getPath(level, true);
@@ -1061,16 +1076,19 @@ local ClassDefinition = function(definition)
         o.__super__ = createSuperTable(cd, o);
         canSetSuper = false;
 
-        createInstanceMetatable(cd, o);
-
         -- Assign non-static default values of fields.
         local fields = cd:getFields();
         for i = 1, #fields do
             local fd = fields[i];
             if not fd.static then
+                bypassFieldSet = true;
+                -- TODO: Make unique.
                 o[fd.name] = fd.value;
+                bypassFieldSet = false;
             end
         end
+
+        createInstanceMetatable(cd, o);
 
         -- Invoke constructor context.
         local args = { ... };
@@ -1822,7 +1840,7 @@ local ClassDefinition = function(definition)
             while
                 relPath == '[C]' or
                 relPath == 'asledgehammer.util.DebugUtils' or
-                relPath == 'class.ClassDefinition'
+                relPath == 'lua.class.ClassDefinition'
             do
                 level = level + 1;
                 relPath = DebugUtils.getPath(level, true);

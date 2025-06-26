@@ -32,19 +32,6 @@ Math:addMethod({
     function() return Math.PI end
 );
 
-Math:addMethod({
-        scope = 'private',
-        name = 'toString',
-        returns = 'string'
-    },
-    --- @param self Object
-    ---
-    --- @return string
-    function(self)
-        return 'LuaClass: ' .. self.__type__;
-    end
-);
-
 Math:finalize();
 
 return Math;
