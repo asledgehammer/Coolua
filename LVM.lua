@@ -390,6 +390,25 @@ getMethodNames = function(classDef, methodNames)
     return methodNames;
 end
 
+--- Grabs the most immediate path outside the LVM.
+--- 
+--- @return integer level, string relativePath
+local function getRelativePath()
+    local level = 1;
+    local relPath = DebugUtils.getPath(level, true);
+
+    while
+        relPath == '[C]' or
+        relPath == 'asledgehammer.util.DebugUtils' or
+        relPath == 'LVM'
+    do
+        level = level + 1;
+        relPath = DebugUtils.getPath(level, true);
+    end
+
+    return level, relPath;
+end
+
 local EMPTY_TABLE = {};
 
 --- Defined for all classes so that __eq actually fires.
@@ -438,17 +457,7 @@ local function createInstanceMetatable(cd, o)
             return;
         end
 
-        local level = 0;
-        local relPath = DebugUtils.getPath(level, true);
-
-        while
-            relPath == '[C]' or
-            relPath == 'asledgehammer.util.DebugUtils' or
-            relPath == 'LVM'
-        do
-            level = level + 1;
-            relPath = DebugUtils.getPath(level, true);
-        end
+        local level, relPath = getRelativePath();
 
         pushContext({
             class = cd,
@@ -512,21 +521,9 @@ local function createInstanceMetatable(cd, o)
             return;
         end
 
-        local level = 1;
-        local relPath = DebugUtils.getPath(level, true);
-
-        while
-            relPath == '[C]' or
-            relPath == 'asledgehammer.util.DebugUtils' or
-            relPath == 'LVM'
-        do
-            -- printf('# LEVEL %i: %s', level, relPath);
-            level = level + 1;
-            relPath = DebugUtils.getPath(level, true);
-        end
+        local level, relPath = getRelativePath();
 
         -- printf('# USING LEVEL %i: %s', level, relPath);
-
 
         pushContext({
             class = cd,
@@ -678,17 +675,7 @@ local function createMiddleMethod(cd, name, methods)
             path = DebugUtils.getPath(3)
         });
 
-        local level = 2;
-        local relPath = DebugUtils.getPath(level, true);
-
-        while
-            relPath == '[C]' or
-            relPath == 'asledgehammer.util.DebugUtils' or
-            relPath == 'LVM'
-        do
-            level = level + 1;
-            relPath = DebugUtils.getPath(level, true);
-        end
+        local level, relPath = getRelativePath();
 
         local callInfo = DebugUtils.getCallInfo(level, true);
         callInfo.path = relPath;
@@ -773,17 +760,7 @@ local function createMiddleConstructor(cd)
             path = DebugUtils.getPath(3)
         });
 
-        local level = 1;
-        local relPath = DebugUtils.getPath(0, true);
-
-        while
-            relPath == '[C]' or
-            relPath == 'asledgehammer.util.DebugUtils' or
-            relPath == 'LVM'
-        do
-            level = level + 1;
-            relPath = DebugUtils.getPath(level, true);
-        end
+        local level, relPath = getRelativePath();
 
         local callInfo = DebugUtils.getCallInfo(3, true);
         callInfo.path = relPath;
@@ -898,17 +875,7 @@ local function createSuperTable(cd, o)
             path = DebugUtils.getPath(3)
         });
 
-        local level = 2;
-        local relPath = DebugUtils.getPath(level, true);
-
-        while
-            relPath == '[C]' or
-            relPath == 'asledgehammer.util.DebugUtils' or
-            relPath == 'LVM'
-        do
-            level = level + 1;
-            relPath = DebugUtils.getPath(level, true);
-        end
+        local level, relPath = getRelativePath();
 
         local callInfo = DebugUtils.getCallInfo(3, true);
         callInfo.path = relPath;
@@ -952,17 +919,7 @@ local function createSuperTable(cd, o)
             path = DebugUtils.getPath(3)
         });
 
-        local level = 2;
-        local relPath = DebugUtils.getPath(1, true);
-
-        while
-            relPath == '[C]' or
-            relPath == 'asledgehammer.util.DebugUtils' or
-            relPath == 'LVM'
-        do
-            level = level + 1;
-            relPath = DebugUtils.getPath(level, true);
-        end
+local level, relPath = getRelativePath();
 
         local callInfo = DebugUtils.getCallInfo(3, true);
         callInfo.path = relPath;
@@ -1846,17 +1803,7 @@ function LVM.newClass(definition)
                 return;
             end
 
-            local level = 1;
-            local relPath = DebugUtils.getPath(level, true);
-
-            while
-                relPath == '[C]' or
-                relPath == 'asledgehammer.util.DebugUtils' or
-                relPath == 'LVM'
-            do
-                level = level + 1;
-                relPath = DebugUtils.getPath(level, true);
-            end
+            local level, relPath = getRelativePath();
 
             pushContext({
                 class = cd,
