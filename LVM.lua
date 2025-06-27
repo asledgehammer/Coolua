@@ -2,34 +2,6 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
--- GENERAL:
--- TODO: Cleanup Code.
--- TODO: (Future) Migrate StackTrace code to Class.
--- TODO: Migrate `string.join()` to `table.join`.
-
--- ENUM:
--- TODO: Implement.
-
--- INTERFACE:
--- TODO: Implement.
--- TODO: Implement default methods.
--- TODO: Implement static methods.
-
--- CLASS:
--- TODO: Implement visibility-scope.
--- TODO: Implement abstract flag.
--- TODO: Implement addSubClass()
--- TODO: Implement addSubInterface()
--- TODO: Implement addSubEnum()
-
--- FIELDS:
-
--- METHODS:
--- TODO: Make addMethod() check for override with flags like static, final, and visibility reduction.
--- TODO: Implement abstract flag.
-
--- CONSTRUCTORS:
-
 local readonly = require 'asledgehammer/util/readonly';
 local DebugUtils = require 'asledgehammer/util/DebugUtils';
 local OOPUtils = require 'asledgehammer/util/OOPUtils';
@@ -486,10 +458,11 @@ local function createInstanceMetatable(cd, o)
 
         popContext();
 
+        -- Get the value.
         if fd.static then
-            return cd[field];
+            return fd.class[field];
         else
-            return fields[field];
+            return fields[cd.path .. '@' .. field];
         end
     end
 
@@ -587,9 +560,9 @@ local function createInstanceMetatable(cd, o)
 
         -- Set the value.
         if fd.static then
-            cd[field] = value;
+            fd.class[field] = value;
         else
-            fields[field] = value;
+            fields[fd.class.path .. '@' .. field] = value;
         end
 
         -- Apply forward the value metrics.
@@ -1839,8 +1812,6 @@ function LVM.newClass(definition)
                 error(errMsg, 2);
                 return;
             end
-
-
 
             if fd.final then
                 local ste = getContext();
