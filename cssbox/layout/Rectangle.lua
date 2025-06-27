@@ -2,16 +2,14 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local LuaClass = require 'lua/LuaClass';
-local ClassDefinition = LuaClass.ClassDefinition;
+local LuaClass = require 'LuaClass';
+local newClass = LuaClass.newClass;
 
 local Dimension = require 'cssbox/layout/Dimension';
 
 --- @type RectangleDefinition
-local Rectangle = ClassDefinition({
+local Rectangle = newClass({
     scope = 'public',
-    package = 'cssbox.layout',
-    name = 'Rectangle',
     superClass = Dimension
 });
 
@@ -21,6 +19,7 @@ Rectangle:addField({
     name = 'x',
     value = 0
 });
+
 Rectangle:addField({
     scope = 'private',
     type = 'number',

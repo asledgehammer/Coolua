@@ -2,10 +2,10 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local LuaClass = require 'lua/LuaClass';
-local Class = LuaClass.ClassDefinition;
+local LuaClass = require 'LuaClass';
+local newClass = LuaClass.newClass;
 
-local Math = Class({ scope = 'public' });
+local Math = newClass({ scope = 'public' });
 
 Math:addField({
     scope = 'public',

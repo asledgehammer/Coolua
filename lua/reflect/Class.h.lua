@@ -46,6 +46,7 @@ local ClassContext = {};
 --- @field parameters ParameterDefinitionParameter[]?
 
 --- @class (exact) ConstructorDefinition
+--- @field class ClassDefinition
 --- @field scope ClassScope
 --- @field parameters ParameterDefinition[]
 --- @field __type__ 'ConstructorDefinition'

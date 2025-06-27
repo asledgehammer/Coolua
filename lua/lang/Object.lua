@@ -2,25 +2,19 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local ClassDefinition = require 'lua/class/ClassDefinition';
+local LVM = require 'LVM';
+local newClass = LVM.newClass;
 
---- @type DimensionDefinition
-local Object = ClassDefinition({
-    package = 'lua.lang',
-    final = false,
-    scope = 'public',
-    name = 'Object',
-});
+--- @type ObjectDefinition
+local Object = newClass({ scope = 'public' });
 
 -- MARK: - Constructors
 
-Object:addConstructor(
-    {
+Object:addConstructor({
         scope = 'public',
         parameters = {}
     },
-    --- @param o Object
-    function(o) end
+    function() end
 );
 
 -- MARK: - instanceOf()

@@ -42,6 +42,14 @@ local arrayContains = OOPUtils.arrayContains;
 local printf = OOPUtils.printf;
 local debugf = OOPUtils.debugf;
 local errorf = OOPUtils.errorf;
+local paramsToString = OOPUtils.paramsToString;
+
+local LVM = {};
+
+--- @type boolean
+---
+--- This private switch flag helps mute the stack. (For initializing LVM)
+LVM.ignorePushPopContext = false;
 
 -- DEBUG FLAGS --
 local DEBUG_INTERNAL = false;
@@ -68,33 +76,49 @@ local canGetSuper = false;
 --- This private switch flag helps shadow attempts to set super outside the class framework.
 local canSetSuper = false;
 
---- @param params ParameterDefinition[]
+--- @type boolean
 ---
---- @return string
-local function paramsToString(params)
-    local s = '';
+--- This private switch flag helps shadow assignments and construction of global package struct references.
+local allowPackageStructModifications = false;
 
-    if not params or #params == 0 then return s end
+--- @return table PackageStruct
+local function createPackageStruct()
+    local t = {};
+    local mt = {};
 
-    for i = 1, #params do
-        local param = params[i];
-        local sTypes = '';
-        for j = 1, #param.types do
-            if sTypes == '' then
-                sTypes = param.types[j];
-            else
-                sTypes = sTypes .. '|' .. param.types[j];
-            end
+    local fields = {};
+
+    mt.__index = fields;
+
+    mt.__newindex = function(tbl, field, value)
+        if not allowPackageStructModifications then
+            error('Cannot modify Package Structure.', 2);
         end
-        local sParam = string.format('%s: %s', param.name, sTypes);
-        if s == '' then
-            s = sParam;
-        else
-            s = s .. ', ' .. sParam;
-        end
+        fields[field] = value;
     end
 
-    return s;
+    setmetatable(t, mt);
+
+    return t;
+end
+
+--- @param classDef ClassDefinition
+local function assignToPackageStruct(classDef)
+    local package = classDef.package;
+    local split = package:split('.');
+
+    local packageCurr = _G;
+    for i = 1, #split do
+        local packageNext = split[i];
+        if not packageCurr[packageNext] then
+            packageCurr[packageNext] = createPackageStruct();
+            printf('Created PackageStruct: %s', packageNext);
+        end
+        packageCurr = packageCurr[packageNext];
+    end
+
+    packageCurr[classDef.name] = classDef;
+    printf('Applied PackageStruct Class: %s', classDef.path);
 end
 
 --- @param md MethodDefinition
@@ -116,86 +140,103 @@ local function printMethod(md)
     return string.format('%s%s%s%s%s(%s)', sStatic, sFinal, md.class.name, callSyntax, md.name, sParams);
 end
 
---- @type ClassContext[]
+--- @type StackTraceElement[]
 local ContextStack = {};
 
---- @param context ClassContext
-local function printContext(context)
-    if context.executable then
-        if context.executable.__type__ == 'MethodDefinition' then
-            local callSyntax;
-            if context.executable.static then
-                callSyntax = '.';
-            else
-                callSyntax = ':';
-            end
-            return string.format('%s:%s: calling %s%s%s(%s)',
-                context.file,
-                context.line,
-                context.executable.class.name,
-                callSyntax,
-                context.executable.name,
-                paramsToString(context.executable.parameters)
-            );
-        else
-            return string.format('%s:%s: calling %s.new(%s)',
-                context.file,
-                context.line,
-                context.executable.class.name,
-                paramsToString(context.executable.parameters)
-            );
-        end
-    elseif context.field then
-        if context.context == 'field-get' then
-            return string.format('%s:%s: accessing field %s.%s',
-                context.file,
-                context.line,
-                context.field.class.name,
-                context.field.name
-            );
-        elseif context.context == 'field-set' then
-            return string.format('%s:%s: assigning field %s.%s',
-                context.file,
-                context.line,
-                context.field.class.name,
-                context.field.name
-            );
-        end
-    end
-    return string.format('%s:%s:',
-        context.file,
-        context.line
-    );
-end
+-- --- @param context ClassContext
+-- local function printContext(context)
+--     if context.executable then
+--         if context.executable.__type__ == 'MethodDefinition' then
+--             local callSyntax;
+--             if context.executable.static then
+--                 callSyntax = '.';
+--             else
+--                 callSyntax = ':';
+--             end
+--             return string.format('%s:%s: calling %s%s%s(%s)',
+--                 context.file,
+--                 context.line,
+--                 context.executable.class.name,
+--                 callSyntax,
+--                 context.executable.name,
+--                 paramsToString(context.executable.parameters)
+--             );
+--         else
+--             return string.format('%s:%s: calling %s.new(%s)',
+--                 context.file,
+--                 context.line,
+--                 context.executable.class.name,
+--                 paramsToString(context.executable.parameters)
+--             );
+--         end
+--     elseif context.field then
+--         if context.context == 'field-get' then
+--             return string.format('%s:%s: accessing field %s.%s',
+--                 context.file,
+--                 context.line,
+--                 context.field.class.name,
+--                 context.field.name
+--             );
+--         elseif context.context == 'field-set' then
+--             return string.format('%s:%s: assigning field %s.%s',
+--                 context.file,
+--                 context.line,
+--                 context.field.class.name,
+--                 context.field.name
+--             );
+--         end
+--     end
+--     return string.format('%s:%s:',
+--         context.path,
+--         context.line
+--     );
+-- end
 
 --- @return string stackTrace
 local function printStackTrace()
     local s = 'Class StackTrace:\n\t(Lua Script)';
     for i = 1, #ContextStack do
-        s = s .. '\n\t' .. printContext(ContextStack[i]);
+        s = s .. '\n\t' .. ContextStack[i];
     end
     return s;
 end
 
 --- Grabs the current context.
+---
+--- @return StackTraceElement|nil
 local function getContext()
     local stackLen = #ContextStack;
-    if stackLen == 0 then
-        return nil;
-    end
+    if stackLen == 0 then return nil end
     return ContextStack[stackLen];
 end
 
+--- @class (exact) ContextArgs
+--- @field path string
+--- @field line number
+--- @field class ClassDefinition
+--- @field context string
+--- @field element FieldDefinition|ConstructorDefinition|MethodDefinition
+
 --- Adds a context to the stack. This happens when constructors or methods are invoked.
 ---
---- @param context ClassContext
+--- @param context ContextArgs
 local function pushContext(context)
+    -- Muting context.
+    if LVM.ignorePushPopContext then return end
+
     debugf(DEBUG_SCOPE, 'line %i ContextStack[%i] pushContext(%s)', DebugUtils.getCurrentLine(3), #ContextStack + 1,
-        printContext(context));
-    table.insert(ContextStack, context);
+        tostring(context));
+
+    LVM.ignorePushPopContext = true;
+    table.insert(ContextStack,
+        _G.lua.lang.StackTraceElement.new(context.path, context.line, context.class, context.context, context.element));
+    LVM.ignorePushPopContext = false;
 end
 
 local function popContext()
+    -- Muting context.
+    if LVM.ignorePushPopContext then return end
+
     debugf(DEBUG_SCOPE, 'line %i ContextStack[%i] popContext()', DebugUtils.getCurrentLine(3), #ContextStack - 1);
     local stackLen = #ContextStack;
     if stackLen == 0 then
@@ -455,10 +496,10 @@ local function createInstanceMetatable(cd, o)
 
         pushContext({
             class = cd,
-            field = fd,
+            element = fd,
             context = 'field-get',
             line = DebugUtils.getCurrentLine(level),
-            file = DebugUtils.getPath(level)
+            path = DebugUtils.getPath(level)
         });
 
         local callInfo = DebugUtils.getCallInfo(level, true);
@@ -533,10 +574,10 @@ local function createInstanceMetatable(cd, o)
 
         pushContext({
             class = cd,
-            field = fd,
+            element = fd,
             context = 'field-set',
             line = DebugUtils.getCurrentLine(level),
-            file = DebugUtils.getPath(level)
+            path = DebugUtils.getPath(level)
         });
 
         local callInfo = DebugUtils.getCallInfo(level, true);
@@ -566,12 +607,25 @@ local function createInstanceMetatable(cd, o)
             return;
         end
 
-        local context = getContext();
+        local ste = getContext();
+
+        if not ste then
+            error('Context is nil.', 2);
+            return;
+        end
+
+        local context = ste:getContext();
+
 
         if fd.final then
-            if not context or context.class ~= cd then
+            if not ste then
                 errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
-            elseif not context or context.context ~= 'constructor' then
+                return;
+            end
+
+            if ste:getCallingClass() ~= cd then
+                errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
+            elseif context ~= 'constructor' then
                 errorf(2, '%s Attempt to assign final field %s outside of constructor scope.', cd.printHeader, field);
             elseif fd.assignedOnce then
                 errorf(2, '%s Attempt to assign final field %s. (Already defined)', cd.printHeader, field);
@@ -662,10 +716,10 @@ local function createMiddleMethod(cd, name, methods)
 
         pushContext({
             class = cd,
-            executable = md,
+            element = md,
             context = 'method',
             line = DebugUtils.getCurrentLine(3),
-            file = DebugUtils.getPath(3)
+            path = DebugUtils.getPath(3)
         });
 
         local level = 2;
@@ -757,10 +811,10 @@ local function createMiddleConstructor(cd)
 
         pushContext({
             class = cd,
-            executable = cons,
+            element = cons,
             context = 'constructor',
             line = DebugUtils.getCurrentLine(3),
-            file = DebugUtils.getPath(3)
+            path = DebugUtils.getPath(3)
         });
 
         local level = 1;
@@ -882,10 +936,10 @@ local function createSuperTable(cd, o)
 
         pushContext({
             class = cd,
-            executable = constructorDefinition,
+            element = constructorDefinition,
             context = 'constructor',
             line = DebugUtils.getCurrentLine(3),
-            file = DebugUtils.getPath(3)
+            path = DebugUtils.getPath(3)
         });
 
         local level = 2;
@@ -936,10 +990,10 @@ local function createSuperTable(cd, o)
 
         pushContext({
             class = cd,
-            executable = md,
+            element = md,
             context = 'method',
             line = DebugUtils.getCurrentLine(3),
-            file = DebugUtils.getPath(3)
+            path = DebugUtils.getPath(3)
         });
 
         local level = 2;
@@ -991,17 +1045,21 @@ local function createSuperTable(cd, o)
         local args = { ... };
         table.remove(args, 1);
 
-        local context = getContext();
+        local ste = getContext();
 
         -- Make sure that super can only be called in the context of the class.
-        if not context then
+        if not ste then
             errorf(2, '%s No super context.', cd.printHeader);
+            return;
         end
 
-        if context.context == 'constructor' then
+        local context = ste:getContext();
+
+        if context == 'constructor' then
             __callConstructor(o, args);
-        elseif context.context == 'method' then
-            return __callMethod(context.executable.name, args);
+        elseif context == 'method' then
+            local element = ste:getElement();
+            return __callMethod(element.name, args);
         end
     end
 
@@ -1010,12 +1068,12 @@ local function createSuperTable(cd, o)
 end
 
 --- @param definition ClassDefinitionParameter
-local ClassDefinition = function(definition)
+function LVM.newClass(definition)
     -- Generate the path and name to use.
     local path = DebugUtils.getPath(3, true);
     local split = path:split('.');
     local inferredName = table.remove(split, #split);
-    local package = string.join(split, '.');
+    local package = table.join(split, '.');
 
     local cd = {
         __type__ = 'ClassDefinition',
@@ -1046,7 +1104,7 @@ local ClassDefinition = function(definition)
     if not cd.superClass and cd.path ~= 'lua.lang.Object' then
         cd.superClass = forName('lua.lang.Object');
         if not cd.superClass then
-            errorf(2, '%s lua.lang.Object not defined!', cd.errorHeader);
+            errorf(2, '%s lua.lang.Object not defined!', cd.printHeader);
         end
     end
 
@@ -1846,10 +1904,10 @@ local ClassDefinition = function(definition)
 
             pushContext({
                 class = cd,
-                field = fd,
+                element = fd,
                 context = 'field-set',
                 line = DebugUtils.getCurrentLine(level),
-                file = DebugUtils.getPath(level)
+                path = DebugUtils.getPath(level)
             });
 
             local callInfo = DebugUtils.getCallInfo(level, true);
@@ -1879,12 +1937,20 @@ local ClassDefinition = function(definition)
                 return;
             end
 
-            local context = getContext();
+
 
             if fd.final then
-                if not context or context.class ~= cd then
+                local ste = getContext();
+                if not ste then
                     errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
-                elseif not context or context.context ~= 'constructor' then
+                    return;
+                end
+
+                local context = ste:getContext();
+                local class = ste:getCallingClass();
+                if class ~= cd then
+                    errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
+                elseif context ~= 'constructor' then
                     errorf(2, '%s Attempt to assign final field %s outside of constructor scope.', cd.printHeader, field);
                 elseif fd.assignedOnce then
                     errorf(2, '%s Attempt to assign final field %s. (Already defined)', cd.printHeader, field);
@@ -1908,6 +1974,11 @@ local ClassDefinition = function(definition)
         if cd.superClass then
             table.insert(cd.superClass.subClasses, cd);
         end
+
+        --- Set the class to be accessable from a global package reference.
+        allowPackageStructModifications = true;
+        assignToPackageStruct(cd);
+        allowPackageStructModifications = false;
 
         return cd;
     end
@@ -1969,4 +2040,4 @@ local ClassDefinition = function(definition)
     return cd;
 end
 
-return ClassDefinition;
+return LVM;

@@ -4,9 +4,37 @@
 
 local OOPUtils = {};
 
+-- @param params ParameterDefinition[]
+---
+--- @return string
+function OOPUtils.paramsToString(params)
+    local s = '';
+
+    if not params or #params == 0 then return s end
+
+    for i = 1, #params do
+        local param = params[i];
+        local sTypes = '';
+        for j = 1, #param.types do
+            if sTypes == '' then
+                sTypes = param.types[j];
+            else
+                sTypes = sTypes .. '|' .. param.types[j];
+            end
+        end
+        local sParam = string.format('%s: %s', param.name, sTypes);
+        if s == '' then
+            s = sParam;
+        else
+            s = s .. ', ' .. sParam;
+        end
+    end
+
+    return s;
+end
+
 --- @class string
 --- @field split fun(self, delimiter: string): string[]
---- @field join fun(array: string[], delimiter: string): string
 
 --- @param self string
 --- @param delimiter string
@@ -20,12 +48,16 @@ function string.split(self, delimiter)
     return t;
 end
 
+-- NOTE: table.concat exists.
+--- @class table
+--- @field join fun(array: string[], delimiter: string): string
+
 --- @param array string[]
 --- @param delimiter string|any
 ---
 --- @return string
-function string.join(array, delimiter)
-    if not array or #array == 0 then error('string[] is nil or empty.', 2) end
+function table.join(array, delimiter)
+    if not array or #array == 0 then error('Array is nil or empty.', 2) end
     local s = '';
     for i = 1, #array do
         if s == '' then

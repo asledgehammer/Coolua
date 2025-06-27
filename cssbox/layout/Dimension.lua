@@ -2,11 +2,11 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local LuaClass = require 'lua/LuaClass';
-local ClassDefinition = LuaClass.ClassDefinition;
+local LuaClass = require 'LuaClass';
+local newClass = LuaClass.newClass;
 
 --- @type DimensionDefinition
-local Dimension = ClassDefinition({
+local Dimension = newClass({
     scope = 'public',
 });
 
