@@ -102,23 +102,19 @@ local function createPackageStruct()
     return t;
 end
 
---- @param classDef ClassDefinition
+--- @param classDef LVMClassDefinition
 local function assignToPackageStruct(classDef)
     local package = classDef.package;
     local split = package:split('.');
-
     local packageCurr = _G;
     for i = 1, #split do
         local packageNext = split[i];
         if not packageCurr[packageNext] then
             packageCurr[packageNext] = createPackageStruct();
-            printf('Created PackageStruct: %s', packageNext);
         end
         packageCurr = packageCurr[packageNext];
     end
-
     packageCurr[classDef.name] = classDef;
-    printf('Applied PackageStruct Class: %s', classDef.path);
 end
 
 --- @param md MethodDefinition
@@ -143,60 +139,11 @@ end
 --- @type StackTraceElement[]
 local ContextStack = {};
 
--- --- @param context ClassContext
--- local function printContext(context)
---     if context.executable then
---         if context.executable.__type__ == 'MethodDefinition' then
---             local callSyntax;
---             if context.executable.static then
---                 callSyntax = '.';
---             else
---                 callSyntax = ':';
---             end
---             return string.format('%s:%s: calling %s%s%s(%s)',
---                 context.file,
---                 context.line,
---                 context.executable.class.name,
---                 callSyntax,
---                 context.executable.name,
---                 paramsToString(context.executable.parameters)
---             );
---         else
---             return string.format('%s:%s: calling %s.new(%s)',
---                 context.file,
---                 context.line,
---                 context.executable.class.name,
---                 paramsToString(context.executable.parameters)
---             );
---         end
---     elseif context.field then
---         if context.context == 'field-get' then
---             return string.format('%s:%s: accessing field %s.%s',
---                 context.file,
---                 context.line,
---                 context.field.class.name,
---                 context.field.name
---             );
---         elseif context.context == 'field-set' then
---             return string.format('%s:%s: assigning field %s.%s',
---                 context.file,
---                 context.line,
---                 context.field.class.name,
---                 context.field.name
---             );
---         end
---     end
---     return string.format('%s:%s:',
---         context.path,
---         context.line
---     );
--- end
-
 --- @return string stackTrace
 local function printStackTrace()
-    local s = 'Class StackTrace:\n\t(Lua Script)';
-    for i = 1, #ContextStack do
-        s = s .. '\n\t' .. ContextStack[i];
+    local s = 'Class StackTrace:';
+    for i = #ContextStack, 1, -1 do
+        s = s .. '\n\t' .. tostring(ContextStack[i]);
     end
     return s;
 end
@@ -213,7 +160,7 @@ end
 --- @class (exact) ContextArgs
 --- @field path string
 --- @field line number
---- @field class ClassDefinition
+--- @field class LVMClassDefinition
 --- @field context string
 --- @field element FieldDefinition|ConstructorDefinition|MethodDefinition
 
@@ -227,9 +174,18 @@ local function pushContext(context)
     debugf(DEBUG_SCOPE, 'line %i ContextStack[%i] pushContext(%s)', DebugUtils.getCurrentLine(3), #ContextStack + 1,
         tostring(context));
 
+    -- Prevent infinite loop.
     LVM.ignorePushPopContext = true;
-    table.insert(ContextStack,
-        _G.lua.lang.StackTraceElement.new(context.path, context.line, context.class, context.context, context.element));
+    table.insert(
+        ContextStack,
+        _G.lua.lang.StackTraceElement.new(
+            context.path,
+            context.line,
+            context.class,
+            context.context,
+            context.element
+        )
+    );
     LVM.ignorePushPopContext = false;
 end
 
@@ -245,7 +201,7 @@ local function popContext()
     return table.remove(ContextStack, stackLen);
 end
 
---- @type table<string, ClassDefinition>
+--- @type table<string, LVMClassDefinition>
 ---
 --- Classes are stored as their path.
 local CLASSES = {};
@@ -272,7 +228,7 @@ local function getType(val)
     return valType;
 end
 
---- @param class ClassDefinition The class called.
+--- @param class LVMClassDefinition The class called.
 --- @param callInfo CallInfo
 ---
 --- @return ClassScope
@@ -401,7 +357,7 @@ local function anyCanCastToTypes(from, to)
     return false;
 end
 
---- @param classDef ClassDefinition
+--- @param classDef LVMClassDefinition
 ---
 --- @return string[] methodNames
 local function getDeclaredMethodNames(classDef, array)
@@ -421,7 +377,7 @@ end
 --- @type function
 local getMethodNames;
 
---- @param classDef ClassDefinition
+--- @param classDef LVMClassDefinition
 --- @param methodNames string[]?
 ---
 --- @return string[] methodNames
@@ -447,7 +403,7 @@ local function __class__eq(a, b)
     return a:getClass().__middleMethods['equals'](a, b);
 end
 
---- @param cd ClassDefinition
+--- @param cd LVMClassDefinition
 --- @param o Object
 local function createInstanceMetatable(cd, o)
     local mt = getmetatable(o) or {};
@@ -488,7 +444,7 @@ local function createInstanceMetatable(cd, o)
         while
             relPath == '[C]' or
             relPath == 'asledgehammer.util.DebugUtils' or
-            relPath == 'lua.class.ClassDefinition'
+            relPath == 'LVM'
         do
             level = level + 1;
             relPath = DebugUtils.getPath(level, true);
@@ -562,7 +518,7 @@ local function createInstanceMetatable(cd, o)
         while
             relPath == '[C]' or
             relPath == 'asledgehammer.util.DebugUtils' or
-            relPath == 'lua.class.ClassDefinition'
+            relPath == 'LVM'
         do
             -- printf('# LEVEL %i: %s', level, relPath);
             level = level + 1;
@@ -675,7 +631,7 @@ local methodParamsAreCompatable = function(paramsA, paramsB)
     return true;
 end
 
---- @param cd ClassDefinition
+--- @param cd LVMClassDefinition
 --- @param name string
 --- @param methods MethodDefinition[]
 ---
@@ -728,7 +684,7 @@ local function createMiddleMethod(cd, name, methods)
         while
             relPath == '[C]' or
             relPath == 'asledgehammer.util.DebugUtils' or
-            relPath == 'lua.class.ClassDefinition'
+            relPath == 'LVM'
         do
             level = level + 1;
             relPath = DebugUtils.getPath(level, true);
@@ -823,7 +779,7 @@ local function createMiddleConstructor(cd)
         while
             relPath == '[C]' or
             relPath == 'asledgehammer.util.DebugUtils' or
-            relPath == 'lua.class.ClassDefinition'
+            relPath == 'LVM'
         do
             level = level + 1;
             relPath = DebugUtils.getPath(level, true);
@@ -871,7 +827,7 @@ end
 --- MiddleSuper instances are created formatted the ClassInstance, not ClassDefinition. This simplifies calls providing
 --- the instance as the first argument.
 ---
---- @param cd ClassDefinition
+--- @param cd LVMClassDefinition
 --- @param o ClassInstance
 ---
 --- @return SuperTable
@@ -948,7 +904,7 @@ local function createSuperTable(cd, o)
         while
             relPath == '[C]' or
             relPath == 'asledgehammer.util.DebugUtils' or
-            relPath == 'lua.class.ClassDefinition'
+            relPath == 'LVM'
         do
             level = level + 1;
             relPath = DebugUtils.getPath(level, true);
@@ -1002,7 +958,7 @@ local function createSuperTable(cd, o)
         while
             relPath == '[C]' or
             relPath == 'asledgehammer.util.DebugUtils' or
-            relPath == 'lua.class.ClassDefinition'
+            relPath == 'LVM'
         do
             level = level + 1;
             relPath = DebugUtils.getPath(level, true);
@@ -1067,7 +1023,7 @@ local function createSuperTable(cd, o)
     return super;
 end
 
---- @param definition ClassDefinitionParameter
+--- @param definition LVMClassDefinitionParameter
 function LVM.newClass(definition)
     -- Generate the path and name to use.
     local path = DebugUtils.getPath(3, true);
@@ -1778,7 +1734,7 @@ function LVM.newClass(definition)
 
     -- MARK: - finalize()
 
-    --- @return ClassDefinition class
+    --- @return LVMClassDefinition class
     function cd:finalize()
         local errHeader = string.format('Class(%s):finalize():', cd.path);
 
@@ -1896,7 +1852,7 @@ function LVM.newClass(definition)
             while
                 relPath == '[C]' or
                 relPath == 'asledgehammer.util.DebugUtils' or
-                relPath == 'lua.class.ClassDefinition'
+                relPath == 'LVM'
             do
                 level = level + 1;
                 relPath = DebugUtils.getPath(level, true);
@@ -1990,7 +1946,7 @@ function LVM.newClass(definition)
         return self:getMethodFromLine(line) or self:getConstructorFromLine(line) or nil;
     end
 
-    --- @param class ClassDefinition
+    --- @param class LVMClassDefinition
     ---
     --- @return boolean
     function cd:isSuperClass(class)
@@ -2004,8 +1960,8 @@ function LVM.newClass(definition)
 
     --- (Handles recursively going through sub-classes to see if a class is a sub-class)
     ---
-    --- @param subClass ClassDefinition
-    --- @param classToEval ClassDefinition
+    --- @param subClass LVMClassDefinition
+    --- @param classToEval LVMClassDefinition
     ---
     --- @return boolean result True if the class to evaluate is a super-class of the subClass.
     local function __recurseSubClass(subClass, classToEval)
@@ -2019,7 +1975,7 @@ function LVM.newClass(definition)
         return false;
     end
 
-    --- @param class ClassDefinition The class to evaulate.
+    --- @param class LVMClassDefinition The class to evaulate.
     ---
     --- @return boolean result True if the class to evaluate is a super-class of the subClass.
     function cd:isSubClass(class)
@@ -2029,7 +1985,7 @@ function LVM.newClass(definition)
         return false;
     end
 
-    --- @param class ClassDefinition
+    --- @param class LVMClassDefinition
     ---
     --- @return boolean
     function cd:isAssignableFromType(class)

@@ -4,7 +4,7 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
---- @class DimensionDefinition: ClassDefinition
+--- @class DimensionDefinition: LVMClassDefinition
 local DimensionDefinition = {};
 
 --- @param width number

@@ -32,7 +32,7 @@ Object:addMethod({
         returns = 'boolean'
     },
     --- @param self Object
-    --- @param class ClassDefinition
+    --- @param class LVMClassDefinition
     ---
     --- @return boolean isAssignable
     function(self, class)
@@ -88,7 +88,7 @@ Object:addMethod({
     },
     --- @param self Object
     ---
-    --- @return ClassDefinition classDef
+    --- @return LVMClassDefinition classDef
     function(self)
         return self.__class__;
     end

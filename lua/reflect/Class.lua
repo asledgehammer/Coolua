@@ -1,0 +1,1 @@
+-- TODO: Create class object that wraps ClassDefinition.

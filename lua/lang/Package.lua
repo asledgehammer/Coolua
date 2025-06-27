@@ -28,12 +28,21 @@ Package:addField({
 });
 
 Package:addConstructor({
-    scope = 'public'
-},
-function (self, path)
-    local split = path:split('.');
-    local name table.remove(split, #split);
-    table.join(split, '.');
-end)
+        scope = 'public',
+        parameters = {
+            { name = 'path', type = 'string' }
+        }
+    },
+    function(self, path)
+        local split = path:split('.');
+        local name = table.remove(split, #split);
+        local package = table.join(split, '.');
+        self.name = name;
+        self.path = package;
+        self.classes = {};
+    end
+);
+
+Package:finalize();
 
 return Package;
