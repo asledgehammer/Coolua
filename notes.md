@@ -1,5 +1,6 @@
 # To Remember:
-- Make sure to try merging the class path with an illegal character delimiter with the field name for storing class-level fields with identical names.
+- Create method `gnew(genericsDefinition, ...)` for LVMClassDefinition method.
+- Implement generics type-casting.
 
 # GENERAL:
 - TODO: Implement Class object.
@@ -8,6 +9,7 @@
 - TODO: Cleanup Code.
 - TODO: (Future) Migrate StackTrace code to Class.
 - TODO: Migrate `string.join()` to `table.join`.
+- TODO: Implement Generics.
 
 # ENUM:
 - TODO: Implement.
@@ -23,11 +25,14 @@
 - TODO: Implement addSubClass()
 - TODO: Implement addSubInterface()
 - TODO: Implement addSubEnum()
+- TODO: Implement generics.
 
 # FIELDS:
 
 # METHODS:
 - TODO: Make addMethod() check for override with flags like static, final, and visibility reduction.
 - TODO: Implement abstract flag.
+- Make sure the returned value is valid for the return type(s).
 
 # CONSTRUCTORS:
+- Check if any final fields are not initialized post-constructor.

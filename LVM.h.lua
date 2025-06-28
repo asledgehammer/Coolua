@@ -6,23 +6,31 @@
 
 --- @alias ClassScope 'private'|'protected'|'package'|'public'
 
---- @class ClassContext The ClassContext is used to monitor and audit calls for scope-visible methods and fields.
---- @field class LVMClassDefinition The current class in the stack.
---- @field context 'constructor'|'method'|'field-get'|'field-set' The current context. (Final fields can be set here)
---- @field executable MethodDefinition|ConstructorDefinition? The definition of the context.
---- @field field FieldDefinition?
---- @field file string
---- @field line integer
-local ClassContext = {};
+-- MARK: - Generics
 
---- @class LVMClassDefinitionParameter
---- @field name string? (Default: The name of the file)
---- @field final boolean? (Default: false)
---- @field scope ClassScope? (Default: public)
---- @field superClass LVMClassDefinition? (Default: nil)
+--- @alias GenericsTypesDefinition GenericTypeDefinition[] Applied on Class-Scope and Method-Scope.
+
+--- @class (exact) GenericTypeDefinition The base definition for all generic definitions.
+--- 
+--- @field __type__ 'GenericTypeDefinition'
+--- @field name string The name of the genric type.
+--- @field types table<string, any> One or more types to assign.
+
+--- @alias GenericsTypesDefinitionParameter GenericTypeDefinitionParameter[] Applied on Class-Scope and Method-Scope.
+
+--- @class (exact) GenericTypeDefinitionParameter
+--- 
+--- @field name string The name of the generic type.
+--- @field types string[]? If two or more types are assignable, use the types string[].
+--- @field type string? If one type is assignable, use the type string.
+
+-- MARK: - Class
+
+-- MARK: - Field
 
 --- @class (exact) FieldDefinition
 --- @field __type__ 'FieldDefinition'
+--- @field audited boolean If true, the struct is audited and verified to be valid.
 --- @field class LVMClassDefinition
 --- @field name string
 --- @field types string[]
@@ -41,38 +49,39 @@ local ClassContext = {};
 --- @field final boolean?
 --- @field value any?
 
+-- MARK: - Constructor
+
+--- @class (exact) ConstructorDefinition
+--- @field __type__ 'ConstructorDefinition'
+--- @field audited boolean If true, the struct is audited and verified to be valid.
+--- @field class LVMClassDefinition
+--- @field scope ClassScope
+--- @field parameters ParameterDefinition[]
+--- @field func fun(o: any, ...)
+
 --- @class (exact) ConstructorDefinitionParameter
 --- @field scope ClassScope? (Default: "package")
 --- @field parameters ParameterDefinitionParameter[]?
 
---- @class (exact) ConstructorDefinition
+-- MARK: - Parameter
+
+--- @class (exact) ParameterDefinition
+--- @field __type__ 'ParameterDefinition'
+--- @field audited boolean If true, the struct is audited and verified to be valid.
 --- @field class LVMClassDefinition
---- @field scope ClassScope
---- @field parameters ParameterDefinition[]
---- @field __type__ 'ConstructorDefinition'
---- @field func fun(o: any, ...)
+--- @field name string
+--- @field types string[]
 
 --- @class (exact) ParameterDefinitionParameter
 --- @field types string[]?
 --- @field type string?
 --- @field name string
 
---- @class (exact) ParameterDefinition
---- @field __type__ 'ParameterDefinition'
---- @field class LVMClassDefinition
---- @field name string
---- @field types string[]
-
---- @class (exact) MethodDefinitionParameter
---- @field scope ClassScope? (Default: public)
---- @field static boolean? (Default: false)
---- @field final boolean? (Default: false)
---- @field name string
---- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
---- @field returns (string[]|string)? (Default: void)
+-- MARK: - Method
 
 --- @class (exact) MethodDefinition
 --- @field __type__ 'MethodDefinition'
+--- @field audited boolean If true, the struct is audited and verified to be valid.
 --- @field class LVMClassDefinition
 --- @field scope ClassScope
 --- @field static boolean
@@ -80,21 +89,44 @@ local ClassContext = {};
 --- @field name string
 --- @field override boolean (Default: false)
 --- @field super MethodDefinition? (Internally assigned. If none, this is nil)
+--- @field generics GenericsTypesDefinition?
 --- @field parameters ParameterDefinition[]
 --- @field returns string[]
 --- @field func fun(o: any, ...): (any?)
 --- @field lineRange {start: number, stop: number} The function's start and stop line.
 
+--- @class (exact) MethodDefinitionParameter
+--- @field scope ClassScope? (Default: public)
+--- @field static boolean? (Default: false)
+--- @field final boolean? (Default: false)
+--- @field name string
+--- @field generics GenericsTypesDefinitionParameter?
+--- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
+--- @field returns (string[]|string)? (Default: void)
+
+-- MARK: - Return
+
+--- @class (exact) ReturnsDefinition
+--- @field __type__ 'ReturnsDefinition'
+--- @field audited boolean If true, the struct is audited and verified to be valid.
+--- @field types string[]
+
 --- @class (exact) ReturnsDefinitionParameter
 --- @field types string[]?
 --- @field type string?
 
---- @class (exact) ReturnsDefinition
---- @field __type__ 'ReturnsDefinition'
---- @field types string[]
+-- MARK: (LVM) Class
 
---- @class LVMClassDefinition
+--- @class (exact) LVMClassDefinitionParameter
+--- @field name string? (Default: The name of the file)
+--- @field final boolean? (Default: false)
+--- @field scope ClassScope? (Default: public)
+--- @field superClass LVMClassDefinition? (Default: nil)
+--- @field generics GenericsTypesDefinitionParameter? Any generic parameter definitions.
+
+--- @class (exact) LVMClassDefinition
 --- @field __type__ 'ClassDefinition'
+--- @field audited boolean If true, the struct is audited and verified to be valid.
 --- @field __middleConstructor function
 --- @field __middleMethods table<string, function>
 --- @field printHeader string
@@ -110,9 +142,8 @@ local ClassContext = {};
 --- @field declaredMethods table<string, MethodDefinition>
 --- @field declaredConstructors ConstructorDefinition[]
 --- @field staticFields table<string, any> Stores the static values for classes.
+--- @field generics GenericsTypesDefinition? If the class supports generics, this is where its defined.
 local LVMClassDefinition = {};
-
--- MARK: - Field
 
 --- @param definition FieldDefinitionParameter
 ---
@@ -135,13 +166,16 @@ function LVMClassDefinition:getField(name) end
 --- @return FieldDefinition? fieldDefinition
 function LVMClassDefinition:getDeclaredField(name) end
 
--- MARK: - Constructor
-
 --- @param constructorDefinition ConstructorDefinitionParameter
 --- @param func function
 ---
 --- @return ConstructorDefinition
 function LVMClassDefinition:addConstructor(constructorDefinition, func) end
+
+--- @param constructorDefinition ConstructorDefinitionParameter
+---
+--- @return ConstructorDefinition
+function LVMClassDefinition:addConstructor(constructorDefinition) end
 
 --- @param args any[]
 ---
@@ -152,8 +186,6 @@ function LVMClassDefinition:getConstructor(args) end
 ---
 --- @return ConstructorDefinition|nil constructorDefinition
 function LVMClassDefinition:getDeclaredConstructor(args) end
-
--- MARK: - Method
 
 --- @param definition MethodDefinitionParameter
 --- @param func function
@@ -211,3 +243,15 @@ function LVMClassDefinition:getMethodFromLine(line) end
 ---
 --- @return ConstructorDefinition|nil method
 function LVMClassDefinition:getConstructorFromLine(line) end
+
+-- MARK: StackTrace
+
+--- @class ClassContext The ClassContext is used to monitor and audit calls for scope-visible methods and fields.
+--- 
+--- @field class LVMClassDefinition The current class in the stack.
+--- @field context 'constructor'|'method'|'field-get'|'field-set' The current context. (Final fields can be set here)
+--- @field executable MethodDefinition|ConstructorDefinition? The definition of the context.
+--- @field field FieldDefinition?
+--- @field file string
+--- @field line integer
+local ClassContext = {};

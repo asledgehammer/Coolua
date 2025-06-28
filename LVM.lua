@@ -18,6 +18,13 @@ local paramsToString = OOPUtils.paramsToString;
 
 local LVM = {};
 
+-- MARK: - Flags
+
+--- @type boolean
+--- 
+--- This private switch flag helps set readonly structs as audited.
+local canSetAudit = false;
+
 --- @type boolean
 ---
 --- This private switch flag helps mute the stack. (For initializing LVM)
@@ -48,45 +55,164 @@ local canGetSuper = false;
 --- This private switch flag helps shadow attempts to set super outside the class framework.
 local canSetSuper = false;
 
+-- MARK: - _G Package
+
 --- @type boolean
 ---
 --- This private switch flag helps shadow assignments and construction of global package struct references.
 local allowPackageStructModifications = false;
 
+--- @param val any
+---
+--- @return type|string
+local function getType(val)
+    local valType = type(val);
+
+    -- Support for Lua-Class types.
+    if valType == 'table' then
+        if val.__type__ then
+            valType = val.__type__;
+        elseif val.type then
+            valType = val.type;
+        end
+    end
+
+    return valType;
+end
+
+--- Constructs a _G package struct. (Used to call from global scope)
+---
 --- @return table PackageStruct
-local function createPackageStruct()
-    local t = {};
-    local mt = {};
-
-    local fields = {};
-
+local function newPackageStruct()
+    local t, mt, fields = {}, {}, {};
     mt.__index = fields;
-
-    mt.__newindex = function(tbl, field, value)
+    mt.__newindex = function(_, field, value)
         if not allowPackageStructModifications then
             error('Cannot modify Package Structure.', 2);
         end
         fields[field] = value;
     end
-
     setmetatable(t, mt);
-
     return t;
 end
 
+--- Adds a Class to the _G package struct tree. (Used to call from global scope)
+---
 --- @param classDef LVMClassDefinition
-local function assignToPackageStruct(classDef)
+local function addToPackageStruct(classDef)
     local package = classDef.package;
     local split = package:split('.');
     local packageCurr = _G;
     for i = 1, #split do
         local packageNext = split[i];
         if not packageCurr[packageNext] then
-            packageCurr[packageNext] = createPackageStruct();
+            packageCurr[packageNext] = newPackageStruct();
         end
         packageCurr = packageCurr[packageNext];
     end
     packageCurr[classDef.name] = classDef;
+end
+
+--- @param def ParameterDefinition
+local function auditParameter(def)
+    if not def then
+        error('Parameter is nil.', 2);
+    elseif not def.__type__ ~= 'ParameterDefinition' then
+        errorf(2, 'Parameter is not a ParameterDefinition. {type = %s, value = %s}',
+            getType(def),
+            tostring(def)
+        );
+    end
+
+    -- Audit name.
+    if not def.name then
+        error('The parameter doesn\'t have a name.', 2);
+    elseif def.name == '' then
+        error('The parameter has an empty name.', 2);
+    elseif isValidName(def.name) then
+        errorf(2, 'The parameter has a name with invalid characters: %s (Valid characters: [A-Z, a,z, 0-9, $, _, -])');
+    end
+
+    -- Audit types.
+    if not def.types then
+        errorf(2, 'The parameter "%s" has no type(s).', def.name);
+    elseif #def.types == 0 then
+        errorf(2, 'The parameter "%s" has no type(s).', def.name);
+    end
+
+    canSetAudit = true;
+    def.audited = true;
+    canSetAudit = false;
+end
+
+local function auditConstructor(def)
+
+end
+
+--- @param def GenericTypeDefinition
+local function auditGenericType(def)
+    if not def.__type__ ~= 'GenericTypeDefinition' then
+        errorf(2, 'Parameter is not a GenericTypeDefinition. {type = %s, value = %s}',
+            getType(def),
+            tostring(def)
+        );
+    end
+
+    if not def.name then
+        errorf(2, 'Property "name" is nil. (Must be a non-empty string)');
+    elseif def.name == '' then
+        errorf(2, 'Property "name" is an empty string. (Must be a non-empty string)');
+    end
+
+    if not def.types then
+        errorf(2, 'Property "types" is nil. (Must be an array))');
+    elseif type(def.types) == 'table' or not isArray(def.types) then
+        errorf(2, 'Property "types" is not an array. {type = %s, value = %s}',
+            getType(def),
+            tostring(def)
+        );
+    end
+end
+
+--- @param def GenericTypeDefinition
+local function printGenericType(def)
+    -- Make sure the def is valid.
+    auditGenericType(def);
+
+    local name = def.name;
+    local typesS = table.concat(def.types, '|');
+    return string.format('%s: %s', name, typesS);
+end
+
+--- @param def GenericsTypesDefinition
+local function printGenericTypes(def)
+    -- Audit array parameter.
+    if not def then
+        error('Parameter is nil.', 2);
+    elseif type(def) ~= 'table' or not isArray(def) then
+        errorf(2, 'Parameter is not GenericsTypesDefinition[]. {type = %s, value = %s}',
+            type(def),
+            tostring(def)
+        );
+    end
+
+    local defLen = #def;
+
+    if defLen == 0 then return '<>' end
+
+    local s = '';
+
+    for i = 1, defLen do
+        local next = defLen[i];
+        local nextS = printGenericType(next);
+        if s == '' then
+            s = nextS;
+        else
+            s = s .. ', ' .. nextS;
+        end
+    end
+
+    return string.format('<%s>', s);
 end
 
 --- @param md MethodDefinition
@@ -96,6 +222,13 @@ local function printMethod(md)
     if md.static then sStatic = 'static ' end
     local sFinal = '';
     if md.final then sFinal = 'final ' end
+
+    local sGenerics = '';
+    if md.generics then
+        -- TODO: Implement printing generics.
+        sGenerics = printGenericTypes(md.generics);
+    end
+
     local sParams;
     local callSyntax;
     if md.static then
@@ -105,7 +238,7 @@ local function printMethod(md)
         sParams = paramsToString(md.parameters);
         callSyntax = ':';
     end
-    return string.format('%s%s%s%s%s(%s)', sStatic, sFinal, md.class.name, callSyntax, md.name, sParams);
+    return string.format('%s%s%s%s%s%s(%s)', sStatic, sFinal, sGenerics, md.class.name, callSyntax, md.name, sParams);
 end
 
 --- @type StackTraceElement[]
@@ -180,24 +313,6 @@ local CLASSES = {};
 
 local function forName(path)
     return CLASSES[path];
-end
-
---- @param val any
----
---- @return type|string
-local function getType(val)
-    local valType = type(val);
-
-    -- Support for Lua-Class types.
-    if valType == 'table' then
-        if val.__type__ then
-            valType = val.__type__;
-        elseif val.type then
-            valType = val.type;
-        end
-    end
-
-    return valType;
 end
 
 --- @param class LVMClassDefinition The class called.
@@ -363,7 +478,7 @@ getMethodNames = function(classDef, methodNames)
 end
 
 --- Grabs the most immediate path outside the LVM.
---- 
+---
 --- @return integer level, string relativePath
 local function getRelativePath()
     local level = 1;
@@ -392,6 +507,22 @@ local EMPTY_TABLE = {};
 --- @return boolean result
 local function __class__eq(a, b)
     return a:getClass().__middleMethods['equals'](a, b);
+end
+
+--- Checks final fields in a class for uninitialization. This is for post-constructor analysis and audits.
+---
+--- @param cd LVMClassDefinition
+--- @param o ClassInstance
+local function auditFinalFields(cd, o)
+    local fields = cd.declaredFields;
+    for name, fd in pairs(fields) do
+        local fieldValue = o[name];
+        if fd.final and fieldValue == UNINITIALIZED_VALUE then
+            errorf(2, '%s Field is not initialized: %s (Check the FieldDefinitions and Constructors)',
+                cd.printHeader, name
+            );
+        end
+    end
 end
 
 --- @param cd LVMClassDefinition
@@ -457,6 +588,8 @@ local function createInstanceMetatable(cd, o)
         end
 
         popContext();
+
+        -- TODO: Implement generic type-cast checks.
 
         -- Get the value.
         if fd.static then
@@ -558,6 +691,8 @@ local function createInstanceMetatable(cd, o)
             end
         end
 
+        -- TODO: Implement generic type-cast checks.
+
         -- Set the value.
         if fd.static then
             fd.class[field] = value;
@@ -607,7 +742,6 @@ end
 ---
 --- @return fun(o: ClassInstance, ...): (any?)
 local function createMiddleMethod(cd, name, methods)
-    -- TODO: Implement static invocation.
     return function(o, ...)
         local args = { ... };
         local argsLen = #args;
@@ -686,6 +820,7 @@ local function createMiddleMethod(cd, name, methods)
             else
                 retVal = md.func(o, unpack(args));
             end
+            -- TODO: Check type-cast of returned value.
         end, debug.traceback);
 
         if o then
@@ -761,7 +896,19 @@ local function createMiddleConstructor(cd)
         canSetSuper = false;
 
         local result, errMsg = xpcall(function()
-            cons.func(o, unpack(args));
+            local retValue = cons.func(o, unpack(args));
+
+            -- Make sure that constructors don't return anything.
+            if retValue ~= nil then
+                errorf(2, '%s Constructor returned non-nil value: {type = %s, value = %s}',
+                    cd.printHeader,
+                    getType(retValue), tostring(retValue)
+                );
+                return;
+            end
+
+            -- Make sure that final fields are initialized post-constructor.
+            auditFinalFields(cd, o);
         end, debug.traceback);
 
         --- Revert super.
@@ -868,7 +1015,19 @@ local function createSuperTable(cd, o)
         end
 
         local result, errMsg = xpcall(function()
-            constructorDefinition.func(o, unpack(args))
+            local retValue = constructorDefinition.func(o, unpack(args));
+
+            -- Make sure that constructors don't return anything.
+            if retValue ~= nil then
+                errorf(2, '%s Constructor returned non-nil value: {type = %s, value = %s}',
+                    cd.printHeader,
+                    getType(retValue), tostring(retValue)
+                );
+                return;
+            end
+
+            -- Make sure that final fields are initialized post-constructor.
+            auditFinalFields(cd, o);
         end, debug.traceback);
 
         popContext();
@@ -892,7 +1051,7 @@ local function createSuperTable(cd, o)
             path = DebugUtils.getPath(3)
         });
 
-local level, relPath = getRelativePath();
+        local level, relPath = getRelativePath();
 
         local callInfo = DebugUtils.getCallInfo(3, true);
         callInfo.path = relPath;
@@ -919,6 +1078,7 @@ local level, relPath = getRelativePath();
             else
                 retVal = md.func(o, unpack(args));
             end
+            -- TODO: Check type-cast of returned value.
         end, debug.traceback);
 
         popContext();
@@ -953,6 +1113,57 @@ local level, relPath = getRelativePath();
     return super;
 end
 
+--- Compiles provided generic parameters for classes and methods.
+---
+--- @param cd LVMClassDefinition
+--- @param gdefParam GenericsTypesDefinitionParameter
+---
+--- @return GenericsTypesDefinition
+local function compileGenericTypesDefinition(cd, gdefParam)
+    -- Check Generics definition.
+    local generics = {};
+    if gdefParam then
+        for i = 1, #gdefParam do
+            local gDefParam = gdefParam[i];
+
+            -- Audit & compile name string.
+            local name = gDefParam.name;
+            if not name then
+                errorf(2, '%s Generic parameter #%i has no name.', cd.printHeader);
+            end
+
+            -- Audit & compile types table.
+            local types = {};
+            if gDefParam.type and gDefParam.types then
+                errorf(2, '%s Generic parameter #%i has both "type" and "types" defined. (Can only have one)',
+                    cd.printHeader);
+            elseif gDefParam.types then
+                if type(gDefParam.types) ~= 'table' or not isArray(gDefParam.types) then
+                    errorf(2, '%s Generic parameter %i types is not array. {type = %s, value = %s}',
+                        cd.printHeader, i,
+                        getType(gDefParam.types), tostring(gDefParam.types)
+                    );
+                elseif #gDefParam.types == 0 then
+                    errorf(2, '%s Generic parameter %i types is empty array.', cd.printHeader, i);
+                end
+
+                types = gDefParam.types;
+            elseif gDefParam.type then
+                types = { gDefParam.type };
+            else
+                errorf(2, '%s Generic parameter %i doesn\'t have a defined type or types.',
+                    cd.printHeader,
+                    i
+                );
+            end
+
+            -- Set the compiled generics table.
+            generics[name] = { name, types };
+        end
+    end
+    return generics;
+end
+
 --- @param definition LVMClassDefinitionParameter
 function LVM.newClass(definition)
     -- Generate the path and name to use.
@@ -984,6 +1195,9 @@ function LVM.newClass(definition)
     cd.declaredMethods = {};
     cd.declaredConstructors = {};
     cd.lock = false;
+
+    -- Compile the generic parameters for the class.
+    cd.generics = compileGenericTypesDefinition(cd, definition.generics);
 
     cd.__middleConstructor = createMiddleConstructor(cd);
 
@@ -1060,6 +1274,7 @@ function LVM.newClass(definition)
         --- @type FieldDefinition
         local args = {
             __type__ = 'FieldDefinition',
+            audited = false,
             class = cd,
             types = fd.types,
             type = fd.type,
@@ -1220,10 +1435,13 @@ function LVM.newClass(definition)
     -- MARK: - Constructor
 
     --- @param constructorDefinition ConstructorDefinitionParameter
-    --- @param func function
+    --- @param func function?
     ---
     --- @return ConstructorDefinition
     function cd:addConstructor(constructorDefinition, func)
+        -- Some constructors are empty. Allow this to be optional.
+        if not func then func = function() end end
+
         -- Friendly check for implementation.
         if not self or type(constructorDefinition) == 'function' then
             error(
@@ -1247,6 +1465,7 @@ function LVM.newClass(definition)
         --- @type ConstructorDefinition
         local args = {
             __type__ = 'ConstructorDefinition',
+            audited = false,
             class = cd,
             scope = constructorDefinition.scope or 'package',
             parameters = constructorDefinition.parameters or {},
@@ -1445,6 +1664,7 @@ function LVM.newClass(definition)
         --- @type MethodDefinition
         local args = {
             __type__ = 'MethodDefinition',
+            audited = false,
             class = cd,
             scope = methodDefinition.scope or 'package',
             static = methodDefinition.static or false,
@@ -1851,7 +2071,7 @@ function LVM.newClass(definition)
 
         --- Set the class to be accessable from a global package reference.
         allowPackageStructModifications = true;
-        assignToPackageStruct(cd);
+        addToPackageStruct(cd);
         allowPackageStructModifications = false;
 
         return cd;
