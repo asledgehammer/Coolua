@@ -22,7 +22,7 @@ local API = {
 function API.auditParameter(def)
     if not def then
         error('Parameter is nil.', 2);
-    elseif not def.__type__ ~= 'ParameterDefinition' then
+    elseif def.__type__ ~= 'ParameterDefinition' then
         errorf(2, 'Parameter is not a ParameterDefinition. {type = %s, value = %s}',
             LVM.type.getType(def),
             tostring(def)
