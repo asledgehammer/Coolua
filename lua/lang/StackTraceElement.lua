@@ -1,6 +1,6 @@
 local OOPUtils = require 'asledgehammer/util/OOPUtils';
 local LVM = require 'LVM';
-local newClass = LVM.newClass;
+local newClass = LVM.class.newClass;
 
 --- @type StackTraceElementDefinition
 local StackTraceElement = newClass({ scope = 'public' });

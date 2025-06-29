@@ -3,7 +3,7 @@
 ---]]
 
 local LVM = require 'LVM';
-local newClass = LVM.newClass;
+local newClass = LVM.class.newClass;
 
 --- @type ObjectDefinition
 local Object = newClass({ scope = 'public' });

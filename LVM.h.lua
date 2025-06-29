@@ -6,20 +6,56 @@
 
 --- @alias ClassScope 'private'|'protected'|'package'|'public'
 
+-- MARK: - LVM
+
+--- @class (exact) LVM
+---
+--- @field __type__ 'LVM'
+---
+--- @field debug LVMDebugModule
+--- @field flags LVMFlagsModule
+--- @field constants LVMConstantsModule
+--- @field print LVMPrintModule
+--- @field type LVMTypeModule
+--- @field scope LVMScopeModule
+--- @field audit LVMAuditModule
+--- @field package LVMPackageModule
+--- @field generic LVMGenericModule
+--- @field meta LVMMetaModule
+--- @field stack LVMStackModule
+--- @field super LVMSuperModule
+--- @field field LVMFieldModule
+--- @field parameter LVMParamModule
+--- @field constructor LVMConstructorModule
+--- @field method LVMMethodModule
+--- @field class LVMClassModule
+local LVM = {};
+
+--- @class LVMModule
+--- 
+--- @field __type__ 'LVMModule'
+local LVMModule = {};
+
+--- @param lvm LVM
+function LVMModule.setLVM(lvm) end
+
+
+
 -- MARK: - Generics
 
 --- @alias GenericsTypesDefinition GenericTypeDefinition[] Applied on Class-Scope and Method-Scope.
 
 --- @class (exact) GenericTypeDefinition The base definition for all generic definitions.
---- 
+---
 --- @field __type__ 'GenericTypeDefinition'
+---
 --- @field name string The name of the genric type.
 --- @field types table<string, any> One or more types to assign.
 
 --- @alias GenericsTypesDefinitionParameter GenericTypeDefinitionParameter[] Applied on Class-Scope and Method-Scope.
 
 --- @class (exact) GenericTypeDefinitionParameter
---- 
+---
 --- @field name string The name of the generic type.
 --- @field types string[]? If two or more types are assignable, use the types string[].
 --- @field type string? If one type is assignable, use the type string.
@@ -247,7 +283,7 @@ function LVMClassDefinition:getConstructorFromLine(line) end
 -- MARK: StackTrace
 
 --- @class ClassContext The ClassContext is used to monitor and audit calls for scope-visible methods and fields.
---- 
+---
 --- @field class LVMClassDefinition The current class in the stack.
 --- @field context 'constructor'|'method'|'field-get'|'field-set' The current context. (Final fields can be set here)
 --- @field executable MethodDefinition|ConstructorDefinition? The definition of the context.

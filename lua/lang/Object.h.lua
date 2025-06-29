@@ -4,7 +4,7 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
---- @class ObjectDefinition: ClassDefinition
+--- @class ObjectDefinition: LVMClassDefinition
 local ObjectDefinition = {};
 
 --- Empty constructor
