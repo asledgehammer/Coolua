@@ -1,5 +1,9 @@
-local OOPUtils = require 'asledgehammer/util/OOPUtils';
-local isArray = OOPUtils.isArray;
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
+local LVMUtils = require 'LVMUtils';
+local isArray = LVMUtils.isArray;
 
 local LVM;
 

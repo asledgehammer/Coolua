@@ -1,3 +1,7 @@
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
 local LVM;
 
 --- @type LVMPackageModule

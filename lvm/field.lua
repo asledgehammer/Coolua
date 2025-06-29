@@ -1,3 +1,7 @@
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
 --- @type LVM
 local LVM;
 

@@ -1,4 +1,4 @@
-local OOPUtils = require 'asledgehammer/util/OOPUtils';
+local LVMUtils = require 'LVMUtils';
 local LVM = require 'LVM';
 local newClass = LVM.class.newClass;
 
@@ -86,14 +86,14 @@ StackTraceElement:addMethod({
                 element.class.name,
                 callSyntax,
                 element.name,
-                OOPUtils.paramsToString(element.parameters)
+                LVMUtils.paramsToString(element.parameters)
             );
         elseif element.__type__ == 'ConstructorDefinition' then
             return string.format('%s:%s: calling %s.new(%s)',
                 path,
                 line,
                 element.class.name,
-                OOPUtils.paramsToString(element.parameters)
+                LVMUtils.paramsToString(element.parameters)
             );
         elseif element.__type__ == 'FieldDefinition' then
             if context == 'field-get' then

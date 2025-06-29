@@ -1,8 +1,12 @@
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
 local DebugUtils = require 'asledgehammer/util/DebugUtils';
 
-local OOPUtils = require 'asledgehammer/util/OOPUtils';
-local errorf = OOPUtils.errorf;
-local paramsToString = OOPUtils.paramsToString;
+local LVMUtils = require 'LVMUtils';
+local errorf = LVMUtils.errorf;
+local paramsToString = LVMUtils.paramsToString;
 
 --- @type LVM
 local LVM;

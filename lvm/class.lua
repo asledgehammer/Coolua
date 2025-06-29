@@ -1,14 +1,18 @@
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
 local readonly = require 'asledgehammer/util/readonly';
 local DebugUtils = require 'asledgehammer/util/DebugUtils';
 
-local OOPUtils = require 'asledgehammer/util/OOPUtils';
-local anyToString = OOPUtils.anyToString;
-local arrayContainsDuplicates = OOPUtils.arrayContainsDuplicates;
-local arrayToString = OOPUtils.arrayToString;
-local debugf = OOPUtils.debugf;
-local errorf = OOPUtils.errorf;
-local isArray = OOPUtils.isArray;
-local isValidName = OOPUtils.isValidName;
+local LVMUtils = require 'LVMUtils';
+local anyToString = LVMUtils.anyToString;
+local arrayContainsDuplicates = LVMUtils.arrayContainsDuplicates;
+local arrayToString = LVMUtils.arrayToString;
+local debugf = LVMUtils.debugf;
+local errorf = LVMUtils.errorf;
+local isArray = LVMUtils.isArray;
+local isValidName = LVMUtils.isValidName;
 
 --- @type LVMClassModule
 local API = {
@@ -167,56 +171,42 @@ function API.newClass(definition)
 
         -- Validate name.
         if not args.name then
-            error(
-                'FieldDefinition: string property "name" is not provided.'
-                , 2);
+            errorf(2, '%s string property "name" is not provided.', errHeader);
         elseif type(args.name) ~= 'string' then
-            error(string.format(
-                'FieldDefinition: property "name" is not a valid string. {type=%s, value=%s}',
-                type(args.name),
-                tostring(args.name)
-            ), 2);
+            errorf(2, '%s property "name" is not a valid string. {type=%s, value=%s}',
+                errHeader, type(args.name), tostring(args.name)
+            );
         elseif args.name == '' then
-            error('FieldDefinition: property "name" is an empty string.');
+            errorf(2, '%s property "name" is an empty string.', errHeader);
         elseif not isValidName(args.name) then
-            error(string.format(
-                'FieldDefinition: property "name" is invalid. (value = %s) (Should only contain A-Z, a-z, 0-9, _, or $ characters)',
-                args.name
-            ), 2);
+            errorf(2,
+                '%s property "name" is invalid. (value = %s) (Should only contain A-Z, a-z, 0-9, _, or $ characters)',
+                errHeader, args.name
+            );
         elseif self.declaredFields[args.name] then
-            error(string.format(
-                'FieldDefinition: field already exists: %s',
-                args.name
-            ), 2);
+            errorf(2, '%s field already exists: %s', errHeader, args.name);
         end
 
         -- Validate types:
         if not args.types and not args.type then
-            error(
-                'FieldDefinition: string[] property "types" or simplified string property "type" are not provided.'
-                , 2);
+            errorf(2, '%s string[] property "types" or simplified string property "type" are not provided.', errHeader);
         elseif args.types then
             if type(args.types) ~= 'table' or not isArray(args.types) then
-                error(
-                    string.format(
-                        'FieldDefinition: property "types" is not a string[]. {type=%s, value=%s}',
-                        type(args.types),
-                        tostring(args.types)
-                    ), 2);
+                errorf(2, 'FieldDefinition: property "types" is not a string[]. {type=%s, value=%s}',
+                    errHeader, type(args.types), tostring(args.types)
+                );
             elseif #args.types == 0 then
-                error('FieldDefinition: string[] property "types" is empty. (min=1)', 2);
+                errorf(2, '%s string[] property "types" is empty. (min=1)', errHeader);
             elseif arrayContainsDuplicates(args.types) then
-                error('FieldDefinition: string[] property "types" contains duplicate types.', 2);
+                errorf(2, '%s string[] property "types" contains duplicate types.', errHeader);
             end
         else
             if type(args.type) ~= 'string' then
-                error(string.format(
-                    'FieldDefinition: property "type" is not a string. {type=%s, value=%s}',
-                    type(args.type),
-                    tostring(args.type)
-                ), 2);
+                errorf(2, '%s: property "type" is not a string. {type=%s, value=%s}',
+                    errHeader, type(args.type), tostring(args.type)
+                );
             elseif args.type == '' then
-                error('FieldDefinition: property "type" is an empty string.', 2);
+                errorf(2, '%s property "type" is an empty string.', errHeader);
             end
             -- Set the types array and remove the simplified form.
             args.types = { args.type };
@@ -226,12 +216,10 @@ function API.newClass(definition)
         -- Validate value:
         if args.value ~= LVM.constants.UNINITIALIZED_VALUE then
             if not LVM.type.isAssignableFromType(args.value, args.types) then
-                error(string.format(
-                    'FieldDefinition: property "value" is not assignable from "types". {types = %s, value = {type = %s, value = %s}}',
-                    arrayToString(args.types),
-                    type(args.value),
-                    tostring(args.value)
-                ), 2);
+                errorf(2,
+                    '%s property "value" is not assignable from "types". {types = %s, value = {type = %s, value = %s}}',
+                    errHeader, arrayToString(args.types), type(args.value), tostring(args.value)
+                );
             end
             args.assignedOnce = true;
         else
@@ -240,28 +228,24 @@ function API.newClass(definition)
 
         -- Validate scope:
         if args.scope ~= 'private' and args.scope ~= 'protected' and args.scope ~= 'package' and args.scope ~= 'public' then
-            error(string.format(
-                'FieldDefinition: ClassScope property "scope" given invalid: %s (Can only be: "private", "protected", "package", or "public")',
-                args.scope
-            ), 2);
+            errorf(2,
+                '%s The property "scope" given invalid: %s (Can only be: "private", "protected", "package", or "public")',
+                errHeader, args.scope
+            );
         end
 
         -- Validate final:
         if type(args.final) ~= 'boolean' then
-            error(string.format(
-                'FieldDefinition: property "final" is not a boolean. {type = %s, value = %s}',
-                LVM.type.getType(args.final),
-                tostring(args.final)
-            ), 2);
+            errorf(2, '%s property "final" is not a boolean. {type = %s, value = %s}',
+                errHeader, LVM.type.getType(args.final), tostring(args.final)
+            );
         end
 
         -- Validate static:
         if type(args.static) ~= 'boolean' then
-            error(string.format(
-                'FieldDefinition: property "static" is not a boolean. {type = %s, value = %s}',
-                LVM.type.getType(args.static),
-                tostring(args.static)
-            ), 2);
+            errorf(2, '%s property "static" is not a boolean. {type = %s, value = %s}',
+                errHeader, LVM.type.getType(args.static), tostring(args.static)
+            );
         end
 
         self.declaredFields[args.name] = args;
@@ -629,7 +613,7 @@ function API.newClass(definition)
 
         if not self.superClass then
             debugf(LVM.debug.method, '%s Compiling original method(s): %s', self.printHeader, debugName);
-            self.methods[name] = OOPUtils.copyArray(self.declaredMethods[name]);
+            self.methods[name] = LVMUtils.copyArray(self.declaredMethods[name]);
             return;
         end
 
@@ -642,18 +626,18 @@ function API.newClass(definition)
             debugf(LVM.debug.method, '%s \tUsing super-class array: %s', self.printHeader, debugName);
 
             -- Copy the super-class array.
-            self.methods[name] = OOPUtils.copyArray(self.superClass.methods[name]);
+            self.methods[name] = LVMUtils.copyArray(self.superClass.methods[name]);
             return;
         end
 
         -- In this case, all methods with this name are original.
         if not cd.superClass.methods[name] then
             debugf(LVM.debug.method, '%s \tUsing class declaration array: %s', self.printHeader, debugName);
-            self.methods[name] = OOPUtils.copyArray(decMethods);
+            self.methods[name] = LVMUtils.copyArray(decMethods);
             return;
         end
 
-        local methods = OOPUtils.copyArray(cd.superClass.methods[name]);
+        local methods = LVMUtils.copyArray(cd.superClass.methods[name]);
 
         if decMethods then
             for i = 1, #decMethods do

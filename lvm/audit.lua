@@ -1,7 +1,11 @@
-local OOPUtils = require 'asledgehammer/util/OOPUtils';
-local isArray = OOPUtils.isArray;
-local isValidName = OOPUtils.isValidName;
-local errorf = OOPUtils.errorf;
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
+local LVMUtils = require 'LVMUtils';
+local isArray = LVMUtils.isArray;
+local isValidName = LVMUtils.isValidName;
+local errorf = LVMUtils.errorf;
 
 --- @type LVM
 local LVM = nil;

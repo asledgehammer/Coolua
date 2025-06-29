@@ -1,5 +1,9 @@
 --- @meta
 
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
 --- @class LVMFlagsModule: LVMModule
 --- @field canSetAudit boolean This private switch flag helps set readonly structs as audited.
 --- @field ignorePushPopContext boolean This private switch flag helps mute the stack. (For initializing LVM)

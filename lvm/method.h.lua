@@ -1,5 +1,9 @@
 --- @meta
 
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
 --- @class LVMMethodModule: LVMModule
 local API = {};
 

@@ -1,5 +1,9 @@
 --- @meta
 
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
 --- @class (exact) LVMConstantsModule: LVMModule
 --- 
 --- @field UNINITIALIZED_VALUE any

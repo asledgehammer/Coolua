@@ -1,6 +1,11 @@
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
 local DebugUtils = require 'asledgehammer/util/DebugUtils';
-local OOPUtils = require 'asledgehammer/util/OOPUtils';
-local debugf = OOPUtils.debugf;
+
+local LVMUtils = require 'LVMUtils';
+local debugf = LVMUtils.debugf;
 
 local LVM;
 

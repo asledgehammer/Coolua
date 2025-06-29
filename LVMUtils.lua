@@ -2,12 +2,12 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local OOPUtils = {};
+local API = {};
 
 -- @param params ParameterDefinition[]
 ---
 --- @return string
-function OOPUtils.paramsToString(params)
+function API.paramsToString(params)
     local s = '';
 
     if not params or #params == 0 then return s end
@@ -74,7 +74,7 @@ end
 ---
 --- @param message string The message to format and print.
 --- @param ... any The `string.format(...)` arguments to inject.
-function OOPUtils.printf(message, ...)
+function API.printf(message, ...)
     print(string.format(message, ...));
 end
 
@@ -84,7 +84,7 @@ end
 --- @param level number
 --- @param message string The message to format and print.
 --- @param ... any The `string.format(...)` arguments to inject.
-function OOPUtils.errorf(level, message, ...)
+function API.errorf(level, message, ...)
     level = level or 1;
     error(string.format(message, ...), level);
 end
@@ -95,13 +95,13 @@ end
 --- @param flag boolean If true, the message prints. If false, it doesn't.
 --- @param message string The message to format and print.
 --- @param ... any The `string.format(...)` arguments to inject.
-function OOPUtils.debugf(flag, message, ...)
-    if flag then OOPUtils.printf(message, ...) end
+function API.debugf(flag, message, ...)
+    if flag then API.printf(message, ...) end
 end
 
-function OOPUtils.copyArray(array)
-    if not OOPUtils.isArray(array) then
-        error(string.format('Object is not array. %s', OOPUtils.typeValueString(array)), 2);
+function API.copyArray(array)
+    if not API.isArray(array) then
+        error(string.format('Object is not array. %s', API.typeValueString(array)), 2);
     end
 
     local array2 = {};
@@ -115,13 +115,13 @@ end
 --- @param t table
 ---
 --- @return table
-function OOPUtils.copyTable(t)
+function API.copyTable(t)
     if not type(t) == 'table' then
-        error(string.format('Object is not a table. %s', OOPUtils.typeValueString(t)), 2);
+        error(string.format('Object is not a table. %s', API.typeValueString(t)), 2);
     end
 
-    if OOPUtils.isArray(t) then
-        return OOPUtils.copyArray(t);
+    if API.isArray(t) then
+        return API.copyArray(t);
     end
 
     local array2 = {};
@@ -135,11 +135,11 @@ end
 --- @param o any
 ---
 --- @return string typeValueString
-function OOPUtils.typeValueString(o)
+function API.typeValueString(o)
     return string.format('{type = %s, value = %s}', type(o), tostring(o));
 end
 
-function OOPUtils.anyToString(v, level, pretty)
+function API.anyToString(v, level, pretty)
     pretty = pretty or false;
     if level == nil or level < 0 then level = 0 end
     local indent = '';
@@ -154,24 +154,24 @@ function OOPUtils.anyToString(v, level, pretty)
     elseif type == 'nil' then
         return indent .. 'nil';
     elseif type == 'table' then
-        return indent .. OOPUtils.tableToString(v, level, pretty);
+        return indent .. API.tableToString(v, level, pretty);
     else
         return indent .. '"' .. tostring(v) .. '"';
     end
 end
 
-function OOPUtils.tableToString(t, level, pretty)
+function API.tableToString(t, level, pretty)
     if level == nil or level < 0 then level = 0 end
     local indent_n2 = string.rep('    ', math.max(level - 2, 0));
     local indent_n1 = string.rep('    ', math.max(level - 1, 0));
     local indent_0 = string.rep('    ', math.max(level, 0));
     local indent_p1 = string.rep('    ', math.max(level + 1, 0));
     local s = '';
-    if OOPUtils.isArray(t) then
-        return OOPUtils.arrayToString(t, level + 1);
+    if API.isArray(t) then
+        return API.arrayToString(t, level + 1);
     else
         for k, v in pairs(t) do
-            local vStr = OOPUtils.anyToString(v, level + 1, pretty);
+            local vStr = API.anyToString(v, level + 1, pretty);
             if s == '' then
                 s = k .. ' = ' .. vStr;
             else
@@ -183,7 +183,7 @@ function OOPUtils.tableToString(t, level, pretty)
     return '{\n' .. indent_p1 .. s .. '\n' .. indent_0 .. '}';
 end
 
-function OOPUtils.arrayToString(array, level, pretty)
+function API.arrayToString(array, level, pretty)
     if #array == 0 then return '[]' end
 
     if level == nil then level = 0 end
@@ -192,22 +192,22 @@ function OOPUtils.arrayToString(array, level, pretty)
     local s = '';
     for i = 1, #array do
         if s == '' then
-            s = OOPUtils.anyToString(array[i], level + 1);
+            s = API.anyToString(array[i], level + 1);
         else
-            s = s .. ',\n' .. indent_p1 .. OOPUtils.anyToString(array[i], level + 1, pretty);
+            s = s .. ',\n' .. indent_p1 .. API.anyToString(array[i], level + 1, pretty);
         end
     end
     return '[\n' .. indent_p1 .. s .. '\n' .. indent_0 .. ']';
 end
 
-function OOPUtils.isValidName(name)
+function API.isValidName(name)
     return string.find(name, '[^%w^_^$]+') == nil;
 end
 
 --- @param t table
 ---
 --- @return boolean result
-function OOPUtils.isArray(t)
+function API.isArray(t)
     if type(t) ~= 'table' then return false end
     local i = 0;
     for _ in pairs(t) do
@@ -221,7 +221,7 @@ end
 --- @param value any
 ---
 --- @return boolean result True if one or more array contents contains an equal value.
-function OOPUtils.arrayContains(array, value)
+function API.arrayContains(array, value)
     local len = #array;
     for i = 1, len do
         if array[i] == value then
@@ -234,7 +234,7 @@ end
 --- @param array any[]
 ---
 --- @return boolean result True if two or more array indices contains equal values.
-function OOPUtils.arrayContainsDuplicates(array)
+function API.arrayContainsDuplicates(array)
     local len = #array;
     for i = 1, len do
         for j = 1, len do
@@ -249,7 +249,7 @@ end
 --- @param val any
 ---
 --- @return type|string
-function OOPUtils.getType(val)
+function API.getType(val)
     local valType = type(val);
 
     -- Support for Lua-Class types.
@@ -262,7 +262,7 @@ end
 
 -- MARK: - Errors
 
-function OOPUtils.IllegalScopeException(o, scope)
+function API.IllegalScopeException(o, scope)
     error(
         string.format(
             'Lua Class (%s): Illegal LuaClassScope given when assigning class-property: %s',
@@ -273,12 +273,12 @@ function OOPUtils.IllegalScopeException(o, scope)
     );
 end
 
-function OOPUtils.IllegalParameterException(o, name, args)
+function API.IllegalParameterException(o, name, args)
     local argsLen = #args;
     local s = '';
     for i = 1, argsLen do
         local arg = args[i];
-        local argType = OOPUtils.getType(arg);
+        local argType = API.getType(arg);
         if argType == 'table' and arg.__type then
             argType = string.format('Lua Class (%s)', arg.__type);
         end
@@ -302,9 +302,9 @@ function OOPUtils.IllegalParameterException(o, name, args)
     error(s, 3);
 end
 
-function OOPUtils.FieldTypeException(o, name, types, value)
+function API.FieldTypeException(o, name, types, value)
     local sTypes = '';
-    if OOPUtils.getType(types) == 'table' then
+    if API.getType(types) == 'table' then
         local len = #types;
         for i = 1, len do
             if sTypes == '' then
@@ -318,24 +318,24 @@ function OOPUtils.FieldTypeException(o, name, types, value)
         'Lua Class (%s): Attempted to assign field "%s" with type "%s". Expected type(s): [\n%s\n]',
         o.__type,
         name,
-        OOPUtils.getType(value),
+        API.getType(value),
         sTypes
     );
     error(s, 3);
 end
 
-function OOPUtils.FieldNotExistsException(o, name, value)
+function API.FieldNotExistsException(o, name, value)
     local s = string.format(
         'Lua Class (%s): Attempted to assign non-field "%s" with type = %s and value = %s".',
         o.__type,
         name,
-        OOPUtils.getType(value),
+        API.getType(value),
         tostring(value)
     );
     error(s, 3);
 end
 
-function OOPUtils.FieldAccessException(o, name)
+function API.FieldAccessException(o, name)
     local s = string.format(
         'Lua Class (%s): Attempted to access private field: "%s"',
         o.__type,
@@ -344,7 +344,7 @@ function OOPUtils.FieldAccessException(o, name)
     error(s, 3);
 end
 
-function OOPUtils.createClassMetatable(o)
+function API.createClassMetatable(o)
     local mt = getmetatable(o) or {};
 
     local __fields = {};
@@ -360,21 +360,21 @@ function OOPUtils.createClassMetatable(o)
         print(string.format('__newindex2(%s, %s)', field, tostring(value)));
         -- Hide assignment table.
         if field == '__fields' then
-            OOPUtils.FieldAccessException(o, field);
+            API.FieldAccessException(o, field);
             return;
         end
 
         if field == 'width' or field == 'height' then
             if type(value) ~= 'number' then
-                OOPUtils.FieldTypeError(tbl, field, { 'number' }, value);
+                API.FieldTypeError(tbl, field, { 'number' }, value);
             end
             __fields[field] = value;
             return;
         end
-        OOPUtils.FieldNotExistsException(tbl, field, value);
+        API.FieldNotExistsException(tbl, field, value);
     end
 
     setmetatable(o, mt);
 end
 
-return OOPUtils;
+return API;

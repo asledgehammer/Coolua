@@ -1,7 +1,11 @@
-local OOPUtils = require 'asledgehammer/util/OOPUtils';
-local errorf = OOPUtils.errorf;
-local isArray = OOPUtils.isArray;
-local paramsToString = OOPUtils.paramsToString;
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
+local LVMUtils = require 'LVMUtils';
+local errorf = LVMUtils.errorf;
+local isArray = LVMUtils.isArray;
+local paramsToString = LVMUtils.paramsToString;
 
 local LVM;
 

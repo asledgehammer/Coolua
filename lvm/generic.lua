@@ -1,6 +1,10 @@
-local OOPUtils = require 'asledgehammer/util/OOPUtils';
-local errorf = OOPUtils.errorf;
-local isArray = OOPUtils.isArray;
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
+local LVMUtils = require 'LVMUtils';
+local errorf = LVMUtils.errorf;
+local isArray = LVMUtils.isArray;
 
 --- @type LVMGenericModule
 local API = {
