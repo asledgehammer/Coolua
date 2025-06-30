@@ -74,6 +74,8 @@ function LVMModule.setLVM(lvm) end
 --- @field value any
 --- @field static boolean
 --- @field final boolean
+--- @field get FieldGetDefinition?
+--- @field set FieldSetDefinition?
 --- @field assignedOnce boolean This flag is used for final fields. If true, all assignments will fail.
 
 --- @class (exact) FieldDefinitionParameter
@@ -84,6 +86,16 @@ function LVMModule.setLVM(lvm) end
 --- @field static boolean?
 --- @field final boolean?
 --- @field value any?
+--- @field get FieldGetDefinition?
+--- @field set FieldSetDefinition?
+
+--- @class (exact) FieldGetDefinition
+--- @field scope ClassScope?
+--- @field func function?
+
+--- @class (exact) FieldSetDefinition
+--- @field scope ClassScope?
+--- @field func function?
 
 -- MARK: - Constructor
 

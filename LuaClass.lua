@@ -12,6 +12,8 @@ local LuaClass = {
 
 LVM.flags.ignorePushPopContext = true;
 LuaClass.Object = require 'lua/lang/Object';
+LuaClass.Package = require 'lua/lang/Package';
+LuaClass.Class = require 'lua/lang/Class';
 LuaClass.StackTraceElement = require 'lua/lang/StackTraceElement';
 LVM.flags.ignorePushPopContext = false;
 

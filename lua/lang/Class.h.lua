@@ -8,4 +8,7 @@
 local ClassDefinition = {};
 
 --- @class Class: Object
+--- @field package string
+--- @field name string
+--- @field def ClassDefinition
 local Class = {};

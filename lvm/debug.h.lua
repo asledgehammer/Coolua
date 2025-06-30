@@ -9,4 +9,5 @@
 --- @field internal boolean
 --- @field method boolean
 --- @field scope boolean
+--- @field compile boolean
 local API = {};

@@ -1,6 +1,7 @@
 # To Remember:
 - Create method `gnew(genericsDefinition, ...)` for LVMClassDefinition method.
 - Implement generics type-casting.
+- FIXME: Store file path and line range for functions to not limit class definitions to one file path for visibility scopes.
 
 # GENERAL:
 - TODO: Implement Class object.

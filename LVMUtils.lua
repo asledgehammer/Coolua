@@ -377,4 +377,13 @@ function API.createClassMetatable(o)
     setmetatable(o, mt);
 end
 
+--- Converts the first character to upper. (Used for get-set shorthand)
+--- 
+--- @param str string
+--- 
+--- @return string firstCharUpperString
+function API.firstCharToUpper(str)
+    return string.upper(string.sub(str, 1, 1)) .. string.sub(str, 2);
+end
+
 return API;

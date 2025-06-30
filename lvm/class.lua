@@ -13,6 +13,7 @@ local debugf = LVMUtils.debugf;
 local errorf = LVMUtils.errorf;
 local isArray = LVMUtils.isArray;
 local isValidName = LVMUtils.isValidName;
+local firstCharToUpper = LVMUtils.firstCharToUpper;
 
 --- @type LVMClassModule
 local API = {
@@ -164,6 +165,8 @@ function API.newClass(definition)
             static = fd.static or false,
             final = fd.final or false,
             value = fd.value or LVM.constants.UNINITIALIZED_VALUE,
+            get = fd.get,
+            set = fd.set,
             assignedOnce = false,
         };
 
@@ -248,9 +251,120 @@ function API.newClass(definition)
             );
         end
 
+        local funcName = firstCharToUpper(args.name);
+
+        -- Validate get:
+        local tGet = type(args.get);
+        if tGet ~= 'nil' then
+            local mGetDef = {
+                name = 'get' .. funcName,
+                scope = args.scope, -- NOTE: We can only assume the same scope without further info.
+                returns = args.types
+            };
+
+            if tGet == 'boolean' then
+
+            elseif tGet == 'table' then
+                --- @type FieldGetDefinition
+                local getDef = args.get;
+
+                if mGetDef.scope then
+                    mGetDef.scope = getDef.scope;
+                end
+            end
+
+            cd:addMethod(mGetDef,
+                function(ins)
+                    return ins[args.name];
+                end
+            );
+        end
+
         self.declaredFields[args.name] = args;
 
         return args;
+    end
+
+    function cd:compileFieldAutoMethods()
+        for name, fieldDef in pairs(cd.declaredFields) do
+            local funcName = firstCharToUpper(fieldDef.name);
+            local tGet = type(fieldDef.get);
+            local tSet = type(fieldDef.set);
+
+            --- @type function
+            local fGet;
+            --- @type function
+            local fSet;
+
+            if tGet ~= 'nil' then
+                local mGetDef = {
+                    name = 'get' .. name,
+                    scope = fieldDef.scope,
+                    returns = fieldDef.types
+                };
+
+                if tGet == 'boolean' then
+
+                elseif tGet == 'table' then
+                    if fieldDef.get.scope then
+                        mGetDef.scope = fieldDef.get.scope;
+                    end
+                    if fieldDef.get.func then
+                        if type(fieldDef.get.func) ~= 'function' then
+                            errorf(2,
+                                '%s The getter method definition for field "%s" is not a function; {type = %s, value = %s}',
+                                cd.printHeader,
+                                name,
+                                LVM.type.getType(fieldDef.get.func),
+                                tostring(fieldDef.get.func)
+                            );
+                        end
+
+                        fGet = fieldDef.get.func;
+                    else
+                        fGet = function(ins)
+                            return ins[name];
+                        end;
+                    end
+                end
+
+                cd:addMethod(mGetDef, fGet);
+            end
+
+            if tSet ~= 'nil' then
+                local mSetDef = {
+                    name = 'set' .. funcName,
+                    scope = fieldDef.scope,
+                    parameters = {
+                        { name = 'value', types = fieldDef.types }
+                    }
+                };
+
+                if tSet == 'table' then
+                    if fieldDef.set.scope then
+                        mSetDef.scope = fieldDef.set.scope;
+                    end
+                    if fieldDef.set.func then
+                        if type(fieldDef.get.func) ~= 'function' then
+                            errorf(2,
+                                '%s The setter method definition for field "%s" is not a function; {type = %s, value = %s}',
+                                cd.printHeader,
+                                name,
+                                LVM.type.getType(fieldDef.get.func),
+                                tostring(fieldDef.get.func)
+                            );
+                        end
+                        fSet = fieldDef.set.func;
+                    else
+                        fSet = function(ins, value)
+                            ins[name] = value;
+                        end;
+                    end
+                end
+
+                cd:addMethod(mSetDef, fSet);
+            end
+        end
     end
 
     --- Attempts to resolve a FieldDefinition in the ClassDefinition. If the field isn't declared for the class level, the
@@ -759,16 +873,19 @@ function API.newClass(definition)
 
         -- TODO: Audit everything.
 
-        -- Change methods.
-        self.addMethod = function() errorf(2, '%s Cannot add methods. (Class is final!)', errHeader) end
-        self.addField = function() errorf(2, '%s Cannot add fields. (Class is final!)', errHeader) end
-        self.addConstructor = function() errorf(2, '%s Cannot add constructors. (Class is final!)', errHeader) end
-
         --- @type table<ParameterDefinition[], function>
         self.__constructors = {};
 
+        -- If any auto-methods are defined for fields (get, set), create them before compiling class methods.
+        self:compileFieldAutoMethods();
+
         --- @type table<string, MethodDefinition[]>
         self:compileMethods();
+
+        -- Change add methods.
+        self.addMethod = function() errorf(2, '%s Cannot add methods. (Class is final!)', errHeader) end
+        self.addField = function() errorf(2, '%s Cannot add fields. (Class is final!)', errHeader) end
+        self.addConstructor = function() errorf(2, '%s Cannot add constructors. (Class is final!)', errHeader) end
 
         -- Set default value(s) for static fields.
         for name, fd in pairs(cd.declaredFields) do

@@ -14,6 +14,7 @@ local API = {
     internal = false,
     method = false,
     scope = false,
+    compile = false,
 
     -- Method(s)
     setLVM = function(lvm) LVM = lvm end

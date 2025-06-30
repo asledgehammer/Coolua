@@ -1,7 +1,7 @@
-local LuaClass = require 'lua.LuaClass';
-local Class = LuaClass.ClassDefinition;
+local LVM = require 'LVM';
+local newClass = LVM.class.newClass;
 
-local Package = Class({
+local Package = newClass({
     scope = 'public',
     final = true,
 });
@@ -10,21 +10,27 @@ Package:addField({
     scope = 'private',
     final = true,
     type = 'string',
-    name = 'path'
+    name = 'path',
+
+    get = { scope = 'public' }
 });
 
 Package:addField({
     scope = 'private',
     final = true,
     type = 'string',
-    name = 'name'
+    name = 'name',
+
+    get = { scope = 'public' }
 });
 
 Package:addField({
     scope = 'private',
     final = true,
     type = 'table',
-    name = 'classes'
+    name = 'classes',
+
+    get = { scope = 'public' }
 });
 
 Package:addConstructor({
