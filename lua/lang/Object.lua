@@ -5,6 +5,8 @@
 local LVM = require 'LVM';
 local newClass = LVM.class.newClass;
 
+-- ! NOTE: All class objects for fields and parameter types are inferred using strings to prevent LVM-loading errors. ! 
+
 --- @type ObjectDefinition
 local Object = newClass({ scope = 'public' });
 
@@ -32,7 +34,7 @@ Object:addMethod({
         returns = 'boolean'
     },
     --- @param self Object
-    --- @param class LVMClassDefinition
+    --- @param class Class
     ---
     --- @return boolean isAssignable
     function(self, class)
@@ -84,7 +86,7 @@ Object:addMethod({
         scope = 'public',
         final = true,
         name = 'getClass',
-        returns = 'ClassDefinition'
+        returns = 'lua.lang.Class'
     },
     --- @param self Object
     ---
@@ -94,6 +96,4 @@ Object:addMethod({
     end
 );
 
-Object:finalize();
-
-return Object;
+return Object:finalize();

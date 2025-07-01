@@ -1,11 +1,11 @@
 local LVM = require 'LVM';
 local newClass = LVM.class.newClass;
 
-local Package = newClass({
-    scope = 'public',
-    final = true,
-});
+-- public final class Package {
 
+local Package = newClass({ scope = 'public', final = true });
+
+-- private final string path { get; }
 Package:addField({
     scope = 'private',
     final = true,
@@ -15,6 +15,7 @@ Package:addField({
     get = { scope = 'public' }
 });
 
+-- private final string name { get; }
 Package:addField({
     scope = 'private',
     final = true,
@@ -24,6 +25,7 @@ Package:addField({
     get = { scope = 'public' }
 });
 
+-- private final Class[] classes; { get; }
 Package:addField({
     scope = 'private',
     final = true,
@@ -33,8 +35,9 @@ Package:addField({
     get = { scope = 'public' }
 });
 
+-- private Package(String path)
 Package:addConstructor({
-        scope = 'public',
+        scope = 'private',
         parameters = {
             { name = 'path', type = 'string' }
         }
@@ -49,6 +52,6 @@ Package:addConstructor({
     end
 );
 
-Package:finalize();
+-- }
 
-return Package;
+return Package:finalize();

@@ -13,7 +13,7 @@ function ObjectDefinition.new() end
 --- @class Object: ClassInstance
 local Object = {};
 
---- @return ClassDefinition definition The class definition of the object.
+--- @return Class class The class of the object.
 function Object:getClass() end
 
 --- @return boolean result Returns true if the instance is either directly of the class or a super-class.

@@ -59,6 +59,5 @@ Class:addConstructor({
 );
 
 -- }
-Class:finalize();
 
-return Class;
+return Class:finalize();

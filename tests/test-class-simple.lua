@@ -11,4 +11,4 @@ print('\nInstance tests:\n');
 print('\tobject:getWidth(): ', dim1:getWidth());
 print('\tobject:toString(): ', dim1);
 print('\tdim1 == dim2 (false): ', dim1 == dim2);
-print('\tdim1 == dim3  (true): ', dim1 == dim3);
+print('\tdim1 == dim3 (true): ', dim1 == dim3);
