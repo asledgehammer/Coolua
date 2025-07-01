@@ -23,14 +23,26 @@ local API = {
     setLVM = function(lvm) LVM = lvm end
 };
 
---- @type table<string, LVMClassDefinition>
+--- @type table<string, Class>
 ---
 --- Classes are stored as their path.
 local CLASSES = {};
 
+--- @type table<string, LVMClassDefinition>
+---
+--- Class Definitions are stored as their path.
+local CLASS_DEFS = {};
+
 --- @param path string
 ---
 --- @return LVMClassDefinition|nil
+function API.forNameDef(path)
+    return CLASS_DEFS[path];
+end
+
+--- @param path string
+---
+--- @return Class|nil
 function API.forName(path)
     return CLASSES[path];
 end
@@ -93,7 +105,7 @@ function API.newClass(definition)
     cd.__middleConstructor = LVM.constructor.createMiddleConstructor(cd);
 
     if not cd.superClass and cd.path ~= 'lua.lang.Object' then
-        cd.superClass = API.forName('lua.lang.Object');
+        cd.superClass = API.forNameDef('lua.lang.Object');
         if not cd.superClass then
             errorf(2, '%s lua.lang.Object not defined!', cd.printHeader);
         end
@@ -201,25 +213,56 @@ function API.newClass(definition)
 
         -- Validate types:
         if not args.types and not args.type then
-            errorf(2, '%s string[] property "types" or simplified string property "type" are not provided.', errHeader);
+            errorf(2, '%s array property "types" or simplified string property "type" are not provided.', errHeader);
         elseif args.types then
             if type(args.types) ~= 'table' or not isArray(args.types) then
-                errorf(2, 'FieldDefinition: property "types" is not a string[]. {type=%s, value=%s}',
+                errorf(2, 'types is not an array. {type=%s, value=%s}',
                     errHeader, type(args.types), tostring(args.types)
                 );
             elseif #args.types == 0 then
-                errorf(2, '%s string[] property "types" is empty. (min=1)', errHeader);
+                errorf(2, '%s types is empty. (min=1)', errHeader);
             elseif arrayContainsDuplicates(args.types) then
-                errorf(2, '%s string[] property "types" contains duplicate types.', errHeader);
+                errorf(2, '%s types contains duplicate types.', errHeader);
+            end
+
+            for i = 1, #args.types do
+                local tType = type(args.types[i]);
+                if tType == 'table' then
+                    if not args.type['__type__'] then
+                        errorf(2, '%s types[%i] is a table without a "string __type__" property.', errHeader, i);
+                    elseif type(args.type['__type__']) ~= 'string' then
+                        errorf(2, '%s types[%i].__type__ is not a string.');
+                    end
+                    args.types[i] = type['__type__'];
+                elseif tType == 'string' then
+                    if args.types[i] == '' then
+                        errorf(2, '%s types[%i] is an empty string.', errHeader, i);
+                    end
+                else
+                    errorf(2, '%s: types[%i] is not a string or { __type__: string }. {type=%s, value=%s}',
+                        errHeader, i, type(args.type), tostring(args.type)
+                    );
+                end
             end
         else
-            if type(args.type) ~= 'string' then
+            local tType = type(args.type);
+            if tType == 'table' then
+                if not args.type['__type__'] then
+                    errorf(2, '%s property "type" is a table without a "string __type__" property.', errHeader);
+                elseif type(args.type['__type__']) ~= 'string' then
+                    errorf(2, '%s type.__type__ is not a string.');
+                end
+                args.type = args.type['__type__'];
+            elseif tType == 'string' then
+                if args.type == '' then
+                    errorf(2, '%s property "type" is an empty string.', errHeader);
+                end
+            else
                 errorf(2, '%s: property "type" is not a string. {type=%s, value=%s}',
                     errHeader, type(args.type), tostring(args.type)
                 );
-            elseif args.type == '' then
-                errorf(2, '%s property "type" is an empty string.', errHeader);
             end
+
             -- Set the types array and remove the simplified form.
             args.types = { args.type };
             args.type = nil;
@@ -553,25 +596,7 @@ function API.newClass(definition)
     --- @return ConstructorDefinition|nil constructorDefinition
     function cd:getDeclaredConstructor(args)
         args = args or LVM.constants.EMPTY_TABLE;
-        local argsLen = #args;
-        local cons = nil;
-        for i = 1, #cd.declaredConstructors do
-            local decCons = cd.declaredConstructors[i];
-            local consParameters = decCons.parameters;
-            local consLen = #consParameters;
-            if argsLen == consLen then
-                cons = decCons;
-                for j = 1, #consParameters do
-                    local arg = args[j];
-                    local parameter = consParameters[j];
-                    if not LVM.type.isAssignableFromType(arg, parameter.types) then
-                        cons = nil;
-                        break;
-                    end
-                end
-            end
-        end
-        return cons;
+        return LVM.constructor.resolveConstructor(self.declaredConstructors, args);
     end
 
     --- @param line integer
@@ -676,13 +701,6 @@ function API.newClass(definition)
                 for i = 1, paramLen do
                     local param = args.parameters[i];
 
-                    -- Validate parameter name.
-                    if not param.name then
-                        errorf(2, '%s Parameter #%i doesn\'t have a defined name string.', errHeader, i);
-                    elseif param.name == '' then
-                        errorf(2, '%s Parameter #%i has an empty name string.', errHeader, i);
-                    end
-
                     -- Validate parameter type(s).
                     if not param.type and not param.types then
                         errorf(2, '%s Parameter #%i doesn\'t have a defined type string or types string[]. (name = %s)',
@@ -694,6 +712,13 @@ function API.newClass(definition)
                             --- @diagnostic disable-next-line
                             param.type = nil;
                         end
+                    end
+
+                    -- Validate parameter name.
+                    if not param.name and not LVM.parameter.isVararg(param.types[1]) then
+                        errorf(2, '%s Parameter #%i doesn\'t have a defined name string.', errHeader, i);
+                    elseif param.name == '' then
+                        errorf(2, '%s Parameter #%i has an empty name string.', errHeader, i);
                     end
                 end
             end
@@ -896,6 +921,20 @@ function API.newClass(definition)
         self.addField = function() errorf(2, '%s Cannot add fields. (Class is final!)', errHeader) end
         self.addConstructor = function() errorf(2, '%s Cannot add constructors. (Class is final!)', errHeader) end
 
+        self.create = function(self)
+            -- If Class isn't loaded yet then return nil.
+            if not _G.lua.lang.Class then return nil end
+
+            LVM.flags.bypassFieldSet = true;
+            self.classObj = _G.lua.lang.Class.new(self);
+            LVM.flags.bypassFieldSet = false;
+
+            CLASSES[cd.path] = self.classObj;
+
+            self.create = function(self) return self.classObj end
+            return self.classObj;
+        end
+
         -- Set default value(s) for static fields.
         for name, fd in pairs(cd.declaredFields) do
             if fd.static then
@@ -969,6 +1008,12 @@ function API.newClass(definition)
 
             if field == 'super' or field == '__super__' then
                 errorf(2, '%s Cannot set super. (Static context)', cd.printHeader);
+                return;
+            end
+
+            -- Post-finalize assignment.
+            if field == 'classObj' and not __properties['classObj'] then
+                __properties['classObj'] = value;
                 return;
             end
 
@@ -1051,7 +1096,7 @@ function API.newClass(definition)
         setmetatable(cd, mt);
 
         self.lock = true;
-        CLASSES[cd.path] = cd;
+        CLASS_DEFS[cd.path] = cd;
 
         -- Set class as child.
         if cd.superClass then

@@ -24,3 +24,9 @@ function API.getDeclaredMethodNames(classDef, array) end
 ---
 --- @return string[] methodNames
 function API.getMethodNames(classDef, methodNames) end
+
+--- @param methods MethodDefinition[]
+--- @param args any[]
+--- 
+--- @return MethodDefinition|nil
+function API.resolveMethod(methods, args) end

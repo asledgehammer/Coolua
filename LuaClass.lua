@@ -16,4 +16,11 @@ LuaClass.Class = require 'lua/lang/Class';
 -- Language-util-level
 LuaClass.StackTraceElement = require 'lua/lang/StackTraceElement';
 
+LVM.flags.bypassFieldSet = true;
+
+LuaClass.Class:create();
+LuaClass.Object:create();
+
+LVM.flags.bypassFieldSet = false;
+
 return LuaClass;

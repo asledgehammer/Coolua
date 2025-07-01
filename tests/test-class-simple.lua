@@ -1,8 +1,8 @@
 local Dimension = require 'cssbox/layout/Dimension';
 
-local dim1 = Dimension.new(5, 5);
-local dim2 = Dimension.new(5, 4);
-local dim3 = Dimension.new(5, 5);
+local dim1 = Dimension:new(5, 5);
+local dim2 = Dimension:new(5, 4);
+local dim3 = Dimension:new(5, 5);
 
 print('ClassDefinition tests:\n');
 print('\tClassDefinition:__tostring()', Dimension);

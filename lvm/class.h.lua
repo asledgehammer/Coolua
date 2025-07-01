@@ -10,6 +10,11 @@ local API = {};
 --- @param path string
 ---
 --- @return LVMClassDefinition|nil
+function API.forNameDef(path) end
+
+--- @param path string
+---
+--- @return Class|nil
 function API.forName(path) end
 
 --- Defined for all classes so that __eq actually fires.

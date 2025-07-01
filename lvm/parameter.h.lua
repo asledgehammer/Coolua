@@ -12,3 +12,13 @@ local API = {};
 ---
 --- @return boolean
 function API.areCompatable(paramsA, paramsB) end
+
+--- @param arg string
+--- 
+--- @return string[] argTypes
+function API.getVarargTypes(arg) end
+
+--- @param arg string
+--- 
+--- @return boolean isVararg
+function API.isVararg(arg) end

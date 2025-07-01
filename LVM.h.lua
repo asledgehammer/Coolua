@@ -123,7 +123,7 @@ function LVMModule.setLVM(lvm) end
 --- @class (exact) ParameterDefinitionParameter
 --- @field types string[]?
 --- @field type string?
---- @field name string
+--- @field name string?
 
 -- MARK: - Method
 
@@ -186,6 +186,7 @@ function LVMModule.setLVM(lvm) end
 --- @field lock boolean
 --- @field name string
 --- @field package string
+--- @field classObj Class?
 --- @field declaredFields table<string, FieldDefinition>
 --- @field declaredMethods table<string, MethodDefinition>
 --- @field declaredConstructors ConstructorDefinition[]
@@ -291,6 +292,9 @@ function LVMClassDefinition:getMethodFromLine(line) end
 ---
 --- @return ConstructorDefinition|nil method
 function LVMClassDefinition:getConstructorFromLine(line) end
+
+--- @return Class
+function LVMClassDefinition:create() end
 
 -- MARK: StackTrace
 

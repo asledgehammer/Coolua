@@ -19,32 +19,79 @@ local API = {
     setLVM = function(lvm) LVM = lvm end
 };
 
-function API.createMiddleMethod(cd, name, methods)
-    return function(o, ...)
-        local args = { ... };
-        local argsLen = #args;
+function API.resolveMethod(methods, args)
+    
+    local argsLen = #args;
 
-        --- @type MethodDefinition?
-        local md = nil;
+    --- @type MethodDefinition?
+    local md = nil;
+
+    -- Try to find the method without varargs first.
+    for i = 1, #methods do
+        if md then break end
+        md = methods[i];
+        local parameters = md.parameters or {};
+        local paramLen = #parameters;
+        if argsLen == paramLen then
+            for p = 1, paramLen do
+                local arg = args[p];
+                local parameter = parameters[p];
+                if not LVM.type.isAssignableFromType(arg, parameter.types) then
+                    md = nil;
+                    break;
+                end
+            end
+        else
+            md = nil;
+        end
+    end
+
+    -- Check and see if a vararg method exists.
+    if not md then
         for i = 1, #methods do
             if md then break end
             md = methods[i];
             local parameters = md.parameters or {};
             local paramLen = #parameters;
-            if argsLen == paramLen then
-                for p = 1, paramLen do
-                    local arg = args[p];
-                    local parameter = parameters[p];
-                    if not LVM.type.isAssignableFromType(arg, parameter.types) then
-                        md = nil;
-                        break;
+            if paramLen ~= 0 then
+                local lastParameter = parameters[paramLen];
+                local lastType = lastParameter.types[i];
+                if not LVM.parameter.isVararg(lastType) then
+                    md = nil;
+                    -- If the varArg range doesn't match.
+                elseif paramLen > argsLen then
+                    md = nil;
+                else
+                    local varArgTypes = LVM.parameter.getVarargTypes(lastType);
+                    -- Check normal parameters.
+                    for p = 1, paramLen - 1 do
+                        local arg = args[p];
+                        local parameter = parameters[p];
+                        if not LVM.type.isAssignableFromType(arg, parameter.types) then
+                            md = nil;
+                            break;
+                        end
+                    end
+                    -- Check vararg parameters.
+                    for p = paramLen, argsLen do
+                        local arg = args[p];
+                        if not LVM.type.isAssignableFromType(arg, varArgTypes) then
+                            md = nil;
+                            break;
+                        end
                     end
                 end
-            else
-                md = nil;
             end
         end
+    end
+    return md;
+end
 
+function API.createMiddleMethod(cd, name, methods)
+    return function(o, ...)
+        local args = { ... };        
+        local md = API.resolveMethod(methods, args);
+        
         local errHeader = string.format('Class(%s):%s():', cd.name, name);
 
         if not md then

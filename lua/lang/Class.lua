@@ -17,12 +17,18 @@ local Class = newClass({
     final = true
 });
 
+-- private final String __type__;
+Class:addField({
+    scope = 'public',
+    name = '__type__',
+    type = 'string',
+});
+
 -- private final String package { get; }
 Class:addField({
     scope = 'private',
-    final = true,
     name = 'package',
-    type = 'string',
+    type = Package,
 
     get = { scope = 'public' }
 });
@@ -51,19 +57,29 @@ Class:addField({
 Class:addConstructor({
         scope = 'private',
         parameters = {
-            { name = 'package', type = Package },
-            { name = 'name',    type = 'string' },
-            { name = 'def',     type = 'ClassDefinition' }
+            { name = 'def', type = 'ClassDefinition' }
         }
     },
     --- @param self Class
-    --- @param package string
-    --- @param name string
     --- @param def ClassDefinition
-    function(self, package, name, def)
-        self.package = package;
-        self.name = name;
+    function(self, def)
         self.def = def;
+        self.name = def.name;
+        self.__type__ = 'lua.lang.Class';
+    end
+);
+
+Class:addMethod({
+        scope = 'public',
+        final = true,
+        name = 'new',
+        parameters = {
+            { type = 'any...' }
+        },
+        returns = 'lua.lang.Object'
+    },
+    function(self, ...)
+        return self.def.new(...);
     end
 );
 

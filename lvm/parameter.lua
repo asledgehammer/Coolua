@@ -2,6 +2,9 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+local LVMUtils = require 'LVMUtils';
+local errorf = LVMUtils.errorf;
+
 --- @type LVM
 local LVM;
 
@@ -32,6 +35,19 @@ function API.areCompatable(paramsA, paramsB)
     end
 
     return true;
+end
+
+function API.getVarargTypes(arg)
+    if not API.isVararg(arg) then
+        errorf(2, 'Type is not vararg: %s', arg);
+    end
+    return arg:sub(1, #arg - 3):split('|');
+end
+
+function API.isVararg(arg)
+    local len = #arg;
+    if len < 3 then return false end
+    return string.sub(arg, len - 2, len) == '...';
 end
 
 return API;
