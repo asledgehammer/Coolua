@@ -50,9 +50,9 @@ function API.forName(path)
         local def = CLASS_DEFS[path];
         -- print(string.format('CLASS_DEFS[%s] = %s', path, tostring(def)))
         if def then
-            LVM.flags.init = LVM.flags.init + 1;
+            LVM.flags.internal = LVM.flags.internal + 1;
             class = _G.lua.lang.Class.new(def);
-            LVM.flags.init = LVM.flags.init - 1;
+            LVM.flags.internal = LVM.flags.internal - 1;
             -- print('result: ' .. tostring(class));
             CLASSES[path] = class;
         end
@@ -180,9 +180,9 @@ function API.newClass(definition)
 
         o.getClass = function(self)
             if not self.__class__ then
-                LVM.flags.init = LVM.flags.init + 1;
+                LVM.flags.internal = LVM.flags.internal + 1;
                 self.__class__ = API.forName(cd.path);
-                LVM.flags.init = LVM.flags.init - 1;
+                LVM.flags.internal = LVM.flags.internal - 1;
             end
             return self.__class__;
         end

@@ -111,7 +111,7 @@ function API.createInstanceMetatable(cd, o)
             end
             return;
         elseif field == '__class__' then
-            if LVM.flags.init ~= 0 then
+            if LVM.flags.internal ~= 0 then
                 fields.__class__ = value;
             else
                 errorf(2, '%s Cannot set __class__. (Internal field)', cd.printHeader);
