@@ -112,6 +112,4 @@ Rectangle:addMethod({
     end
 );
 
-Rectangle:finalize();
-
-return Rectangle;
+return Rectangle:finalize();

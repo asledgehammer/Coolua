@@ -96,4 +96,4 @@ Dimension:addMethod({
     end
 );
 
-return Dimension:finalize():create();
+return Dimension:finalize();

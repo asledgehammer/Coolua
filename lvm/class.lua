@@ -40,11 +40,25 @@ function API.forNameDef(path)
     return CLASS_DEFS[path];
 end
 
---- @param path string
----
---- @return Class|nil
 function API.forName(path)
-    return CLASSES[path];
+    --- @type Class?
+    local class = CLASSES[path];
+    -- print(string.format('CLASSES[%s] = %s', path, tostring(class)))
+
+    if not class then
+        --- @type LVMClassDefinition
+        local def = CLASS_DEFS[path];
+        -- print(string.format('CLASS_DEFS[%s] = %s', path, tostring(def)))
+        if def then
+            LVM.flags.init = LVM.flags.init + 1;
+            class = _G.lua.lang.Class.new(def);
+            LVM.flags.init = LVM.flags.init - 1;
+            -- print('result: ' .. tostring(class));
+            CLASSES[path] = class;
+        end
+    end
+
+    return class;
 end
 
 --- Defined for all classes so that __eq actually fires.
@@ -55,7 +69,20 @@ end
 ---
 --- @return boolean result
 function API.equals(a, b)
-    return a:getClass().__middleMethods['equals'](a, b);
+    return a:getClass():getDefinition().__middleMethods['equals'](a, b);
+end
+
+-- For internal / bottom-level classes, this will aid in providing methods for what's needed.
+local function createPseudoClassInstance(def)
+    -- Prevent infinite loops.
+    local __class__ = { getDefinition = function() return def; end };
+    local mt = {};
+    function mt.__tostring()
+        return '(Pseudo-Class): ' .. def.name;
+    end
+
+    setmetatable(__class__, mt);
+    return __class__;
 end
 
 --- @param definition LVMClassDefinitionParameter
@@ -75,12 +102,18 @@ function API.newClass(definition)
         name = inferredName;
     end
 
+    local superClass = definition.superClass;
+    if superClass and superClass.__type__ == 'lua.lang.Class' then
+        --- @cast superClass Class<Object>
+        superClass = superClass:getDefinition();
+    end
+
     local cd = {
         __type__ = 'ClassDefinition',
         package = package,
         name = name,
         scope = definition.scope,
-        superClass = definition.superClass,
+        superClass = superClass,
         subClasses = {},
     };
 
@@ -111,6 +144,8 @@ function API.newClass(definition)
         end
     end
 
+    CLASS_DEFS[cd.path] = cd;
+
     -- MARK: - new()
 
     function cd.new(...)
@@ -122,20 +157,35 @@ function API.newClass(definition)
 
         -- TODO: Check if package-class exists.
 
-        local o = { __class__ = cd, __type__ = cd.type };
+        local __class__;
+        if cd.path ~= 'lua.lang.Class' then -- Prevent infinite loops.
+            __class__ = API.forName(path);
+        else
+            __class__ = createPseudoClassInstance(cd);
+        end
+
+        local o = {
+            __type__ = cd.type,
+            __class__ = __class__,
+        };
 
         --- Assign the middle-functions to the object.
         for name, func in pairs(cd.__middleMethods) do
             o[name] = func;
         end
 
-        -- for name, decField in pairs(cd.declaredFields) do
-        --     o[name] = decField;
-        -- end
-
         LVM.canSetSuper = true;
         o.__super__ = LVM.super.createSuperTable(cd, o);
         LVM.canSetSuper = false;
+
+        o.getClass = function(self)
+            if not self.__class__ then
+                LVM.flags.init = LVM.flags.init + 1;
+                self.__class__ = API.forName(cd.path);
+                LVM.flags.init = LVM.flags.init - 1;
+            end
+            return self.__class__;
+        end
 
         -- Assign non-static default values of fields.
         local fields = cd:getFields();
@@ -144,7 +194,14 @@ function API.newClass(definition)
             if not fd.static then
                 -- TODO: Make unique.
                 o[fd.name] = fd.value;
+                -- print(string.format('Field: o[%s] = %s', fd.name, tostring(fd.value)));
             end
+        end
+
+        local middleMethods = cd.__middleMethods;
+        for name, func in pairs(middleMethods) do
+            o[name] = func;
+            -- print(string.format('Method: o[%s] = %s', name, tostring(func)));
         end
 
         LVM.meta.createInstanceMetatable(cd, o);
@@ -350,7 +407,7 @@ function API.newClass(definition)
 
             if tGet ~= 'nil' then
                 local mGetDef = {
-                    name = 'get' .. name,
+                    name = 'get' .. funcName,
                     scope = fieldDef.scope,
                     returns = fieldDef.types
                 };
@@ -379,6 +436,8 @@ function API.newClass(definition)
                         end;
                     end
                 end
+
+                debugf(LVM.flags.method, 'Creating auto-method: ', cd.name .. '.' .. mGetDef.name);
 
                 cd:addMethod(mGetDef, fGet);
             end
@@ -413,6 +472,8 @@ function API.newClass(definition)
                         end;
                     end
                 end
+
+                debugf(LVM.debug.method, 'Creating auto-method: ', cd.name .. '.' .. mSetDef.name);
 
                 cd:addMethod(mSetDef, fSet);
             end
@@ -901,17 +962,14 @@ function API.newClass(definition)
 
         if self.lock then
             errorf(2, '%s Cannot finalize. (Class is already finalized!)', errHeader);
-        elseif self.superClass and not self.superClass.lock then
-            errorf(2, '%s Cannot finalize. (SuperClass %s is not finalized!)', errHeader, self.superClass.path);
+        elseif cd.superClass and (cd.superClass.__type__ == 'ClassDefinition' and not cd.superClass.lock) then
+            errorf(2, '%s Cannot finalize. (SuperClass %s is not finalized!)', errHeader, path);
         end
-
-        -- TODO: Audit everything.
-
-        --- @type table<ParameterDefinition[], function>
-        self.__constructors = {};
 
         -- If any auto-methods are defined for fields (get, set), create them before compiling class methods.
         self:compileFieldAutoMethods();
+
+        -- TODO: Audit everything.
 
         --- @type table<string, MethodDefinition[]>
         self:compileMethods();
@@ -921,26 +979,15 @@ function API.newClass(definition)
         self.addField = function() errorf(2, '%s Cannot add fields. (Class is final!)', errHeader) end
         self.addConstructor = function() errorf(2, '%s Cannot add constructors. (Class is final!)', errHeader) end
 
-        self.create = function(self)
-            -- If Class isn't loaded yet then return nil.
-            if not _G.lua.lang.Class then return nil end
-
-            LVM.flags.bypassFieldSet = true;
-            self.classObj = _G.lua.lang.Class.new(self);
-            LVM.flags.bypassFieldSet = false;
-
-            CLASSES[cd.path] = self.classObj;
-
-            self.create = function(self) return self.classObj end
-            return self.classObj;
-        end
-
         -- Set default value(s) for static fields.
         for name, fd in pairs(cd.declaredFields) do
             if fd.static then
                 cd[name] = fd.value;
             end
         end
+
+        --- @type table<ParameterDefinition[], function>
+        self.__constructors = {};
 
         -- Set all definitions as read-only.
         local constructorsLen = #self.declaredConstructors;

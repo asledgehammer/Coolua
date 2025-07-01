@@ -10,8 +10,8 @@ local newClass = LVM.class.newClass;
 LVM.flags.ignorePushPopContext = true;
 
 --- @type ObjectDefinition
-local Object = newClass({ 
-    
+local Object = newClass({
+
     -- Define these for debugging purposes.
     package = 'lua.lang',
     name = 'Object',
@@ -31,10 +31,7 @@ Object:addMethod({
         final = true,
         name = 'instanceOf',
         parameters = {
-            {
-                name = 'class',
-                type = 'ClassDefinition'
-            }
+            { name = 'class', type = 'lua.lang.Class' }
         },
         returns = 'boolean'
     },
@@ -51,10 +48,7 @@ Object:addMethod({
         scope = 'public',
         name = 'equals',
         parameters = {
-            {
-                name = 'other',
-                type = 'any'
-            }
+            { name = 'other', type = 'any' }
         },
         returns = 'boolean'
     },
@@ -89,7 +83,7 @@ Object:addMethod({
     },
     --- @param self Object
     ---
-    --- @return LVMClassDefinition classDef
+    --- @return Class class
     function(self)
         return self.__class__;
     end

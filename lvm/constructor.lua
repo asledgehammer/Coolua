@@ -111,7 +111,8 @@ function API.createMiddleConstructor(classDef)
         callInfo.path = relPath;
         local scopeAllowed = LVM.scope.getScopeForCall(cons.class, callInfo);
 
-        if not LVM.flags.bypassFieldSet and not LVM.scope.canAccessScope(cons.scope, scopeAllowed) then
+
+        if LVM.flags.init == 0 and not LVM.scope.canAccessScope(cons.scope, scopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The constructor %s.new(%s) is set as "%s" access level. (Access Level from call: "%s")\n%s',
                 cons.class.name, paramsToString(cons.parameters),
@@ -120,7 +121,7 @@ function API.createMiddleConstructor(classDef)
             );
             LVM.stack.popContext();
             print(errMsg);
-            error('', 2);
+            error(errMsg, 2);
             return;
         end
 

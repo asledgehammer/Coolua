@@ -181,8 +181,8 @@ function LVMModule.setLVM(lvm) end
 --- @field type string
 --- @field path string
 --- @field methods table<string, MethodDefinition[]>
---- @field superClass LVMClassDefinition?
---- @field subClasses LVMClassDefinition[]
+--- @field superClass LVMClassDefinition
+--- @field subClasses (LVMClassDefinition|Class)[]
 --- @field lock boolean
 --- @field name string
 --- @field package string
@@ -270,7 +270,7 @@ function LVMClassDefinition:getDeclaredMethods(name) end
 --- @return MethodDefinition|nil methodDefinition
 function LVMClassDefinition:getDeclaredMethod(name, args) end
 
---- @returns ClassDefinition
+--- @returns LVMClassDefinition
 function LVMClassDefinition:finalize() end
 
 --- @param class LVMClassDefinition

@@ -47,8 +47,8 @@ Class:addField({
 Class:addField({
     scope = 'private',
     final = true,
-    name = 'def',
-    type = 'ClassDefinition',
+    name = 'definition',
+    type = 'LVMClassDefinition',
 
     get = { scope = 'public' }
 });
@@ -61,10 +61,10 @@ Class:addConstructor({
         }
     },
     --- @param self Class
-    --- @param def ClassDefinition
-    function(self, def)
-        self.def = def;
-        self.name = def.name;
+    --- @param definition ClassDefinition
+    function(self, definition)
+        self.definition = definition;
+        self.name = definition.name;
         self.__type__ = 'lua.lang.Class';
     end
 );
@@ -79,7 +79,7 @@ Class:addMethod({
         returns = 'lua.lang.Object'
     },
     function(self, ...)
-        return self.def.new(...);
+        return self.definition.new(...);
     end
 );
 

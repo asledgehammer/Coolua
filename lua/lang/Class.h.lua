@@ -7,7 +7,7 @@
 --- @class ClassDefinition: LVMClassDefinition
 local ClassDefinition = {};
 
---- @param def ClassDefinition
+--- @param def LVMClassDefinition
 function ClassDefinition.new(def) end
 
 --- @return Class
@@ -16,7 +16,7 @@ function ClassDefinition:create() end
 --- @class Class: Object
 --- @field package string
 --- @field name string
---- @field def ClassDefinition
+--- @field definition ClassDefinition
 ---
 --- @generic T: ObjectDefinition
 local Class = {};
@@ -25,3 +25,6 @@ local Class = {};
 ---
 --- @return boolean isAssignable
 function Class:isAssignableFromType(other) end
+
+--- @return LVMClassDefinition
+function Class:getDefinition() end

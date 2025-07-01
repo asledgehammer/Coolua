@@ -45,7 +45,7 @@ end
 --- @param context ContextArgs
 function API.pushContext(context)
     -- Muting context.
-    if LVM.ignorePushPopContext then return end
+    if LVM.init or LVM.ignorePushPopContext then return end
 
     debugf(LVM.debug.scope, 'line %i ContextStack[%i] pushContext(%s)', DebugUtils.getCurrentLine(3), #stack + 1,
         tostring(context));
@@ -67,7 +67,7 @@ end
 
 function API.popContext()
     -- Muting context.
-    if LVM.ignorePushPopContext then return end
+    if LVM.init or LVM.ignorePushPopContext then return end
 
     debugf(LVM.debug.scope, 'line %i ContextStack[%i] popContext()', DebugUtils.getCurrentLine(3), #stack - 1);
     local stackLen = #stack;

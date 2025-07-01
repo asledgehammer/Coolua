@@ -11,4 +11,5 @@
 --- @field canGetSuper boolean This private switch flag helps shadow attempts to get super outside the class framework.
 --- @field canSetSuper boolean This private switch flag helps shadow attempts to set super outside the class framework.
 --- @field allowPackageStructModifications boolean This private switch flag helps shadow assignments and construction of global package struct references.
+--- @field init number
 local API = {};

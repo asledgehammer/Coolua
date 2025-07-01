@@ -17,6 +17,7 @@ local API = {
     canSetAudit = false,
     canSetSuper = false,
     ignorePushPopContext = false,
+    init = 0,
 
     -- Method(s)
     setLVM = function(lvm) LVM = lvm end

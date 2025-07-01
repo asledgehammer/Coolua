@@ -7,14 +7,18 @@
 --- @class LVMClassModule: LVMModule
 local API = {};
 
---- @param path string
+--- Simulates path resolution from Java via `Class.forName(..)`. Resolves the definition struct.
 ---
---- @return LVMClassDefinition|nil
+--- @param path string The path to the class. syntax: `<package>.<class>`
+---
+--- @return LVMClassDefinition|nil The LVM class definition struct. If no definition exists with the path then nil is returned.
 function API.forNameDef(path) end
 
---- @param path string
+--- Simulates path resolution from Java via `Class.forName(..)`. Resolves (or builds) a Class object.
 ---
---- @return Class|nil
+--- @param path string The path to the class. syntax: `<package>.<class>`
+---
+--- @return Class|nil classObj The class object. If no definition exists with the path then nil is returned.
 function API.forName(path) end
 
 --- Defined for all classes so that __eq actually fires.
@@ -27,6 +31,6 @@ function API.forName(path) end
 function API.equals(a, b) end
 
 --- @param defParams LVMClassDefinitionParameter
---- 
+---
 --- @return LVMClassDefinition
 function API.newClass(defParams) end

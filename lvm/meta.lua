@@ -41,6 +41,8 @@ function API.createInstanceMetatable(cd, o)
             return fields[field];
         elseif field == 'super' then
             return rawget(o, '__super__');
+        elseif field == '__class__' then
+            return fields[field];
         end
 
         local fd = cd:getField(field);
@@ -106,6 +108,13 @@ function API.createInstanceMetatable(cd, o)
                 fields.__super__ = value;
             else
                 errorf(2, '%s Cannot set __super__. (Internal field)', cd.printHeader);
+            end
+            return;
+        elseif field == '__class__' then
+            if LVM.flags.init ~= 0 then
+                fields.__class__ = value;
+            else
+                errorf(2, '%s Cannot set __class__. (Internal field)', cd.printHeader);
             end
             return;
         end

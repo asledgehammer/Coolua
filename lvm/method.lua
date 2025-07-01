@@ -89,7 +89,7 @@ end
 
 function API.createMiddleMethod(cd, name, methods)
     return function(o, ...)
-        local args = { ... };        
+        local args = { ... };
         local md = API.resolveMethod(methods, args);
         
         local errHeader = string.format('Class(%s):%s():', cd.name, name);
