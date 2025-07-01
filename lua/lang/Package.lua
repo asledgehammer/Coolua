@@ -1,9 +1,18 @@
 local LVM = require 'LVM';
 local newClass = LVM.class.newClass;
 
+require 'lua/lang/Object';
+
 -- public final class Package {
 
-local Package = newClass({ scope = 'public', final = true });
+local Package = newClass({
+    -- Define these for debugging purposes.
+    path = 'lua.lang',
+    name = 'Package',
+
+    scope = 'public',
+    final = true
+});
 
 -- private final string path { get; }
 Package:addField({

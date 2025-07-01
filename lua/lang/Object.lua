@@ -5,21 +5,26 @@
 local LVM = require 'LVM';
 local newClass = LVM.class.newClass;
 
--- ! NOTE: All class objects for fields and parameter types are inferred using strings to prevent LVM-loading errors. ! 
+-- ! NOTE: All class objects for fields and parameter types are inferred using strings to prevent LVM-loading errors. !
+
+LVM.flags.ignorePushPopContext = true;
 
 --- @type ObjectDefinition
-local Object = newClass({ scope = 'public' });
+local Object = newClass({ 
+    
+    -- Define these for debugging purposes.
+    package = 'lua.lang',
+    name = 'Object',
 
--- MARK: - Constructors
+    scope = 'public'
+});
+
+LVM.flags.ignorePushPopContext = false;
 
 Object:addConstructor({
-        scope = 'public',
-        parameters = {}
-    },
-    function() end
-);
-
--- MARK: - instanceOf()
+    scope = 'public',
+    parameters = {}
+});
 
 Object:addMethod({
         scope = 'public',
@@ -42,8 +47,6 @@ Object:addMethod({
     end
 );
 
--- MARK: - equals()
-
 Object:addMethod({
         scope = 'public',
         name = 'equals',
@@ -65,8 +68,6 @@ Object:addMethod({
     end
 );
 
--- MARK: - toString()
-
 Object:addMethod({
         scope = 'public',
         name = 'toString',
@@ -79,8 +80,6 @@ Object:addMethod({
         return 'LuaClass: ' .. self.__type__;
     end
 );
-
--- MARK: - getClass()
 
 Object:addMethod({
         scope = 'public',

@@ -52,13 +52,22 @@ function API.newClass(definition)
     local path = DebugUtils.getPath(3, true);
     local split = path:split('.');
     local inferredName = table.remove(split, #split);
-    local package = table.join(split, '.');
+
+    local package = definition.package;
+    if not package then
+        package = table.join(split, '.');
+    end
+
+    local name = definition.name;
+    if not name then
+        name = inferredName;
+    end
 
     local cd = {
         __type__ = 'ClassDefinition',
         package = package,
+        name = name,
         scope = definition.scope,
-        name = definition.name or inferredName,
         superClass = definition.superClass,
         subClasses = {},
     };
