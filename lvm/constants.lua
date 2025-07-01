@@ -15,6 +15,7 @@ local API = {
     EMPTY_TABLE = {},
 
     -- Method(s)
+    --- @param lvm LVM
     setLVM = function(lvm) LVM = lvm end
 };
 

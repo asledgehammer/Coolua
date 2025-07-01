@@ -8,7 +8,7 @@ local errorf = LVMUtils.errorf;
 --- @type LVM
 local LVM;
 
---- @type LVMParamModule
+--- @type LVMParameterModule
 local API = {
 
     __type__ = 'LVMModule',

@@ -15,11 +15,15 @@ local isArray = LVMUtils.isArray;
 local isValidName = LVMUtils.isValidName;
 local firstCharToUpper = LVMUtils.firstCharToUpper;
 
+--- @type LVM
+local LVM;
+
 --- @type LVMClassModule
 local API = {
 
     __type__ = 'LVMModule',
 
+    --- @param lvm LVM
     setLVM = function(lvm) LVM = lvm end
 };
 
@@ -85,22 +89,40 @@ local function createPseudoClassInstance(def)
     return __class__;
 end
 
---- @param definition LVMClassDefinitionParameter
-function API.newClass(definition)
-    -- Generate the path and name to use.
-    local path = DebugUtils.getPath(3, true);
-    local split = path:split('.');
-    local inferredName = table.remove(split, #split);
+--- @param definition LVMClassDefinitionParameter|LVMChildClassDefinitionParameter
+--- @param enclosingClass LVMClassDefinition?
+function API.newClass(definition, enclosingClass)
+    local path;
+    local name;
+    local package;
 
-    local package = definition.package;
-    if not package then
+    if enclosingClass then
+        path = enclosingClass.path .. '$' .. enclosingClass.name;
+
+        package = definition.pkg or enclosingClass.package;
+
+        if not definition.name then
+            error('Name not defined for child class.', 2);
+        end
+        name = definition.name;
+    else
+        -- Generate the path to use.
+        path = DebugUtils.getPath(3, LVM.ROOT_PATH, true);
+        local split = path:split('.');
+        name = table.remove(split, #split);
         package = table.join(split, '.');
+
+        if definition.pkg then
+            package = definition.pkg;
+        end
+
+        if definition.name then
+            name = definition.name;
+        end
+
+        path = package .. '.' .. name;
     end
 
-    local name = definition.name;
-    if not name then
-        name = inferredName;
-    end
 
     local superClass = definition.superClass;
     if superClass and superClass.__type__ == 'lua.lang.Class' then
@@ -115,9 +137,13 @@ function API.newClass(definition)
         scope = definition.scope,
         superClass = superClass,
         subClasses = {},
+        static = definition.static or false,
+        isChild = enclosingClass ~= nil,
+        enclosingClass = enclosingClass,
+        children = {}
     };
 
-    cd.path = cd.package .. '.' .. cd.name;
+    cd.path = path;
 
     -- Make sure that no class is made twice.
     if LVM.class.forName(cd.path) then
@@ -145,6 +171,10 @@ function API.newClass(definition)
     end
 
     CLASS_DEFS[cd.path] = cd;
+
+    if enclosingClass then
+        enclosingClass.children[cd.name] = cd;
+    end
 
     -- MARK: - new()
 
@@ -174,9 +204,9 @@ function API.newClass(definition)
             o[name] = func;
         end
 
-        LVM.canSetSuper = true;
+        LVM.flags.canSetSuper = true;
         o.__super__ = LVM.super.createSuperTable(cd, o);
-        LVM.canSetSuper = false;
+        LVM.flags.canSetSuper = false;
 
         o.getClass = function(self)
             if not self.__class__ then
@@ -437,7 +467,7 @@ function API.newClass(definition)
                     end
                 end
 
-                debugf(LVM.flags.method, 'Creating auto-method: ', cd.name .. '.' .. mGetDef.name);
+                debugf(LVM.debug.method, 'Creating auto-method: ', cd.name .. '.' .. mGetDef.name);
 
                 cd:addMethod(mGetDef, fGet);
             end
@@ -1087,7 +1117,7 @@ function API.newClass(definition)
                 path = DebugUtils.getPath(level)
             });
 
-            local callInfo = DebugUtils.getCallInfo(level, true);
+            local callInfo = DebugUtils.getCallInfo(level, nil, true);
             callInfo.path = relPath;
             local scopeAllowed = LVM.scope.getScopeForCall(fd.class, callInfo);
 
@@ -1151,9 +1181,9 @@ function API.newClass(definition)
         end
 
         --- Set the class to be accessable from a global package reference.
-        LVM.allowPackageStructModifications = true;
+        LVM.flags.allowPackageStructModifications = true;
         LVM.package.addToPackageStruct(cd);
-        LVM.allowPackageStructModifications = false;
+        LVM.flags.allowPackageStructModifications = false;
 
         return cd;
     end

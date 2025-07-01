@@ -6,11 +6,15 @@ local LVMUtils = require 'LVMUtils';
 local errorf = LVMUtils.errorf;
 local isArray = LVMUtils.isArray;
 
+--- @type LVM
+local LVM;
+
 --- @type LVMGenericModule
 local API = {
 
     __type__ = 'LVMModule',
 
+    --- @param lvm LVM
     setLVM = function(lvm) LVM = lvm end
 };
 

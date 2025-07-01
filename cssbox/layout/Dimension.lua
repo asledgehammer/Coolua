@@ -5,7 +5,6 @@
 local LuaClass = require 'LuaClass';
 local newClass = LuaClass.newClass;
 
---- @type DimensionDefinition
 local Dimension = newClass({
     scope = 'public',
 });
@@ -96,4 +95,7 @@ Dimension:addMethod({
     end
 );
 
-return Dimension:finalize();
+Dimension:finalize();
+
+--- @cast Dimension DimensionDefinition
+return Dimension;

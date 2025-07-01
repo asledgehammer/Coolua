@@ -20,6 +20,7 @@ local API = {
     internal = 0,
 
     -- Method(s)
+    --- @param lvm LVM
     setLVM = function(lvm) LVM = lvm end
 };
 

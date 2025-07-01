@@ -14,21 +14,44 @@ else                        -- Native Lua Environment.
 
     -- MARK: - General
 
-    local function modifyPath(path)
+    --- @param path string
+    --- @param rootPath string?
+    ---
+    --- @return string
+    local function modifyPath(path, rootPath)
+        if rootPath then
+            rootPath = modifyPath(rootPath);
+            local colonStart = string.find(rootPath, ':.', 1, true);
+
+            if colonStart ~= 0 then
+                rootPath = string.sub(rootPath, colonStart + 2);
+            end
+
+            rootPath = rootPath .. '.';
+        end
+        
+        path = string.gsub(path, '...:.', '');
+
         path = string.gsub(path, '\\', '/');
         path = string.gsub(path, '%.lua', '');
         path = string.gsub(path, '%./', '', 1);
         path = string.gsub(path, '/', '.');
+
+        if rootPath then
+            path = string.gsub(path, rootPath, '');
+        end
+
         return path;
     end
 
     --- @param levelOrFunc function|integer
+    --- @param rootPath string?
     --- @param isClassPath boolean? (Default: false) If true, the path is transformed to `ClassDefinition.path` syntax.
     ---
     --- @return string path
-    function DebugUtils.getPath(levelOrFunc, isClassPath)
-        local dS = debug.getinfo(levelOrFunc, "S");
-        if isClassPath then return modifyPath(dS.short_src) end
+    function DebugUtils.getPath(levelOrFunc, rootPath, isClassPath)
+        local dS = debug.getinfo(levelOrFunc, 'S');
+        if isClassPath then return modifyPath(dS.short_src, rootPath) end
         return dS.short_src;
     end
 
@@ -40,14 +63,15 @@ else                        -- Native Lua Environment.
     end
 
     --- @param level integer
+    --- @param rootPath string?
     --- @param isClassPath boolean? (Default: false) If true, the path is transformed to `ClassDefinition.path` syntax.
     ---
     --- @return CallInfo
-    function DebugUtils.getCallInfo(level, isClassPath)
+    function DebugUtils.getCallInfo(level, rootPath, isClassPath)
         local level_p1 = level + 1;
         return {
             currentLine = DebugUtils.getCurrentLine(level_p1),
-            path = DebugUtils.getPath(level_p1, isClassPath),
+            path = DebugUtils.getPath(level_p1, rootPath, isClassPath),
         };
     end
 
@@ -68,10 +92,12 @@ else                        -- Native Lua Environment.
     end
 
     --- @param func function
+    --- @param rootPath string?
     --- @param isClassPath boolean? (Default: false) If true, the path is transformed to `ClassDefinition.path` syntax.
+    --- 
     --- @return FunctionInfo
-    function DebugUtils.getFuncInfo(func, isClassPath)
-        local path = DebugUtils.getPath(func, isClassPath);
+    function DebugUtils.getFuncInfo(func, rootPath, isClassPath)
+        local path = DebugUtils.getPath(func, rootPath, isClassPath);
         local start, stop = DebugUtils.getFuncRange(func);
         return {
             path = path,

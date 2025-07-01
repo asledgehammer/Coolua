@@ -35,6 +35,7 @@ end
 
 --- @class string
 --- @field split fun(self, delimiter: string): string[]
+--- @field startsWith fun(self, str: string): boolean
 
 --- @param self string
 --- @param delimiter string
@@ -46,6 +47,14 @@ function string.split(self, delimiter)
         table.insert(t, str);
     end
     return t;
+end
+
+--- @param self string
+--- @param str string
+--- 
+--- @return boolean
+function string.startsWith(self, str)
+    return string.find(self, str, 1, true) == 1;
 end
 
 -- NOTE: table.concat exists.
@@ -357,7 +366,6 @@ function API.createClassMetatable(o)
     mt.__index = __fields;
 
     mt.__newindex = function(tbl, field, value)
-        print(string.format('__newindex2(%s, %s)', field, tostring(value)));
         -- Hide assignment table.
         if field == '__fields' then
             API.FieldAccessException(o, field);

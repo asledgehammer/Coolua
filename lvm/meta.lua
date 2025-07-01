@@ -15,6 +15,7 @@ local API = {
 
     __type__ = 'LVMModule',
 
+    --- @param lvm LVM
     setLVM = function(lvm) LVM = lvm end
 };
 
@@ -63,7 +64,7 @@ function API.createInstanceMetatable(cd, o)
             path = DebugUtils.getPath(level)
         });
 
-        local callInfo = DebugUtils.getCallInfo(level, true);
+        local callInfo = DebugUtils.getCallInfo(level, LVM.ROOT_PATH, true);
         -- callInfo.path = relPath;
         local scopeAllowed = LVM.scope.getScopeForCall(fd.class, callInfo);
 
@@ -139,7 +140,7 @@ function API.createInstanceMetatable(cd, o)
             path = DebugUtils.getPath(level)
         });
 
-        local callInfo = DebugUtils.getCallInfo(level, true);
+        local callInfo = DebugUtils.getCallInfo(level, LVM.ROOT_PATH, true);
         callInfo.path = relPath;
         local scopeAllowed = LVM.scope.getScopeForCall(fd.class, callInfo);
 

@@ -2,12 +2,12 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+local LVM = require 'LVM';
 local LuaClass = require 'LuaClass';
 local newClass = LuaClass.newClass;
 
 local Dimension = require 'cssbox/layout/Dimension';
 
---- @type RectangleDefinition
 local Rectangle = newClass({
     scope = 'public',
     superClass = Dimension
@@ -112,4 +112,7 @@ Rectangle:addMethod({
     end
 );
 
-return Rectangle:finalize();
+Rectangle:finalize();
+
+--- @cast Rectangle RectangleDefinition
+return Rectangle;

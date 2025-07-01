@@ -16,6 +16,7 @@ local API = {
 
     __type__ = 'LVMModule',
 
+    --- @param lvm LVM
     setLVM = function(lvm) LVM = lvm end
 };
 
@@ -109,7 +110,7 @@ function API.createMiddleMethod(cd, name, methods)
 
         local level, relPath = LVM.scope.getRelativePath();
 
-        local callInfo = DebugUtils.getCallInfo(level, true);
+        local callInfo = DebugUtils.getCallInfo(level, LVM.ROOT_PATH, true);
         callInfo.path = relPath;
         local scopeAllowed = LVM.scope.getScopeForCall(md.class, callInfo);
 

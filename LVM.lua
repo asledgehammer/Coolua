@@ -2,10 +2,80 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+local DebugUtils = require 'asledgehammer/util/DebugUtils';
+
+local LVMUtils = require 'LVMUtils';
+local errorf = LVMUtils.errorf;
+
 --- @type LVM
-local LVM = {
+local LVM;
+
+local function prequire(...)
+    local status, lib = pcall(require, ...)
+    if status then return lib end
+    return nil
+end
+
+local function predofile(...)
+    local status, lib = pcall(dofile, ...)
+    if status then return lib end
+    return nil
+end
+
+local function getFullPath()
+    local level = 1;
+    local info = debug.getinfo(level);
+    local lastRootPath = info.source;
+    local rootPath = info.source;
+    while info ~= nil do
+        level = level + 1;
+        info = debug.getinfo(level);
+        if info then
+            local next = info.source;
+            lastRootPath = rootPath;
+            rootPath = next;
+        end
+    end
+
+    if rootPath == '=[C]' then
+        rootPath = lastRootPath;
+    end
+
+    rootPath = string.gsub(rootPath, '\\', '/');
+    rootPath = string.gsub(rootPath, '@', '');
+
+    return rootPath;
+end
+
+local function getRootPath()
+    local fullRootPath = getFullPath();
+    local rootPath = '';
+    local folders = fullRootPath:split('/');
+    local built = '';
+    for i=1, #folders do
+        if built == '' then
+            built = folders[i];
+        else
+            built = built .. '/' .. folders[i];
+        end
+        local test = built .. '/LVMUtils.lua';
+        local x = predofile(test);
+        if x then
+            rootPath = built;
+            break;
+        end
+    end
+    return rootPath;
+end
+
+local ROOT_PATH = getRootPath();
+print('LVM.ROOT_PATH = ' .. ROOT_PATH);
+
+LVM = {
 
     __type__ = 'LVM',
+
+    ROOT_PATH = ROOT_PATH,
 
     debug = require 'lvm/debug',
     constants = require 'lvm/constants',
@@ -23,7 +93,7 @@ local LVM = {
     parameter = require 'lvm/parameter',
     constructor = require 'lvm/constructor',
     method = require 'lvm/method',
-    class = require 'lvm/class'
+    class = require 'lvm/class',
 };
 
 LVM.debug.setLVM(LVM);

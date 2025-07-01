@@ -17,6 +17,7 @@ local API = {
     compile = false,
 
     -- Method(s)
+    --- @param lvm LVM
     setLVM = function(lvm) LVM = lvm end
 };
 

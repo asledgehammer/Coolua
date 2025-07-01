@@ -1,0 +1,32 @@
+local LuaClass = require 'LuaClass';
+local newClass = LuaClass.newClass;
+
+--[[
+  public class EnclosingClass {
+    static class EnclosedClass {
+    }
+  }
+--]]
+
+-- MARK: - Enclosing
+
+local EnclosingClass = newClass({
+    package = 'org.example',
+    name = 'EnclosingClass',
+    scope = 'public',
+});
+
+EnclosingClass:finalize();
+
+-- MARK: - Enclosed
+
+local EnclosedClass = newClass({
+    name = 'EnclosedClass'
+    -- Package level
+}, EnclosingClass);
+
+EnclosedClass:finalize();
+
+-- Return the top-level class.
+
+return EnclosingClass;

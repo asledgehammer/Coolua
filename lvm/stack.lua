@@ -7,6 +7,7 @@ local DebugUtils = require 'asledgehammer/util/DebugUtils';
 local LVMUtils = require 'LVMUtils';
 local debugf = LVMUtils.debugf;
 
+--- @type LVM
 local LVM;
 
 --- @type LVMStackModule
@@ -14,6 +15,7 @@ local API = {
 
     __type__ = 'LVMModule',
 
+    --- @param lvm LVM
     setLVM = function(lvm) LVM = lvm end
 };
 
@@ -45,13 +47,13 @@ end
 --- @param context ContextArgs
 function API.pushContext(context)
     -- Muting context.
-    if LVM.init or LVM.ignorePushPopContext then return end
+    if LVM.flags.internal > 0 or LVM.flags.ignorePushPopContext then return end
 
     debugf(LVM.debug.scope, 'line %i ContextStack[%i] pushContext(%s)', DebugUtils.getCurrentLine(3), #stack + 1,
         tostring(context));
 
     -- Prevent infinite loop.
-    LVM.ignorePushPopContext = true;
+    LVM.flags.ignorePushPopContext = true;
     table.insert(
         stack,
         _G.lua.lang.StackTraceElement.new(
@@ -62,12 +64,12 @@ function API.pushContext(context)
             context.element
         )
     );
-    LVM.ignorePushPopContext = false;
+    LVM.flags.ignorePushPopContext = false;
 end
 
 function API.popContext()
     -- Muting context.
-    if LVM.init or LVM.ignorePushPopContext then return end
+    if LVM.flags.internal > 0 or LVM.flags.ignorePushPopContext then return end
 
     debugf(LVM.debug.scope, 'line %i ContextStack[%i] popContext()', DebugUtils.getCurrentLine(3), #stack - 1);
     local stackLen = #stack;

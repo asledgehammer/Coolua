@@ -34,3 +34,9 @@ function API.equals(a, b) end
 ---
 --- @return LVMClassDefinition
 function API.newClass(defParams) end
+
+--- @param defParams LVMChildClassDefinitionParameter
+--- @param enclosingClass LVMClassDefinition
+---
+--- @return LVMClassDefinition
+function API.newClass(defParams, enclosingClass) end

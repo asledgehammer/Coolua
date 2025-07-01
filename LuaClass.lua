@@ -5,7 +5,7 @@
 local LVM = require 'LVM';
 
 local LuaClass = {
-    newClass = LVM.class.newClass
+    newClass = LVM.class.newClass,
 };
 
 LVM.flags.internal = LVM.flags.internal + 1;

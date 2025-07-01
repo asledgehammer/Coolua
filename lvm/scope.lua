@@ -16,6 +16,7 @@ local API = {
 
     __type__ = 'LVMModule',
 
+    --- @param lvm LVM
     setLVM = function(lvm) LVM = lvm end
 };
 
@@ -77,15 +78,18 @@ end
 
 function API.getRelativePath()
     local level = 1;
-    local relPath = DebugUtils.getPath(level, true);
+    local relPath = DebugUtils.getPath(level, LVM.ROOT_PATH, true);
 
     while
         relPath == '[C]' or
         relPath == 'asledgehammer.util.DebugUtils' or
-        relPath == 'LVM'
+        relPath:startsWith('lvm.') or
+        relPath == 'LVM' or
+        relPath == 'LVMUtils' or
+        relPath == 'LuaClass'
     do
         level = level + 1;
-        relPath = DebugUtils.getPath(level, true);
+        relPath = DebugUtils.getPath(level, LVM.ROOT_PATH, true);
     end
 
     return level, relPath;

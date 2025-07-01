@@ -7,6 +7,7 @@ local errorf = LVMUtils.errorf;
 local isArray = LVMUtils.isArray;
 local paramsToString = LVMUtils.paramsToString;
 
+--- @type LVM
 local LVM;
 
 --- @type LVMPrintModule
@@ -14,6 +15,7 @@ local API = {
 
     __type__ = 'LVMModule',
 
+    --- @param lvm LVM
     setLVM = function(lvm) LVM = lvm end
 };
 

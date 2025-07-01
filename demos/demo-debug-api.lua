@@ -17,8 +17,4 @@ function obj:a_func()
     obj:inspect();
 end
 
--- If not inside PZ Kahlua environment, run this test.
-if not instanceof then
-    obj:a_func();
-end
-
+obj:a_func();

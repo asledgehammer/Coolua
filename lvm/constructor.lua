@@ -16,11 +16,11 @@ local API = {
 
     __type__ = 'LVMModule',
 
+    --- @param lvm LVM
     setLVM = function(lvm) LVM = lvm end
 };
 
 function API.resolveConstructor(cons, args)
-    
     local argsLen = #args;
 
     --- @type ConstructorDefinition?
@@ -107,10 +107,9 @@ function API.createMiddleConstructor(classDef)
 
         local level, relPath = LVM.scope.getRelativePath();
 
-        local callInfo = DebugUtils.getCallInfo(3, true);
+        local callInfo = DebugUtils.getCallInfo(3, LVM.ROOT_PATH, true);
         callInfo.path = relPath;
         local scopeAllowed = LVM.scope.getScopeForCall(cons.class, callInfo);
-
 
         if LVM.flags.internal == 0 and not LVM.scope.canAccessScope(cons.scope, scopeAllowed) then
             local errMsg = string.format(
@@ -138,10 +137,12 @@ function API.createMiddleConstructor(classDef)
 
             -- Make sure that constructors don't return anything.
             if retValue ~= nil then
-                errorf(2, '%s Constructor returned non-nil value: {type = %s, value = %s}',
+                local errMsg = string.format('%s Constructor returned non-nil value: {type = %s, value = %s}',
                     classDef.printHeader,
                     LVM.type.getType(retValue), tostring(retValue)
                 );
+                LVM.stack.popContext();
+                error(errMsg, 2);
                 return;
             end
 

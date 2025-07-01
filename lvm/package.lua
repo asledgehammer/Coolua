@@ -2,6 +2,7 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+--- @type LVM
 local LVM;
 
 --- @type LVMPackageModule
@@ -9,6 +10,7 @@ local API = {
 
     __type__ = 'LVMModule',
 
+    --- @param lvm LVM
     setLVM = function(lvm) LVM = lvm end
 };
 
@@ -16,7 +18,7 @@ function API.newPackageStruct()
     local t, mt, fields = {}, {}, {};
     mt.__index = fields;
     mt.__newindex = function(_, field, value)
-        if not LVM.allowPackageStructModifications then
+        if not LVM.flags.allowPackageStructModifications then
             error('Cannot modify Package Structure.', 2);
         end
         fields[field] = value;

@@ -17,6 +17,7 @@ local API = {
 
     __type__ = 'LVMModule',
 
+    --- @param lvm LVM
     setLVM = function(lvm) LVM = lvm end
 };
 
@@ -89,7 +90,7 @@ function API.createSuperTable(cd, o)
 
         local level, relPath = LVM.scope.getRelativePath();
 
-        local callInfo = DebugUtils.getCallInfo(3, true);
+        local callInfo = DebugUtils.getCallInfo(3, LVM.ROOT_PATH, true);
         callInfo.path = relPath;
         local scopeAllowed = LVM.scope.getScopeForCall(constructorDefinition.class, callInfo);
 
@@ -145,7 +146,7 @@ function API.createSuperTable(cd, o)
 
         local level, relPath = LVM.scope.getRelativePath();
 
-        local callInfo = DebugUtils.getCallInfo(3, true);
+        local callInfo = DebugUtils.getCallInfo(3, LVM.ROOT_PATH, true);
         callInfo.path = relPath;
         local scopeAllowed = LVM.scope.getScopeForCall(md.class, callInfo);
 
@@ -187,6 +188,7 @@ function API.createSuperTable(cd, o)
 
         -- Make sure that super can only be called in the context of the class.
         if not ste then
+            -- print('internal = ', LVM.flags.internal);
             errorf(2, '%s No super context.', cd.printHeader);
             return;
         end

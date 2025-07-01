@@ -12,6 +12,7 @@
 ---
 --- @field __type__ 'LVM'
 ---
+--- @field ROOT_PATH string The root path of the running source code.
 --- @field debug LVMDebugModule
 --- @field flags LVMFlagsModule
 --- @field constants LVMConstantsModule
@@ -25,7 +26,7 @@
 --- @field stack LVMStackModule
 --- @field super LVMSuperModule
 --- @field field LVMFieldModule
---- @field parameter LVMParamModule
+--- @field parameter LVMParameterModule
 --- @field constructor LVMConstructorModule
 --- @field method LVMMethodModule
 --- @field class LVMClassModule
@@ -168,9 +169,19 @@ function LVMModule.setLVM(lvm) end
 --- @class (exact) LVMClassDefinitionParameter
 --- @field name string? (Default: The name of the file)
 --- @field final boolean? (Default: false)
---- @field scope ClassScope? (Default: public)
+--- @field scope ClassScope? (Default: package)
 --- @field superClass LVMClassDefinition? (Default: nil)
 --- @field generics GenericsTypesDefinitionParameter? Any generic parameter definitions.
+--- @field static boolean? If the class is defined as static.
+--- @field pkg string?
+
+--- @class (exact) LVMChildClassDefinitionParameter
+--- @field name string? (Default: The name of the file)
+--- @field final boolean? (Default: false)
+--- @field scope ClassScope? (Default: package)
+--- @field superClass LVMClassDefinition? (Default: nil)
+--- @field generics GenericsTypesDefinitionParameter? Any generic parameter definitions.
+--- @field pkg string?
 
 --- @class (exact) LVMClassDefinition
 --- @field __type__ 'ClassDefinition'
@@ -185,6 +196,7 @@ function LVMModule.setLVM(lvm) end
 --- @field subClasses (LVMClassDefinition|Class)[]
 --- @field lock boolean
 --- @field name string
+--- @field isChild boolean
 --- @field package string
 --- @field classObj Class?
 --- @field declaredFields table<string, FieldDefinition>
@@ -192,6 +204,10 @@ function LVMModule.setLVM(lvm) end
 --- @field declaredConstructors ConstructorDefinition[]
 --- @field staticFields table<string, any> Stores the static values for classes.
 --- @field generics GenericsTypesDefinition? If the class supports generics, this is where its defined.
+--- 
+--- @field children table<string, LVMClassDefinition> Any classes that are defined within the class's context.
+--- @field static boolean If true, the class is considered static.
+--- @field enclosingClass LVMClassDefinition
 local LVMClassDefinition = {};
 
 --- @param definition FieldDefinitionParameter
