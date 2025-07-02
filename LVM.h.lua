@@ -151,6 +151,7 @@ function LVMModule.setLVM(lvm) end
 --- @field returns string[]
 --- @field func fun(o: any, ...): (any?)
 --- @field lineRange {start: number, stop: number} The function's start and stop line.
+--- @field abstract boolean (Default: false)
 
 --- @class (exact) MethodDefinitionParameter
 --- @field scope ClassScope? (Default: public)
@@ -160,6 +161,7 @@ function LVMModule.setLVM(lvm) end
 --- @field generics GenericsTypesDefinitionParameter?
 --- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
 --- @field returns (string[]|string)? (Default: void)
+--- @field abstract boolean? (Default: false)
 
 -- MARK: - Return
 
@@ -182,6 +184,8 @@ function LVMModule.setLVM(lvm) end
 --- @field generics GenericsTypesDefinitionParameter? Any generic parameter definitions.
 --- @field static boolean? If the class is defined as static.
 --- @field pkg string?
+--- @field abstract boolean? (Default: false)
+
 
 --- @class (exact) LVMChildClassDefinitionParameter
 --- @field name string? (Default: The name of the file)
@@ -190,6 +194,7 @@ function LVMModule.setLVM(lvm) end
 --- @field superClass LVMClassDefinition? (Default: nil)
 --- @field generics GenericsTypesDefinitionParameter? Any generic parameter definitions.
 --- @field pkg string?
+--- @field abstract boolean? (Default: false)
 
 --- @class (exact) LVMClassDefinition
 --- @field __type__ 'ClassDefinition'
@@ -204,6 +209,7 @@ function LVMModule.setLVM(lvm) end
 --- @field subClasses (LVMClassDefinition|Class)[]
 --- @field lock boolean
 --- @field name string
+--- @field final boolean (Default: false) If the class is final and cannot be extended.
 --- @field isChild boolean
 --- @field package string
 --- @field classObj Class?
@@ -212,9 +218,10 @@ function LVMModule.setLVM(lvm) end
 --- @field declaredConstructors ConstructorDefinition[]
 --- @field staticFields table<string, any> Stores the static values for classes.
 --- @field generics GenericsTypesDefinition? If the class supports generics, this is where its defined.
+--- @field abstract boolean (Default: false)
 ---
 --- @field children table<string, LVMClassDefinition> Any classes that are defined within the class's context.
---- @field static boolean If true, the class is considered static.
+--- @field static boolean (Default: false) If true, the class is considered static.
 --- @field enclosingClass LVMClassDefinition
 local LVMClassDefinition = {};
 
@@ -261,7 +268,7 @@ function LVMClassDefinition:getConstructor(args) end
 function LVMClassDefinition:getDeclaredConstructor(args) end
 
 --- @param definition MethodDefinitionParameter
---- @param func function
+--- @param func function?
 ---
 --- @return MethodDefinition
 function LVMClassDefinition:addMethod(definition, func) end

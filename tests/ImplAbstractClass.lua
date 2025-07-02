@@ -1,0 +1,26 @@
+local LuaClass = require 'LuaClass';
+local newClass = LuaClass.newClass;
+
+local AbstractClass = require 'tests/AbstractClass';
+
+local ImplAbstractClass = newClass({
+    scope = 'public',
+    final = true,
+    superClass = AbstractClass
+});
+
+ImplAbstractClass:addConstructor({ scope = 'public' });
+
+ImplAbstractClass:addMethod({
+    scope = 'public',
+    name = 'aMethod',
+    parameters = {},
+    returns = 'void'
+}, function()
+    print('Running from implemented class!');
+end);
+
+ImplAbstractClass:finalize();
+
+--- @cast ImplAbstractClass ImplAbstractClassDefinition
+return ImplAbstractClass;

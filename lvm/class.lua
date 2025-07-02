@@ -52,7 +52,6 @@ function API.forName(path)
         --- @type LVMClassDefinition
         local def = CLASS_DEFS[path];
         if def then
-
             LVM.stepIn();
             class = _G.lua.lang.Class.new(def);
             LVM.stepOut();
@@ -122,11 +121,26 @@ function API.newClass(definition, enclosingClass)
         path = package .. '.' .. name;
     end
 
+    -- Make sure the class cannot be both final and abstract at the same time.
+    if definition.final and definition.abstract then
+        errorf(2, 'Class cannot be abstract AND final: %s', path);
+        return;
+    end
 
     local superClass = definition.superClass;
-    if superClass and superClass.__type__ == 'lua.lang.Class' then
-        --- @cast superClass Class<Object>
-        superClass = superClass:getDefinition();
+
+    if superClass then
+        if superClass.__type__ == 'lua.lang.Class' then
+            --- @cast superClass Class<Object>
+            superClass = superClass:getDefinition();
+        end
+
+        if superClass.final then
+            errorf(2, 'Class cannot extend final superClass: %s extends final %s',
+                path, superClass.path
+            );
+            return;
+        end
     end
 
     local cd = {
@@ -136,10 +150,12 @@ function API.newClass(definition, enclosingClass)
         scope = definition.scope,
         superClass = superClass,
         subClasses = {},
-        static = definition.static or false,
         isChild = enclosingClass ~= nil,
         enclosingClass = enclosingClass,
-        children = {}
+        children = {},
+        static = definition.static or false,
+        final = definition.final or false,
+        abstract = definition.abstract or false
     };
 
     cd.path = path;
@@ -757,9 +773,26 @@ function API.newClass(definition, enclosingClass)
             types = { returns };
         end
 
-        -- TODO: Implement all definition property checks.
+        -- Validate abstract flag.
+        if methodDefinition.abstract then
+            if not cd.abstract then
+                errorf(2, '%s The method cannot be abstract when the class is not: %s.%s',
+                    errHeader, cd.name, methodDefinition.name
+                );
+                return;
+            elseif func then
+                errorf(2, '%s The method cannot be abstract and have a defined function block: %s.%s',
+                    errHeader, cd.name, methodDefinition.name
+                );
+                return;
+            end
+        end
 
-        local lineStart, lineStop = DebugUtils.getFuncRange(func);
+        -- TODO: Implement all definition property checks.
+        local lineStart, lineStop = -1, -1;
+        if func then
+            lineStart, lineStop = DebugUtils.getFuncRange(func);
+        end
 
         --- @type MethodDefinition
         local args = {
@@ -775,6 +808,7 @@ function API.newClass(definition, enclosingClass)
             override = false,
             super = nil,
             func = func,
+            abstract = methodDefinition.abstract or false,
             lineRange = { start = lineStart, stop = lineStop },
         };
 
@@ -838,6 +872,24 @@ function API.newClass(definition, enclosingClass)
             self:compileMethod(methodNames[i]);
         end
 
+        -- Make sure that all methods exposed are not abstract in non-abstract classes.
+        if not cd.abstract then
+            for _, methods in pairs(self.methods) do
+                for i = 1, #methods do
+                    --- @type MethodDefinition
+                    local method = methods[i];
+
+                    if method.abstract then
+                        local errMsg = string.format('%s Abstract method not implemented: %s',
+                            cd.printHeader, LVM.print.printMethod(method)
+                        );
+                        print(errMsg);
+                        error(errMsg, 3);
+                    end
+                end
+            end
+        end
+
         local keysCount = 0;
         for _, _ in pairs(self.methods) do
             keysCount = keysCount + 1;
@@ -875,6 +927,7 @@ function API.newClass(definition, enclosingClass)
             return;
         end
 
+        --- @type table<string, MethodDefinition[]>
         local methods = LVMUtils.copyArray(cd.superClass.methods[name]);
 
         if decMethods then

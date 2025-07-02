@@ -39,3 +39,5 @@
 
 # CONSTRUCTORS:
 - Check if any final fields are not initialized post-constructor.
+- Enforce super calls check for classes extending classes with non-empty constructors.
+  - If a super-method exists without parameters, invoke it if anything is called. Use middle-methods to monitor in-constructor calls.
