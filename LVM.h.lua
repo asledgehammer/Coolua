@@ -17,6 +17,7 @@
 --- 
 --- * Modules
 --- @field debug LVMDebugModule
+--- @field enum LVMEnumModule
 --- @field flags LVMFlagsModule
 --- @field constants LVMConstantsModule
 --- @field print LVMPrintModule

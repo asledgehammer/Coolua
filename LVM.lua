@@ -70,6 +70,7 @@ LVM = {
     ROOT_PATH = ROOT_PATH,
 
     debug = require 'lvm/debug',
+    enum = require 'lvm/enum',
     constants = require 'lvm/constants',
     flags = require 'lvm/flags',
     print = require 'lvm/print',
@@ -108,6 +109,7 @@ LVM = {
 };
 
 LVM.debug.setLVM(LVM);
+LVM.enum.setLVM(LVM);
 LVM.constants.setLVM(LVM);
 LVM.flags.setLVM(LVM);
 LVM.print.setLVM(LVM);
