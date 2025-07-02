@@ -38,7 +38,10 @@ else                        -- Native Lua Environment.
         path = string.gsub(path, '/', '.');
 
         if rootPath then
-            path = string.gsub(path, rootPath, '');
+            local start, _end = string.find(path, rootPath, 1, true);
+            if start ~= nil and _end ~= nil and start ~= 0 and _end ~= 0 then
+                path = string.sub(path, _end);
+            end
         end
 
         return path;
