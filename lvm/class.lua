@@ -942,6 +942,19 @@ function API.newClass(definition, enclosingClass)
 
                     if LVM.parameter.areCompatable(decMethod.parameters, method.parameters) then
                         debugf(LVM.debug.method, '%s \t\t@override detected: %s', self.printHeader, debugName);
+
+                        -- Cannot override final methods.
+                        if method.final then
+                            errorf(2, '%s Class method cannot override super-method because it is final: %s',
+                                cd.printHeader, LVM.print.printMethod(method)
+                            );
+                        end
+
+                        -- Overrided methods must maintain static / non-static with exact signatures.
+                        -- if method.static ~= decMethod.static then
+                        -- TODO: Implement.
+                        -- end
+
                         isOverride = true;
                         decMethod.super = method;
                         decMethod.override = true;
