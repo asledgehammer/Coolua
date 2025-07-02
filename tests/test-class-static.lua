@@ -1,4 +1,4 @@
-local Math = require 'org/example/Math';
+local Math = require 'tests/Math';
 
 local test = true;
 if test then

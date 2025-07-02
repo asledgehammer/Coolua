@@ -2,8 +2,7 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local readonly = require 'asledgehammer/util/readonly';
-local DebugUtils = require 'asledgehammer/util/DebugUtils';
+local DebugUtils = require 'DebugUtils';
 
 local LVMUtils = require 'LVMUtils';
 local anyToString = LVMUtils.anyToString;
@@ -14,6 +13,7 @@ local errorf = LVMUtils.errorf;
 local isArray = LVMUtils.isArray;
 local isValidName = LVMUtils.isValidName;
 local firstCharToUpper = LVMUtils.firstCharToUpper;
+local readonly = LVMUtils.readonly;
 
 --- @type LVM
 local LVM;

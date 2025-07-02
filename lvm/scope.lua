@@ -2,7 +2,7 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local DebugUtils = require 'asledgehammer/util/DebugUtils';
+local DebugUtils = require 'DebugUtils';
 
 local LVMUtils = require 'LVMUtils';
 local anyToString = LVMUtils.anyToString;
@@ -82,11 +82,11 @@ function API.getRelativePath()
 
     while
         relPath == '[C]' or
-        relPath == 'asledgehammer.util.DebugUtils' or
-        relPath:startsWith('lvm.') or
+        relPath == 'DebugUtils' or
         relPath == 'LVM' or
         relPath == 'LVMUtils' or
-        relPath == 'LuaClass'
+        relPath == 'LuaClass' or
+        relPath:startsWith('lvm.')
     do
         level = level + 1;
         relPath = DebugUtils.getPath(level, LVM.ROOT_PATH, true);

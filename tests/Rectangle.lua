@@ -6,7 +6,7 @@ local LVM = require 'LVM';
 local LuaClass = require 'LuaClass';
 local newClass = LuaClass.newClass;
 
-local Dimension = require 'cssbox/layout/Dimension';
+local Dimension = require 'tests/Dimension';
 
 local Rectangle = newClass({
     scope = 'public',

@@ -2,7 +2,7 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local DebugUtils = require 'asledgehammer/util/DebugUtils';
+local DebugUtils = require 'DebugUtils';
 
 local LVMUtils = require 'LVMUtils';
 local arrayContains = LVMUtils.arrayContains;

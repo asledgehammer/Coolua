@@ -2,19 +2,11 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local DebugUtils = require 'asledgehammer/util/DebugUtils';
-
 local LVMUtils = require 'LVMUtils';
 local errorf = LVMUtils.errorf;
 
 --- @type LVM
 local LVM;
-
-local function prequire(...)
-    local status, lib = pcall(require, ...)
-    if status then return lib end
-    return nil
-end
 
 local function predofile(...)
     local status, lib = pcall(dofile, ...)

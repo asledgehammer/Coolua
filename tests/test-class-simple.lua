@@ -1,4 +1,4 @@
-local Dimension = require 'cssbox/layout/Dimension';
+local Dimension = require 'tests/Dimension';
 
 local dim1 = Dimension.new(5, 5);
 local dim2 = Dimension.new(5, 4);
