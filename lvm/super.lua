@@ -188,7 +188,6 @@ function API.createSuperTable(cd, o)
 
         -- Make sure that super can only be called in the context of the class.
         if not ste then
-            -- print('internal = ', LVM.flags.internal);
             errorf(2, '%s No super context.', cd.printHeader);
             return;
         end

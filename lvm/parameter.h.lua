@@ -4,7 +4,7 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
---- @class LVMParamModule: LVMModule
+--- @class LVMParameterModule: LVMModule
 local API = {};
 
 --- @param paramsA ParameterDefinition[]

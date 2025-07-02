@@ -47,17 +47,16 @@ end
 function API.forName(path)
     --- @type Class?
     local class = CLASSES[path];
-    -- print(string.format('CLASSES[%s] = %s', path, tostring(class)))
 
     if not class then
         --- @type LVMClassDefinition
         local def = CLASS_DEFS[path];
-        -- print(string.format('CLASS_DEFS[%s] = %s', path, tostring(def)))
         if def then
-            LVM.flags.internal = LVM.flags.internal + 1;
+
+            LVM.stepIn();
             class = _G.lua.lang.Class.new(def);
-            LVM.flags.internal = LVM.flags.internal - 1;
-            -- print('result: ' .. tostring(class));
+            LVM.stepOut();
+
             CLASSES[path] = class;
         end
     end
@@ -210,9 +209,9 @@ function API.newClass(definition, enclosingClass)
 
         o.getClass = function(self)
             if not self.__class__ then
-                LVM.flags.internal = LVM.flags.internal + 1;
+                LVM.stepIn();
                 self.__class__ = API.forName(cd.path);
-                LVM.flags.internal = LVM.flags.internal - 1;
+                LVM.stepOut();
             end
             return self.__class__;
         end
@@ -1095,6 +1094,19 @@ function API.newClass(definition, enclosingClass)
             end
 
             local fd = cd:getField(field);
+
+            -- Inner class invocation.
+            if cd.children[field] then
+                if LVM.isOutside() then
+                    errorf(2, 'Cannot set inner class explicitly. Use the API.');
+                end
+
+                print('setting inner-class: ', field, tostring(value));
+                __properties[field] = value;
+
+                return;
+            end
+
             if not fd then
                 errorf(2, 'FieldNotFoundException: Cannot set new field or method: %s.%s',
                     cd.path, field
@@ -1184,6 +1196,13 @@ function API.newClass(definition, enclosingClass)
         LVM.flags.allowPackageStructModifications = true;
         LVM.package.addToPackageStruct(cd);
         LVM.flags.allowPackageStructModifications = false;
+
+        -- Add a reference for global package and static code.
+        if enclosingClass then
+            LVM.stepIn();
+            enclosingClass[cd.name] = cd;
+            LVM.stepOut();
+        end
 
         return cd;
     end

@@ -3,7 +3,6 @@ local newClass = LuaClass.newClass;
 
 -- Main files need to initialize LuaClass. --
 
-
 --[[
   public class EnclosingClass {
     static class EnclosedClass {
@@ -34,4 +33,5 @@ EnclosedClass:finalize();
 print(EnclosingClass);
 print(EnclosedClass);
 
-return '2';
+print(EnclosingClass.EnclosedClass);
+print(_G.tests.EnclosingClass.EnclosedClass);

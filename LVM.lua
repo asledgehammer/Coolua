@@ -52,7 +52,7 @@ local function getRootPath()
     local rootPath = '';
     local folders = fullRootPath:split('/');
     local built = '';
-    for i=1, #folders do
+    for i = 1, #folders do
         if built == '' then
             built = folders[i];
         else
@@ -94,6 +94,25 @@ LVM = {
     constructor = require 'lvm/constructor',
     method = require 'lvm/method',
     class = require 'lvm/class',
+
+    isInside = function()
+        return LVM.flags.internal ~= 0;
+    end,
+
+    isOutside = function()
+        return LVM.flags.internal == 0;
+    end,
+
+    stepIn = function()
+        LVM.flags.internal = LVM.flags.internal + 1;
+    end,
+
+    stepOut = function()
+        if LVM.isOutside() then
+            error('Cannot step out of internal LVM. (Already outside)', 2);
+        end
+        LVM.flags.internal = LVM.flags.internal - 1;
+    end
 };
 
 LVM.debug.setLVM(LVM);

@@ -98,25 +98,22 @@ function API.createInstanceMetatable(cd, o)
         -- TODO: Type-checking.
 
         if field == 'super' then
-            if LVM.flags.canSetSuper then
-                fields.super = value;
-            else
+            if not LVM.flags.canSetSuper then
                 errorf(2, '%s Cannot set super(). (Reserved method)', cd.printHeader);
             end
+            fields.super = value;
             return;
         elseif field == '__super__' then
-            if LVM.flags.canSetSuper then
-                fields.__super__ = value;
-            else
+            if not LVM.flags.canSetSuper then
                 errorf(2, '%s Cannot set __super__. (Internal field)', cd.printHeader);
             end
+            fields.__super__ = value;
             return;
         elseif field == '__class__' then
-            if LVM.flags.internal ~= 0 then
-                fields.__class__ = value;
-            else
+            if LVM.isOutside() then
                 errorf(2, '%s Cannot set __class__. (Internal field)', cd.printHeader);
             end
+            fields.__class__ = value;
             return;
         end
 
