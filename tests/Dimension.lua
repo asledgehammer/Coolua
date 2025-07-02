@@ -77,10 +77,7 @@ Dimension:addMethod({
         scope = 'public',
         name = 'equals',
         parameters = {
-            {
-                name = 'other',
-                type = 'any'
-            }
+            { name = 'other', type = 'any' }
         },
         returns = 'boolean'
     },

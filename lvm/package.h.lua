@@ -14,5 +14,5 @@ function API.newPackageStruct() end
 
 --- Adds a Class to the _G package struct tree. (Used to call from global scope)
 ---
---- @param def LVMClassDefinition
+--- @param def StructDefinition
 function API.addToPackageStruct(def) end

@@ -1,3 +1,5 @@
+local DebugUtils = require 'DebugUtils';
+
 --- @type LVM
 local LVM;
 
@@ -12,41 +14,35 @@ local API = {
 };
 
 function API.calcPathNamePackage(definition, enclosingDefinition)
-    local path;
+    local _, path;
     local name;
-    local package;
+    local pkg;
 
 if enclosingDefinition then
         path = enclosingDefinition.path .. '$' .. enclosingDefinition.name;
-
-        package = definition.pkg or enclosingDefinition.package;
-
+        pkg = definition.pkg or enclosingDefinition.pkg;
         if not definition.name then
-            error('Name not defined for child class.', 2);
+            error('Name not defined for child class.', 3);
         end
         name = definition.name;
     else
         -- Generate the path to use.
-        path = DebugUtils.getPath(3, LVM.ROOT_PATH, true);
+        _, path = LVM.scope.getRelativePath();
+        -- path = DebugUtils.getPath(4, LVM.ROOT_PATH, true);
         local split = path:split('.');
         name = table.remove(split, #split);
-        package = table.join(split, '.');
+        pkg = table.join(split, '.');
 
-        if definition.pkg then
-            package = definition.pkg;
-        end
+        if definition.pkg then pkg = definition.pkg end
+        if definition.name then name = definition.name end
 
-        if definition.name then
-            name = definition.name;
-        end
-
-        path = package .. '.' .. name;
+        path = pkg .. '.' .. name;
     end
 
     return {
         path = path,
         name = name,
-        package = package
+        pkg = pkg
     };
 end
 

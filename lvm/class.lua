@@ -94,34 +94,7 @@ function API.newClass(definition, enclosingClass)
     local locInfo = LVM.struct.calcPathNamePackage(definition, enclosingClass);
     local path = locInfo.path;
     local name = locInfo.name;
-    local package = locInfo.package;
-
-    if enclosingClass then
-        path = enclosingClass.path .. '$' .. enclosingClass.name;
-
-        package = definition.pkg or enclosingClass.package;
-
-        if not definition.name then
-            error('Name not defined for child class.', 2);
-        end
-        name = definition.name;
-    else
-        -- Generate the path to use.
-        path = DebugUtils.getPath(3, LVM.ROOT_PATH, true);
-        local split = path:split('.');
-        name = table.remove(split, #split);
-        package = table.join(split, '.');
-
-        if definition.pkg then
-            package = definition.pkg;
-        end
-
-        if definition.name then
-            name = definition.name;
-        end
-
-        path = package .. '.' .. name;
-    end
+    local pkg = locInfo.pkg;
 
     -- Make sure the class cannot be both final and abstract at the same time.
     if definition.final and definition.abstract then
@@ -147,7 +120,7 @@ function API.newClass(definition, enclosingClass)
 
     local cd = {
         __type__ = 'ClassDefinition',
-        package = package,
+        pkg = pkg,
         name = name,
         scope = definition.scope,
         superClass = superClass,

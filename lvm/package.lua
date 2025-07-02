@@ -2,6 +2,9 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+local LVMUtils = require 'LVMUtils';
+local debugf = LVMUtils.debugf;
+
 --- @type LVM
 local LVM;
 
@@ -28,17 +31,18 @@ function API.newPackageStruct()
 end
 
 function API.addToPackageStruct(def)
-    local package = def.package;
-    local split = package:split('.');
-    local packageCurr = _G;
+    debugf(LVM.debug.pkg, 'addToPackageStruct(pkg = %s, name = %s)', def.pkg, def.name);
+    local pkg = def.pkg;
+    local split = pkg:split('.');
+    local pkgCurr = _G;
     for i = 1, #split do
-        local packageNext = split[i];
-        if not packageCurr[packageNext] then
-            packageCurr[packageNext] = API.newPackageStruct();
+        local pkgNext = split[i];
+        if not pkgCurr[pkgNext] then
+            pkgCurr[pkgNext] = API.newPackageStruct();
         end
-        packageCurr = packageCurr[packageNext];
+        pkgCurr = pkgCurr[pkgNext];
     end
-    packageCurr[def.name] = def;
+    pkgCurr[def.name] = def;
 end
 
 return API;

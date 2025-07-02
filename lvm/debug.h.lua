@@ -10,4 +10,5 @@
 --- @field method boolean
 --- @field scope boolean
 --- @field compile boolean
+--- @field pkg boolean
 local API = {};

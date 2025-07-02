@@ -9,11 +9,10 @@ local newClass = LVM.class.newClass;
 
 LVM.flags.ignorePushPopContext = true;
 
---- @type ObjectDefinition
 local Object = newClass({
 
     -- Define these for debugging purposes.
-    package = 'lua.lang',
+    pkg = 'lua.lang',
     name = 'Object',
 
     scope = 'public'
@@ -87,5 +86,7 @@ Object:addMethod({
         return self.__class__;
     end
 );
+
+--- @cast Object ObjectDefinition
 
 return Object:finalize();

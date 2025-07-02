@@ -41,7 +41,7 @@ function API.getScopeForCall(class, callInfo)
         elseif class:isAssignableFromType(cd) then
             -- The class calling the function is a sub-class and can access protected-scope properties.
             value = 'protected';
-        elseif cd.package == class.package then
+        elseif cd.pkg == class.pkg then
             -- The class calling the function is in the same package and can access package-scope properties.
             value = 'package';
         end

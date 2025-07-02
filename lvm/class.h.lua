@@ -21,22 +21,19 @@
 --- @field generics GenericsTypesDefinitionParameter? Any generic parameter definitions.
 --- @field abstract boolean? (Default: false)
 
---- @class (exact) LVMClassDefinition
+--- @class (exact) LVMClassDefinition: StructDefinition
 --- @field __type__ 'ClassDefinition'
 --- @field audited boolean If true, the struct is audited and verified to be valid.
 --- @field __middleConstructor function
 --- @field __middleMethods table<string, function>
 --- @field printHeader string
 --- @field type string
---- @field path string
 --- @field methods table<string, MethodDefinition[]>
 --- @field superClass LVMClassDefinition
 --- @field subClasses (LVMClassDefinition|Class)[]
 --- @field lock boolean
---- @field name string
 --- @field final boolean (Default: false) If the class is final and cannot be extended.
 --- @field isChild boolean
---- @field package string
 --- @field classObj Class?
 --- @field declaredFields table<string, FieldDefinition>
 --- @field declaredMethods table<string, MethodDefinition>

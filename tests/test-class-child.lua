@@ -13,7 +13,7 @@ local newClass = LuaClass.newClass;
 -- MARK: - Enclosing
 
 local EnclosingClass = newClass({
-    package = 'tests',
+    pkg = 'tests',
     name = 'EnclosingClass',
     scope = 'public',
 });

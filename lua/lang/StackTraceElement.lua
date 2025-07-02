@@ -2,7 +2,6 @@ local LVMUtils = require 'LVMUtils';
 local LVM = require 'LVM';
 local newClass = LVM.class.newClass;
 
---- @type StackTraceElementDefinition
 local StackTraceElement = newClass({ scope = 'public' });
 
 StackTraceElement:addField({
@@ -180,5 +179,7 @@ StackTraceElement:addMethod({
 );
 
 StackTraceElement:finalize();
+
+--- @cast StackTraceElement StackTraceElementDefinition
 
 return StackTraceElement;

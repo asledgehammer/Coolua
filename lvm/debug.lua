@@ -15,6 +15,7 @@ local API = {
     method = false,
     scope = false,
     compile = false,
+    pkg = false,
 
     -- Method(s)
     --- @param lvm LVM

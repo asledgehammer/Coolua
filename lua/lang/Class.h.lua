@@ -14,7 +14,7 @@ function ClassDefinition.new(def) end
 function ClassDefinition:create() end
 
 --- @class Class: Object
---- @field package string
+--- @field pkg string
 --- @field name string
 --- @field definition ClassDefinition
 ---
