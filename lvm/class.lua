@@ -90,9 +90,11 @@ end
 --- @param definition LVMClassDefinitionParameter|LVMChildClassDefinitionParameter
 --- @param enclosingClass LVMClassDefinition?
 function API.newClass(definition, enclosingClass)
-    local path;
-    local name;
-    local package;
+
+    local locInfo = LVM.struct.calcPathNamePackage(definition, enclosingClass);
+    local path = locInfo.path;
+    local name = locInfo.name;
+    local package = locInfo.package;
 
     if enclosingClass then
         path = enclosingClass.path .. '$' .. enclosingClass.name;

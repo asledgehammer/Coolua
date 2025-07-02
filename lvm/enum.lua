@@ -15,4 +15,17 @@ local API = {
     setLVM = function(lvm) LVM = lvm end
 };
 
+function API.newEnum(definition)
+
+    local ed = {
+        -- Internal Type --
+        __type__ = 'EnumDefinition'
+
+        
+
+    };
+
+    return definition;
+end
+
 return API;
