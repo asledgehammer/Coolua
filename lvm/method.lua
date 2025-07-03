@@ -11,7 +11,6 @@ local errorf = LVMUtils.errorf;
 --- @type LVM
 local LVM;
 
---- @type LVMMethodModule
 local API = {
 
     __type__ = 'LVMModule',
@@ -194,7 +193,7 @@ function API.getDeclaredMethodNames(struct, array)
     return array;
 end
 
---- @param classDef ClassDefinition
+--- @param classDef ClassStructDefinition
 --- @param methodNames string[]?
 ---
 --- @return string[] methodNames
@@ -206,5 +205,7 @@ function API.getMethodNames(classDef, methodNames)
     API.getDeclaredMethodNames(classDef, methodNames);
     return methodNames;
 end
+
+--- @cast API LVMMethodModule
 
 return API;

@@ -8,7 +8,6 @@ local errorf = LVMUtils.errorf;
 --- @type LVM
 local LVM;
 
---- @type LVMParameterModule
 local API = {
 
     __type__ = 'LVMModule',
@@ -20,7 +19,7 @@ local API = {
 --- @param paramsB ParameterDefinition[]
 ---
 --- @return boolean
-function API.areCompatable(paramsA, paramsB)
+function API.areCompatible(paramsA, paramsB)
     if #paramsA ~= #paramsB then
         print(string.format('Params length mismatch: #a = %i, #b = %i', #paramsA, #paramsB));
         return false;
@@ -49,5 +48,7 @@ function API.isVararg(arg)
     if len < 3 then return false end
     return string.sub(arg, len - 2, len) == '...';
 end
+
+--- @cast API LVMParameterModule
 
 return API;

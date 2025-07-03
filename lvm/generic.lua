@@ -9,7 +9,6 @@ local isArray = LVMUtils.isArray;
 --- @type LVM
 local LVM;
 
---- @type LVMGenericModule
 local API = {
 
     __type__ = 'LVMModule',
@@ -18,12 +17,12 @@ local API = {
     setLVM = function(lvm) LVM = lvm end
 };
 
-function API.compileGenericTypesDefinition(cd, gdefParam)
+function API.compileGenericTypesDefinition(cd, genericDefinitionParam)
     -- Check Generics definition.
     local generics = {};
-    if gdefParam then
-        for i = 1, #gdefParam do
-            local gDefParam = gdefParam[i];
+    if genericDefinitionParam then
+        for i = 1, #genericDefinitionParam do
+            local gDefParam = genericDefinitionParam[i];
 
             -- Audit & compile name string.
             local name = gDefParam.name;
@@ -62,5 +61,7 @@ function API.compileGenericTypesDefinition(cd, gdefParam)
     end
     return generics;
 end
+
+--- @cast API LVMGenericModule
 
 return API;

@@ -10,7 +10,6 @@ local errorf = LVMUtils.errorf;
 --- @type LVM
 local LVM;
 
---- @type LVMMetaModule
 local API = {
 
     __type__ = 'LVMModule',
@@ -212,5 +211,7 @@ function API.createInstanceMetatable(cd, o)
 
     setmetatable(o, mt);
 end
+
+--- @cast API LVMMetaModule
 
 return API;

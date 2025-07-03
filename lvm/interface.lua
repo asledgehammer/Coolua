@@ -5,7 +5,6 @@
 --- @type LVM
 local LVM;
 
---- @type LVMInterfaceModule
 local API = {
 
     __type__ = 'LVMModule',
@@ -33,5 +32,11 @@ function API.newInterface(definition, enclosingStruct)
 
     return id;
 end
+
+function API.newInterface()
+
+end
+
+--- @cast API LVMInterfaceModule
 
 return API;

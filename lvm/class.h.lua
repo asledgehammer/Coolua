@@ -21,12 +21,13 @@
 --- @field generics GenericsTypesDefinitionParameter? Any generic parameter definitions.
 --- @field abstract boolean? (Default: false)
 
---- @class (exact) ClassStructDefinition: StructDefinition, Genericable, Hierarchical, Constructable, Methodable, Fieldable, Staticable, Abstractable, Auditable
+--- @class (exact) ClassStructDefinition: StructDefinition, Genericable, Hierarchical, Constructable, Fieldable, Staticable, Abstractable, Auditable
 --- @field __type__ 'ClassStructDefinition'
 --- @field printHeader string
 --- @field type string
 --- @field lock boolean
 --- @field classObj Class?
+--- @field superClass ClassStructDefinition?
 local ClassStructDefinition = {};
 
 --- @param definition FieldDefinitionParameter

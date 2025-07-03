@@ -27,7 +27,7 @@ local API = {};
 --- @param paramsB ParameterDefinition[]
 ---
 --- @return boolean
-function API.areCompatable(paramsA, paramsB) end
+function API.areCompatible(paramsA, paramsB) end
 
 --- @param arg string
 --- 

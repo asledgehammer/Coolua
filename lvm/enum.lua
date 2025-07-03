@@ -5,7 +5,6 @@
 --- @type LVM
 local LVM;
 
---- @type LVMEnumModule
 local API = {
 
     __type__ = 'LVMModule',
@@ -33,5 +32,7 @@ function API.newEnum(definition, enclosingStruct)
 
     return ed;
 end
+
+--- @cast API LVMEnumModule
 
 return API;

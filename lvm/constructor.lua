@@ -11,7 +11,6 @@ local paramsToString = LVMUtils.paramsToString;
 --- @type LVM
 local LVM;
 
---- @type LVMConstructorModule
 local API = {
 
     __type__ = 'LVMModule',
@@ -159,5 +158,7 @@ function API.createMiddleConstructor(classDef)
         if not result then error(errMsg) end
     end
 end
+
+--- @cast API LVMConstructorModule
 
 return API;

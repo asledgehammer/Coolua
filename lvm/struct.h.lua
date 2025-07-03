@@ -36,7 +36,7 @@
 --- @field staticFields table<string, any> Stores the static values for classes.
 
 --- @class (exact) Hierarchical
---- @field superClass Hierarchical
+--- @field superClass Hierarchical?
 --- @field subClasses (ClassDefinition|Class)[]
 --- @field children table<string, ClassDefinition> Any classes that are defined within the class's context.
 --- @field isChild boolean
@@ -44,7 +44,7 @@
 
 -- MARK: - Definition
 
---- @class (exact) StructDefinition
+--- @class (exact) StructDefinition: Methodable
 --- @field __type__ string The internal type. Used for evaluation for several components inside the LVM.
 --- @field path string
 --- @field pkg string

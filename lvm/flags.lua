@@ -5,7 +5,6 @@
 --- @type LVM
 local LVM;
 
---- @type LVMFlagsModule
 local API = {
 
     __type__ = 'LVMModule',
@@ -23,5 +22,7 @@ local API = {
     --- @param lvm LVM
     setLVM = function(lvm) LVM = lvm end
 };
+
+--- @cast API LVMFlagsModule
 
 return API;

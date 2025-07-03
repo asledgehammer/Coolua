@@ -1,0 +1,13 @@
+{
+    "emmylua.spell.dict": [
+        "Struct",
+        "calc",
+        "recurse",
+        "Eval",
+        "errorf",
+        "Utils",
+        "readonly",
+        "debugf",
+        "Vararg"
+    ]
+}

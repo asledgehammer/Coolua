@@ -18,7 +18,6 @@ local readonly = LVMUtils.readonly;
 --- @type LVM
 local LVM;
 
---- @type LVMClassModule
 local API = {
 
     __type__ = 'LVMModule',
@@ -90,7 +89,6 @@ end
 --- @param definition ClassStructDefinitionParameter|ChildClassStructDefinitionParameter
 --- @param enclosingClass ClassStructDefinition?
 function API.newClass(definition, enclosingClass)
-
     local locInfo = LVM.struct.calcPathNamePackage(definition, enclosingClass);
     local path = locInfo.path;
     local name = locInfo.name;
@@ -104,18 +102,11 @@ function API.newClass(definition, enclosingClass)
 
     local superClass = definition.superClass;
 
-    if superClass then
-        if superClass.__type__ == 'lua.lang.Class' then
-            --- @cast superClass Class<Object>
-            superClass = superClass:getDefinition();
-        end
-
-        if superClass.final then
-            errorf(2, 'Class cannot extend final superClass: %s extends final %s',
-                path, superClass.path
-            );
-            return;
-        end
+    if superClass and superClass.final then
+        errorf(2, 'Class cannot extend final superClass: %s extends final %s',
+            path, superClass.path
+        );
+        return;
     end
 
     local cd = {
@@ -500,7 +491,7 @@ function API.newClass(definition, enclosingClass)
         end
     end
 
-    --- Attempts to resolve a FieldDefinition in the ClassStructDefinition. If the field isn't declared for the class 
+    --- Attempts to resolve a FieldDefinition in the ClassStructDefinition. If the field isn't declared for the class
     --- level, the super-class(es) are checked.
     ---
     --- @param name string
@@ -915,7 +906,7 @@ function API.newClass(definition, enclosingClass)
                 for j = 1, #methods do
                     local method = methods[j];
 
-                    if LVM.parameter.areCompatable(decMethod.parameters, method.parameters) then
+                    if LVM.parameter.areCompatible(decMethod.parameters, method.parameters) then
                         debugf(LVM.debug.method, '%s \t\t@override detected: %s', self.printHeader, debugName);
 
                         -- Cannot override final methods.
@@ -1255,10 +1246,11 @@ function API.newClass(definition, enclosingClass)
         return self:getMethodFromLine(line) or self:getConstructorFromLine(line) or nil;
     end
 
-    --- @param class ClassStructDefinition
+    --- @param class Hierarchical?
     ---
     --- @return boolean
     function cd:isSuperClass(class)
+        --- @type Hierarchical|nil
         local next = self.superClass;
         while next do
             if next == class then return true end
@@ -1304,5 +1296,7 @@ function API.newClass(definition, enclosingClass)
 
     return cd;
 end
+
+--- @cast API LVMClassModule
 
 return API;

@@ -10,7 +10,6 @@ local errorf = LVMUtils.errorf;
 --- @type LVM
 local LVM = nil;
 
---- @type LVMAuditModule
 local API = {
 
     __type__ = 'LVMModule',
@@ -91,5 +90,7 @@ end
 function API.auditConstructor(def)
 
 end
+
+--- @cast API LVMAuditModule
 
 return API;
