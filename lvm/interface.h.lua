@@ -76,7 +76,7 @@ function InterfaceStructDefinition:finalize() end
 local API = {};
 
 --- @param definition InterfaceStructDefinitionParameter
---- @param enclosingStruct StructDefinition
+--- @param enclosingStruct StructDefinition?
 ---
 --- @return InterfaceStructDefinition
 function API.newInterface(definition, enclosingStruct) end

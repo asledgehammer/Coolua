@@ -24,7 +24,6 @@ local API = {
 };
 
 function API.newInterface(definition, enclosingStruct)
-
     local locInfo = LVM.struct.calcPathNamePackage(definition, enclosingStruct);
     local path = locInfo.path;
     local name = locInfo.name;
@@ -36,8 +35,37 @@ function API.newInterface(definition, enclosingStruct)
 
         path = path,
         name = name,
-        pkg = pkg
+        pkg = pkg,
+
+        superClass = definition.superClass,
+        subClasses = {},
+        isChild = enclosingStruct ~= nil,
+        enclosingClass = enclosingStruct,
+        children = {},
+        static = definition.static or false,
+
     };
+
+    -- Make sure that no class is made twice.
+    if LVM.forNameDef(id.path) then
+        errorf(2, 'Struct is already defined: %s', id.path);
+        return id; -- NOTE: Useless return. Makes sure the method doesn't say it'll define something as nil.
+    end
+
+    LVM.DEFINITIONS[id.path] = id;
+
+    id.type = 'interface:' .. id.path;
+    id.printHeader = string.format('Interface(%s):', id.path);
+    id.declaredFields = {};
+    id.declaredMethods = {};
+    id.lock = false;
+
+    -- Compile the generic parameters for the class.
+    id.generics = LVM.generic.compileGenericTypesDefinition(id, definition.generics);
+
+    if enclosingStruct then
+        enclosingStruct.children[id.name] = id;
+    end
 
     --- @param methodDefinition MethodDefinitionParameter
     --- @param func function
@@ -360,9 +388,6 @@ function API.newInterface(definition, enclosingStruct)
             errorf(2, '%s Cannot finalize. (SuperClass %s is not finalized!)', errHeader, path);
         end
 
-        -- If any auto-methods are defined for fields (get, set), create them before compiling class methods.
-        self:compileFieldAutoMethods();
-
         -- TODO: Audit everything.
 
         --- @type table<string, MethodDefinition[]>
@@ -371,28 +396,11 @@ function API.newInterface(definition, enclosingStruct)
         -- Change add methods.
         self.addMethod = function() errorf(2, '%s Cannot add methods. (Class is final!)', errHeader) end
         self.addField = function() errorf(2, '%s Cannot add fields. (Class is final!)', errHeader) end
-        self.addConstructor = function() errorf(2, '%s Cannot add constructors. (Class is final!)', errHeader) end
 
         -- Set default value(s) for static fields.
         for name, fd in pairs(id.declaredFields) do
             if fd.static then
                 id[name] = fd.value;
-            end
-        end
-
-        --- @type table<ParameterDefinition[], function>
-        self.__constructors = {};
-
-        -- Set all definitions as read-only.
-        local constructorsLen = #self.declaredConstructors;
-        if constructorsLen ~= 0 then
-            for i = 1, constructorsLen do
-                --- @type ConstructorDefinition
-                local constructor = self.declaredConstructors[i];
-                self.__constructors[constructor.parameters] = constructor.func;
-
-                -- Set read-only.
-                self.declaredConstructors[i] = readonly(constructor);
             end
         end
 
@@ -550,7 +558,7 @@ function API.newInterface(definition, enclosingStruct)
         setmetatable(id, mt);
 
         self.lock = true;
-        CLASS_DEFS[id.path] = id;
+        LVM.DEFINITIONS[id.path] = id;
 
         -- Set class as child.
         if id.superClass then

@@ -76,6 +76,7 @@ function API.newClass(definition, enclosingClass)
     local cd = {
         __type__ = 'ClassStructDefinition',
         pkg = pkg,
+        path = path,
         name = name,
         scope = definition.scope,
         superClass = superClass,
@@ -88,11 +89,9 @@ function API.newClass(definition, enclosingClass)
         abstract = definition.abstract or false
     };
 
-    cd.path = path;
-    
     -- Make sure that no class is made twice.
     if LVM.forNameDef(cd.path) then
-        errorf(2, 'Class is already defined: %s', cd.path);
+        errorf(2, 'Struct is already defined: %s', cd.path);
         return cd; -- NOTE: Useless return. Makes sure the method doesn't say it'll define something as nil.
     end
 
