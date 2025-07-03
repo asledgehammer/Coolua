@@ -48,7 +48,11 @@ Class:addField({
     scope = 'private',
     final = true,
     name = 'definition',
-    type = 'ClassStructDefinition',
+    types = {
+        'ClassStructDefinition',
+        'InterfaceStructDefinition',
+        'EnumStructDefinition'
+    },
 
     get = { scope = 'public' }
 });
@@ -57,7 +61,14 @@ Class:addField({
 Class:addConstructor({
         scope = 'private',
         parameters = {
-            { name = 'def', type = 'ClassStructDefinition' }
+            {
+                name = 'def',
+                types = {
+                    'ClassStructDefinition',
+                    'InterfaceStructDefinition',
+                    'EnumStructDefinition'
+                }
+            }
         }
     },
     --- @param self Class
@@ -80,6 +91,28 @@ Class:addMethod({
     },
     function(self, ...)
         return self.definition.new(...);
+    end
+);
+
+Class:addMethod({
+        scope = 'public',
+        final = true,
+        name = 'isInterface',
+        returns = 'boolean',
+    },
+    function(self)
+        return self.definition.__type__ == 'InterfaceStructDefinition';
+    end
+);
+
+Class:addMethod({
+        scope = 'public',
+        final = true,
+        name = 'isEnum',
+        returns = 'boolean',
+    },
+    function(self)
+        return self.definition.__type__ == 'EnumStructDefinition';
     end
 );
 

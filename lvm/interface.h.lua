@@ -75,7 +75,8 @@ function InterfaceStructDefinition:finalize() end
 --- @class LVMInterfaceModule: LVMModule
 local API = {};
 
---- @param enumDef InterfaceStructDefinitionParameter
+--- @param definition InterfaceStructDefinitionParameter
+--- @param enclosingStruct StructDefinition
 ---
 --- @return InterfaceStructDefinition
-function API.newInterface(enumDef) end
+function API.newInterface(definition, enclosingStruct) end

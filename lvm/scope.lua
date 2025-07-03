@@ -24,7 +24,7 @@ function API.getScopeForCall(class, callInfo)
     local value = 'public';
 
     -- Classes are locked to their package path and name.
-    local cd = LVM.class.forNameDef(callInfo.path);
+    local cd = LVM.forNameDef(callInfo.path);
 
     -- - If the class is nil, the call is coming from code outside of a class file entirely.
     -- - If the executable is nil, then the call is coming from code inside of a class but not in a defined method or

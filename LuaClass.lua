@@ -17,7 +17,7 @@ LuaClass.Class = require 'lua/lang/Class';
 
 -- Language-util-level
 LuaClass.StackTraceElement = require 'lua/lang/StackTraceElement';
-LVM.class.forName(LuaClass.StackTraceElement.path);
+LVM.forName(LuaClass.StackTraceElement.path);
 
 LVM.stepOut();
 

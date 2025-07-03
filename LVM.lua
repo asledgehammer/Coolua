@@ -4,6 +4,7 @@
 
 local LVMUtils = require 'LVMUtils';
 local errorf = LVMUtils.errorf;
+local printf = LVMUtils.printf;
 
 --- @type LVM
 local LVM;
@@ -68,6 +69,9 @@ LVM = {
     __type__ = 'LVM',
 
     ROOT_PATH = ROOT_PATH,
+    
+    DEFINITIONS = {},
+    CLASSES = {},
 
     debug = require 'lvm/debug',
     enum = require 'lvm/enum',
@@ -130,5 +134,37 @@ LVM.method.setLVM(LVM);
 LVM.class.setLVM(LVM);
 LVM.struct.setLVM(LVM);
 LVM.interface.setLVM(LVM);
+
+--- @param path string
+---
+--- @return StructDefinition|nil
+function LVM.forNameDef(path)
+    return LVM.DEFINITIONS[path];
+end
+
+function LVM.forName(path)
+    --- @type Class?
+    local class = LVM.CLASSES[path];
+
+    if not class then
+        local def = LVM.DEFINITIONS[path];
+        printf('LVM.DEFINITIONS[%s] = %s', path, tostring(def));
+        if def and (
+                def.__type__ == 'ClassStructDefinition' or
+                def.__type__ == 'InterfaceStructDefinition' or
+                def.__type__ == 'EnumStructDefinition'
+            ) then
+            --- @cast def ClassStructDefinition|InterfaceStructDefinition|EnumStructDefinition
+
+            LVM.stepIn();
+            class = _G.lua.lang.Class.new(def);
+            LVM.stepOut();
+
+            LVM.CLASSES[path] = class;
+        end
+    end
+
+    return class;
+end
 
 return LVM;

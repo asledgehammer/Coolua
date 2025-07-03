@@ -26,42 +26,6 @@ local API = {
     setLVM = function(lvm) LVM = lvm end
 };
 
---- @type table<string, Class>
----
---- Classes are stored as their path.
-local CLASSES = {};
-
---- @type table<string, ClassStructDefinition>
----
---- Class Definitions are stored as their path.
-local CLASS_DEFS = {};
-
---- @param path string
----
---- @return ClassStructDefinition|nil
-function API.forNameDef(path)
-    return CLASS_DEFS[path];
-end
-
-function API.forName(path)
-    --- @type Class?
-    local class = CLASSES[path];
-
-    if not class then
-        --- @type ClassStructDefinition
-        local def = CLASS_DEFS[path];
-        if def then
-            LVM.stepIn();
-            class = _G.lua.lang.Class.new(def);
-            LVM.stepOut();
-
-            CLASSES[path] = class;
-        end
-    end
-
-    return class;
-end
-
 --- Defined for all classes so that __eq actually fires.
 --- Reference: http://lua-users.org/wiki/MetatableEvents
 ---
@@ -125,12 +89,14 @@ function API.newClass(definition, enclosingClass)
     };
 
     cd.path = path;
-
+    
     -- Make sure that no class is made twice.
-    if LVM.class.forName(cd.path) then
+    if LVM.forNameDef(cd.path) then
         errorf(2, 'Class is already defined: %s', cd.path);
         return cd; -- NOTE: Useless return. Makes sure the method doesn't say it'll define something as nil.
     end
+
+    LVM.DEFINITIONS[cd.path] = cd;
 
     cd.type = 'class:' .. cd.path;
     cd.printHeader = string.format('Class(%s):', cd.path);
@@ -145,13 +111,11 @@ function API.newClass(definition, enclosingClass)
     cd.__middleConstructor = LVM.constructor.createMiddleConstructor(cd);
 
     if not cd.superClass and cd.path ~= 'lua.lang.Object' then
-        cd.superClass = API.forNameDef('lua.lang.Object');
+        cd.superClass = LVM.forNameDef('lua.lang.Object');
         if not cd.superClass then
             errorf(2, '%s lua.lang.Object not defined!', cd.printHeader);
         end
     end
-
-    CLASS_DEFS[cd.path] = cd;
 
     if enclosingClass then
         enclosingClass.children[cd.name] = cd;
@@ -170,7 +134,7 @@ function API.newClass(definition, enclosingClass)
 
         local __class__;
         if cd.path ~= 'lua.lang.Class' then -- Prevent infinite loops.
-            __class__ = API.forName(path);
+            __class__ = LVM.forName(path);
         else
             __class__ = createPseudoClassInstance(cd);
         end
@@ -192,7 +156,7 @@ function API.newClass(definition, enclosingClass)
         o.getClass = function(self)
             if not self.__class__ then
                 LVM.stepIn();
-                self.__class__ = API.forName(cd.path);
+                self.__class__ = LVM.forName(cd.path);
                 LVM.stepOut();
             end
             return self.__class__;
@@ -1217,7 +1181,7 @@ function API.newClass(definition, enclosingClass)
         setmetatable(cd, mt);
 
         self.lock = true;
-        CLASS_DEFS[cd.path] = cd;
+        LVM.DEFINITIONS[cd.path] = cd;
 
         -- Set class as child.
         if cd.superClass then

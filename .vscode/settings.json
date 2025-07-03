@@ -8,6 +8,7 @@
         "Utils",
         "readonly",
         "debugf",
-        "Vararg"
+        "Vararg",
+        "printf"
     ]
 }

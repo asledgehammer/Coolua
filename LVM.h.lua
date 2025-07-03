@@ -12,12 +12,14 @@ function LVMModule.setLVM(lvm) end
 
 -- MARK: - LVM
 
---- @class (exact) LVM
+--- @class LVM
 ---
 --- @field __type__ 'LVM'
 ---
 --- * Constants
 --- @field ROOT_PATH string The root path of the running source code.
+--- @field DEFINITIONS table<string, StructDefinition> Key = `StructDefinition.path`
+--- @field CLASSES table<string, Class> Key = `StructDefinition.path`
 --- 
 --- * Modules
 --- @field debug LVMDebugModule
@@ -46,3 +48,18 @@ function LVMModule.setLVM(lvm) end
 --- @field isOutside fun(): boolean
 --- @field stepIn fun()
 --- @field stepOut fun()
+local LVM = {};
+
+--- Simulates path resolution from Java via `Class.forName(..)`. Resolves the definition struct.
+---
+--- @param path string The path to the class. syntax: `<package>.<class>`
+---
+--- @return ClassStructDefinition|nil The LVM class definition struct. If no definition exists with the path then nil is returned.
+function LVM.forNameDef(path) end
+
+--- Simulates path resolution from Java via `Class.forName(..)`. Resolves (or builds) a Class object.
+---
+--- @param path string The path to the class. syntax: `<package>.<class>`
+---
+--- @return Class|nil classObj The class object. If no definition exists with the path then nil is returned.
+function LVM.forName(path) end
