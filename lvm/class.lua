@@ -51,9 +51,9 @@ local function createPseudoClassInstance(def)
 end
 
 --- @param definition ClassStructDefinitionParameter|ChildClassStructDefinitionParameter
---- @param enclosingClass ClassStructDefinition?
-function API.newClass(definition, enclosingClass)
-    local locInfo = LVM.struct.calcPathNamePackage(definition, enclosingClass);
+--- @param outer StructDefinition?
+function API.newClass(definition, outer)
+    local locInfo = LVM.struct.calcPathNamePackage(definition, outer);
     local path = locInfo.path;
     local name = locInfo.name;
     local pkg = locInfo.pkg;
@@ -64,28 +64,39 @@ function API.newClass(definition, enclosingClass)
         return;
     end
 
-    local superClass = definition.superClass;
-
-    if superClass and superClass.final then
-        errorf(2, 'Class cannot extend final superClass: %s extends final %s',
-            path, superClass.path
+    local super = definition.extends;
+    if super and super.final then
+        errorf(2, 'Class cannot extend final Super-Class: %s extends final %s',
+            path, super.path
         );
         return;
     end
 
     local cd = {
+
         __type__ = 'ClassStructDefinition',
+
+        -- * Struct Properties * --
         pkg = pkg,
         path = path,
         name = name,
-        scope = definition.scope,
-        superClass = superClass,
-        subClasses = {},
-        isChild = enclosingClass ~= nil,
-        enclosingClass = enclosingClass,
-        children = {},
+
         static = definition.static or false,
         final = definition.final or false,
+
+        -- * Scopable Properties * --
+        scope = definition.scope,
+
+        -- * Hierarchical Properties * --
+        super = super,
+        sub = {},
+
+        -- * Enclosurable Properties * --
+        outer = outer,
+        inner = {},
+        isChild = outer ~= nil,
+
+        -- * Class-Specific Properties * --
         abstract = definition.abstract or false
     };
 
@@ -109,15 +120,15 @@ function API.newClass(definition, enclosingClass)
 
     cd.__middleConstructor = LVM.constructor.createMiddleConstructor(cd);
 
-    if not cd.superClass and cd.path ~= 'lua.lang.Object' then
-        cd.superClass = LVM.forNameDef('lua.lang.Object');
-        if not cd.superClass then
+    if not cd.super and cd.path ~= 'lua.lang.Object' then
+        cd.super = LVM.forNameDef('lua.lang.Object');
+        if not cd.super then
             errorf(2, '%s lua.lang.Object not defined!', cd.printHeader);
         end
     end
 
-    if enclosingClass then
-        enclosingClass.children[cd.name] = cd;
+    if outer then
+        outer.inner[cd.name] = cd;
     end
 
     -- MARK: - new()
@@ -462,8 +473,8 @@ function API.newClass(definition, enclosingClass)
     --- @return FieldDefinition? fieldDefinition
     function cd:getField(name)
         local fd = cd:getDeclaredField(name);
-        if not fd and cd.superClass then
-            return cd.superClass:getField(name);
+        if not fd and cd.super then
+            return cd.super:getField(name);
         end
         return fd;
     end
@@ -488,7 +499,7 @@ function API.newClass(definition, enclosingClass)
             for _, fd in pairs(next.declaredFields) do
                 table.insert(array, fd);
             end
-            next = next.superClass;
+            next = next.super;
         end
 
         return array;
@@ -620,8 +631,8 @@ function API.newClass(definition, enclosingClass)
     --- @return ConstructorDefinition|nil constructorDefinition
     function cd:getConstructor(args)
         local cons = self:getDeclaredConstructor(args);
-        if not cons and self.superClass then
-            cons = self.superClass:getConstructor(args);
+        if not cons and self.super then
+            cons = self.super:getConstructor(args);
         end
         return cons;
     end
@@ -651,8 +662,6 @@ function API.newClass(definition, enclosingClass)
 
     -- MARK: - Method
 
-    --- @param methodDefinition MethodDefinitionParameter
-    --- @param func function
     function cd:addMethod(methodDefinition, func)
         -- Friendly check for implementation.
         if not self or type(methodDefinition) == 'function' then
@@ -724,35 +733,48 @@ function API.newClass(definition, enclosingClass)
         end
 
         --- @type MethodDefinition
-        local args = {
+        local md = {
+
             __type__ = 'MethodDefinition',
-            audited = false,
+
+            -- Base properties. --
             class = cd,
-            scope = methodDefinition.scope or 'package',
-            static = methodDefinition.static or false,
-            final = methodDefinition.final or false,
-            parameters = methodDefinition.parameters or {},
             name = methodDefinition.name,
             returns = types,
+            parameters = methodDefinition.parameters or {},
+            func = func,
+
+            -- Used for scope-visibility analysis. --
+            scope = methodDefinition.scope or 'package',
+            lineRange = { start = lineStart, stop = lineStop },
+
+            -- General method flags --
+            static = methodDefinition.static or false,
+            final = methodDefinition.final or false,
+            abstract = methodDefinition.abstract or false,
+
+            -- Compiled method flags --
+            audited = false,
             override = false,
             super = nil,
-            func = func,
-            abstract = methodDefinition.abstract or false,
-            lineRange = { start = lineStart, stop = lineStop },
+
+            -- Always falsify interface flags in class method definitions. --
+            interface = false,
+            default = false,
         };
 
-        if args.parameters then
-            if type(args.parameters) ~= 'table' or not isArray(args.parameters) then
+        if md.parameters then
+            if type(md.parameters) ~= 'table' or not isArray(md.parameters) then
                 errorf(2, '%s property "parameters" is not a ParameterDefinition[]. {type=%s, value=%s}',
-                    errHeader, LVM.type.getType(args.parameters), tostring(args.parameters)
+                    errHeader, LVM.type.getType(md.parameters), tostring(md.parameters)
                 );
             end
 
             -- Convert any simplified type declarations.
-            local paramLen = #args.parameters;
+            local paramLen = #md.parameters;
             if paramLen then
                 for i = 1, paramLen do
-                    local param = args.parameters[i];
+                    local param = md.parameters[i];
 
                     -- Validate parameter type(s).
                     if not param.type and not param.types then
@@ -776,18 +798,18 @@ function API.newClass(definition, enclosingClass)
                 end
             end
         else
-            args.parameters = {};
+            md.parameters = {};
         end
 
-        local name = args.name;
+        local name = md.name;
         local methodCluster = self.declaredMethods[name];
         if not methodCluster then
             methodCluster = {};
             self.declaredMethods[name] = methodCluster;
         end
-        table.insert(methodCluster, args);
+        table.insert(methodCluster, md);
 
-        return args;
+        return md;
     end
 
     function cd:compileMethods()
@@ -830,7 +852,7 @@ function API.newClass(definition, enclosingClass)
     function cd:compileMethod(name)
         local debugName = self.name .. '.' .. name .. '(...)';
 
-        if not self.superClass then
+        if not self.super then
             debugf(LVM.debug.method, '%s Compiling original method(s): %s', self.printHeader, debugName);
             self.methods[name] = LVMUtils.copyArray(self.declaredMethods[name]);
             return;
@@ -845,19 +867,19 @@ function API.newClass(definition, enclosingClass)
             debugf(LVM.debug.method, '%s \tUsing super-class array: %s', self.printHeader, debugName);
 
             -- Copy the super-class array.
-            self.methods[name] = LVMUtils.copyArray(self.superClass.methods[name]);
+            self.methods[name] = LVMUtils.copyArray(self.super.methods[name]);
             return;
         end
 
         -- In this case, all methods with this name are original.
-        if not cd.superClass.methods[name] then
+        if not cd.super.methods[name] then
             debugf(LVM.debug.method, '%s \tUsing class declaration array: %s', self.printHeader, debugName);
             self.methods[name] = LVMUtils.copyArray(decMethods);
             return;
         end
 
         --- @type table<string, MethodDefinition[]>
-        local methods = LVMUtils.copyArray(cd.superClass.methods[name]);
+        local methods = LVMUtils.copyArray(cd.super.methods[name]);
 
         if decMethods then
             for i = 1, #decMethods do
@@ -918,8 +940,8 @@ function API.newClass(definition, enclosingClass)
     --- @return MethodDefinition|nil methodDefinition
     function cd:getMethod(name, args)
         local method = self:getDeclaredMethod(name, args);
-        if not method and self.superClass then
-            method = self.superClass:getMethod(name, args);
+        if not method and self.super then
+            method = self.super:getMethod(name, args);
         end
         return method;
     end
@@ -986,8 +1008,8 @@ function API.newClass(definition, enclosingClass)
 
         if self.lock then
             errorf(2, '%s Cannot finalize. (Class is already finalized!)', errHeader);
-        elseif cd.superClass and (cd.superClass.__type__ == 'ClassStructDefinition' and not cd.superClass.lock) then
-            errorf(2, '%s Cannot finalize. (SuperClass %s is not finalized!)', errHeader, path);
+        elseif cd.super and (cd.super.__type__ == 'ClassStructDefinition' and not cd.super.lock) then
+            errorf(2, '%s Cannot finalize. (Super-Class %s is not finalized!)', errHeader, path);
         end
 
         -- If any auto-methods are defined for fields (get, set), create them before compiling class methods.
@@ -1088,10 +1110,26 @@ function API.newClass(definition, enclosingClass)
                 return;
             end
 
+
             local fd = cd:getField(field);
 
+            -- Internal bypass for struct construction.
+            if LVM.isInside() then
+
+                -- Set the value.
+                __properties[field] = value;
+
+                -- Apply forward the value metrics. (If defined)
+                if fd then
+                    fd.assignedOnce = true;
+                    fd.value = value;
+                end
+
+                return;
+            end
+
             -- Inner class invocation.
-            if cd.children[field] then
+            if cd.sub[field] then
                 if LVM.isOutside() then
                     errorf(2, 'Cannot set inner class explicitly. Use the API.');
                 end
@@ -1183,8 +1221,8 @@ function API.newClass(definition, enclosingClass)
         LVM.DEFINITIONS[cd.path] = cd;
 
         -- Set class as child.
-        if cd.superClass then
-            table.insert(cd.superClass.subClasses, cd);
+        if cd.super then
+            table.insert(cd.super.sub, cd);
         end
 
         --- Set the class to be accessable from a global package reference.
@@ -1193,9 +1231,9 @@ function API.newClass(definition, enclosingClass)
         LVM.flags.allowPackageStructModifications = false;
 
         -- Add a reference for global package and static code.
-        if enclosingClass then
+        if outer then
             LVM.stepIn();
-            enclosingClass[cd.name] = cd;
+            outer[cd.name] = cd;
             LVM.stepOut();
         end
 
@@ -1214,10 +1252,10 @@ function API.newClass(definition, enclosingClass)
     --- @return boolean
     function cd:isSuperClass(class)
         --- @type Hierarchical|nil
-        local next = self.superClass;
+        local next = self.super;
         while next do
             if next == class then return true end
-            next = next.superClass;
+            next = next.super;
         end
         return false;
     end
@@ -1229,9 +1267,9 @@ function API.newClass(definition, enclosingClass)
     ---
     --- @return boolean result True if the class to evaluate is a super-class of the subClass.
     local function __recurseSubClass(subClass, classToEval)
-        local subLen = #cd.subClasses;
+        local subLen = #cd.sub;
         for i = 1, subLen do
-            local next = cd.subClasses[i];
+            local next = cd.sub[i];
             if next:isAssignableFromType(classToEval) or __recurseSubClass(next, classToEval) then
                 return true;
             end

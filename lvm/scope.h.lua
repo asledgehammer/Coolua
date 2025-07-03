@@ -6,10 +6,6 @@
 
 -- MARK: - Definition
 
----[[
---- @author asledgehammer, JabDoesThings 2025
----]]
-
 --- @alias ClassScope 'private'|'protected'|'package'|'public'
 
 -- MARK: - Module
@@ -17,7 +13,7 @@
 --- @class LVMScopeModule: LVMModule
 local API = {};
 
---- @param class ClassStructDefinition The class called.
+--- @param class StructDefinition The class called.
 --- @param callInfo CallInfo
 ---
 --- @return ClassScope

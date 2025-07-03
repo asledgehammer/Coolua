@@ -45,7 +45,7 @@ function API.createSuperTable(cd, o)
         errorf(2, '%s Cannot modify SuperTable. (readonly)', cd.printHeader);
     end
 
-    local superClass = cd.superClass;
+    local superClass = cd.super;
     -- This would only apply to `lua.lang.Object` and any modifications made to it.
     if not superClass then
         -- Nothing to call. Let the implementation know.
@@ -65,10 +65,10 @@ function API.createSuperTable(cd, o)
     properties.__middleMethods = {};
     local ssd = superClass;
     while ssd do
-        for k, v in pairs(cd.superClass.__middleMethods) do
+        for k, v in pairs(cd.super.__middleMethods) do
             properties.__middleMethods[k] = v;
         end
-        ssd = ssd.superClass;
+        ssd = ssd.super;
     end
 
     -- Assign / discover the inferred method in the super-class.

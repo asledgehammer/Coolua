@@ -9,7 +9,7 @@
 --- @class (exact) ClassStructDefinitionParameter: StructDefinitionParameter
 --- @field final boolean? (Default: false)
 --- @field scope ClassScope? (Default: package)
---- @field superClass ClassStructDefinition? (Default: nil)
+--- @field extends ClassStructDefinition? (Default: nil)
 --- @field generics GenericsTypesDefinitionParameter? Any generic parameter definitions.
 --- @field static boolean? If the class is defined as static.
 --- @field abstract boolean? (Default: false)
@@ -17,7 +17,7 @@
 --- @class (exact) ChildClassStructDefinitionParameter: StructDefinitionParameter
 --- @field final boolean? (Default: false)
 --- @field scope ClassScope? (Default: package)
---- @field superClass ClassStructDefinition? (Default: nil)
+--- @field extends ClassStructDefinition? (Default: nil)
 --- @field generics GenericsTypesDefinitionParameter? Any generic parameter definitions.
 --- @field abstract boolean? (Default: false)
 
@@ -27,7 +27,7 @@
 --- @field type string
 --- @field lock boolean
 --- @field classObj Class?
---- @field superClass ClassStructDefinition?
+--- @field super ClassStructDefinition?
 local ClassStructDefinition = {};
 
 --- @param definition FieldDefinitionParameter
@@ -72,7 +72,7 @@ function ClassStructDefinition:getConstructor(args) end
 --- @return ConstructorDefinition|nil constructorDefinition
 function ClassStructDefinition:getDeclaredConstructor(args) end
 
---- @param definition MethodDefinitionParameter
+--- @param definition ClassMethodDefinitionParameter
 --- @param func function?
 ---
 --- @return MethodDefinition
@@ -152,7 +152,7 @@ function API.equals(a, b) end
 function API.newClass(defParams) end
 
 --- @param defParams ChildClassStructDefinitionParameter
---- @param enclosingClass ClassStructDefinition
+--- @param outer StructDefinition
 ---
 --- @return ClassStructDefinition
-function API.newClass(defParams, enclosingClass) end
+function API.newClass(defParams, outer) end

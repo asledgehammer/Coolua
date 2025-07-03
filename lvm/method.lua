@@ -19,6 +19,8 @@ local API = {
     setLVM = function(lvm) LVM = lvm end
 };
 
+--- @cast API LVMMethodModule
+
 function API.resolveMethod(methods, args)
     
     local argsLen = #args;
@@ -193,19 +195,13 @@ function API.getDeclaredMethodNames(struct, array)
     return array;
 end
 
---- @param classDef ClassStructDefinition
---- @param methodNames string[]?
----
---- @return string[] methodNames
 function API.getMethodNames(classDef, methodNames)
     methodNames = methodNames or {};
-    if classDef.superClass then
-        API.getMethodNames(classDef.superClass, methodNames);
+    if classDef.super then
+        API.getMethodNames(classDef.super, methodNames);
     end
     API.getDeclaredMethodNames(classDef, methodNames);
     return methodNames;
 end
-
---- @cast API LVMMethodModule
 
 return API;

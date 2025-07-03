@@ -6,10 +6,25 @@
 
 -- MARK: - Definition
 
+--- @class (exact) InterfaceMethodDefinitionParameter
+--- 
+--- @field scope ClassScope? (Default: public)
+--- @field static boolean? (Default: false)
+--- @field name string
+--- @field generics GenericsTypesDefinitionParameter?
+--- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
+--- @field returns (string[]|string)? (Default: void)
+--- NOTE: The `default` flag is automatically true if a function body is provided at the time of adding the method. 
+
 --- @class InterfaceStructDefinitionParameter: StructDefinitionParameter
 local InterfaceStructDefinitionParameter = {};
 
---- @class InterfaceStructDefinition: StructDefinition
+--- @class InterfaceStructDefinition: StructDefinition, Hierarchical, Fieldable
+--- 
+--- @field printHeader string
+--- @field super InterfaceStructDefinition?
+--- @field sub InterfaceStructDefinition[]
+--- @field lock boolean
 local InterfaceStructDefinition = {};
 
 --- @param definition FieldDefinitionParameter
@@ -33,7 +48,7 @@ function InterfaceStructDefinition:getField(name) end
 --- @return FieldDefinition? fieldDefinition
 function InterfaceStructDefinition:getDeclaredField(name) end
 
---- @param definition MethodDefinitionParameter
+--- @param definition InterfaceMethodDefinitionParameter
 --- @param func function?
 ---
 --- @return MethodDefinition
