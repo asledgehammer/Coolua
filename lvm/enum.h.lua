@@ -6,10 +6,10 @@
 
 -- MARK: - Definition
 
---- @class EnumStructDefinitionParameter
+--- @class EnumStructDefinitionParameter: StructDefinitionParameter
 local EnumStructDefinitionParameter = {};
 
---- @class EnumStructDefinition
+--- @class EnumStructDefinition: StructDefinition
 local EnumStructDefinition = {};
 
 --- @param definition FieldDefinitionParameter

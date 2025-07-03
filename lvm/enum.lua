@@ -15,17 +15,23 @@ local API = {
     setLVM = function(lvm) LVM = lvm end
 };
 
-function API.newEnum(definition)
+function API.newEnum(definition, enclosingStruct)
+
+    local locInfo = LVM.struct.calcPathNamePackage(definition, enclosingStruct);
+    local path = locInfo.path;
+    local name = locInfo.name;
+    local pkg = locInfo.pkg;
 
     local ed = {
         -- Internal Type --
-        __type__ = 'EnumStructDefinition'
+        __type__ = 'EnumStructDefinition',
 
-        
-
+        path = path,
+        name = name,
+        pkg = pkg
     };
 
-    return definition;
+    return ed;
 end
 
 return API;
