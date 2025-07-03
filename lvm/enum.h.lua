@@ -6,16 +6,16 @@
 
 -- MARK: - Definition
 
---- @class EnumDefinitionParameter
-local EnumDefinitionParameter = {};
+--- @class EnumStructDefinitionParameter
+local EnumStructDefinitionParameter = {};
 
---- @class EnumDefinition
-local EnumDefinition = {};
+--- @class EnumStructDefinition
+local EnumStructDefinition = {};
 
 --- @param definition FieldDefinitionParameter
 ---
 --- @return FieldDefinition
-function EnumDefinition:addField(definition) end
+function EnumStructDefinition:addField(definition) end
 
 --- Attempts to resolve a FieldDefinition in the EnumStructDefinition. If the field isn't declared for the class level,
 --- the super-class(es) are checked.
@@ -23,7 +23,7 @@ function EnumDefinition:addField(definition) end
 --- @param name string
 ---
 --- @return FieldDefinition? fieldDefinition
-function EnumDefinition:getField(name) end
+function EnumStructDefinition:getField(name) end
 
 --- Attempts to resolve a FieldDefinition in the EnumStructDefinition. If the field isn't defined in the class, `nil`
 --- is returned.
@@ -31,34 +31,34 @@ function EnumDefinition:getField(name) end
 --- @param name string
 ---
 --- @return FieldDefinition? fieldDefinition
-function EnumDefinition:getDeclaredField(name) end
+function EnumStructDefinition:getDeclaredField(name) end
 
 --- @param constructorDefinition ConstructorDefinitionParameter
 --- @param func function
 ---
 --- @return ConstructorDefinition
-function EnumDefinition:addConstructor(constructorDefinition, func) end
+function EnumStructDefinition:addConstructor(constructorDefinition, func) end
 
 --- @param constructorDefinition ConstructorDefinitionParameter
 ---
 --- @return ConstructorDefinition
-function EnumDefinition:addConstructor(constructorDefinition) end
+function EnumStructDefinition:addConstructor(constructorDefinition) end
 
 --- @param args any[]
 ---
 --- @return ConstructorDefinition|nil constructorDefinition
-function EnumDefinition:getConstructor(args) end
+function EnumStructDefinition:getConstructor(args) end
 
 --- @param args any[]
 ---
 --- @return ConstructorDefinition|nil constructorDefinition
-function EnumDefinition:getDeclaredConstructor(args) end
+function EnumStructDefinition:getDeclaredConstructor(args) end
 
 --- @param definition MethodDefinitionParameter
 --- @param func function?
 ---
 --- @return MethodDefinition
-function EnumDefinition:addMethod(definition, func) end
+function EnumStructDefinition:addMethod(definition, func) end
 
 --- Attempts to resolve a MethodDefinition in the EnumStructDefinition. If the method isn't declared for the class
 --- level, the super-class(es) are checked.
@@ -66,13 +66,13 @@ function EnumDefinition:addMethod(definition, func) end
 --- @param name string
 ---
 --- @return MethodDefinition[]? methods
-function EnumDefinition:getMethods(name) end
+function EnumStructDefinition:getMethods(name) end
 
 --- @param name string
 --- @param args any[]
 ---
 --- @return MethodDefinition|nil methodDefinition
-function EnumDefinition:getMethod(name, args) end
+function EnumStructDefinition:getMethod(name, args) end
 
 --- Attempts to resolve a MethodDefinition in the EnumStructDefinition. If the method isn't defined in the class, `nil`
 --- is returned.
@@ -80,23 +80,23 @@ function EnumDefinition:getMethod(name, args) end
 --- @param name string
 ---
 --- @return MethodDefinition[]? methods
-function EnumDefinition:getDeclaredMethods(name) end
+function EnumStructDefinition:getDeclaredMethods(name) end
 
 --- @param name string
 --- @param args any[]
 ---
 --- @return MethodDefinition|nil methodDefinition
-function EnumDefinition:getDeclaredMethod(name, args) end
+function EnumStructDefinition:getDeclaredMethod(name, args) end
 
 --- @returns ClassStructDefinition
-function EnumDefinition:finalize() end
+function EnumStructDefinition:finalize() end
 
 -- MARK: - Module
 
 --- @class LVMEnumModule: LVMModule
 local API = {};
 
---- @param enumDef EnumDefinitionParameter
+--- @param enumDef EnumStructDefinitionParameter
 ---
---- @return EnumDefinition
+--- @return EnumStructDefinition
 function API.newEnum(enumDef) end

@@ -19,7 +19,7 @@ function API.newEnum(definition)
 
     local ed = {
         -- Internal Type --
-        __type__ = 'EnumDefinition'
+        __type__ = 'EnumStructDefinition'
 
         
 
