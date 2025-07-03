@@ -14,7 +14,7 @@
 --- @field static boolean? If the class is defined as static.
 --- @field abstract boolean? (Default: false)
 
---- @class (exact) ChildClassStructDefinitionParameter
+--- @class (exact) ChildClassStructDefinitionParameter: StructDefinitionParameter
 --- @field final boolean? (Default: false)
 --- @field scope ClassScope? (Default: package)
 --- @field superClass ClassStructDefinition? (Default: nil)
