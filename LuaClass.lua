@@ -6,6 +6,7 @@ local LVM = require 'LVM';
 
 local LuaClass = {
     newClass = LVM.class.newClass,
+    newInterface = LVM.interface.newInterface
 };
 
 LVM.stepIn();
