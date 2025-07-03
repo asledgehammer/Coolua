@@ -59,8 +59,8 @@
 --- @class LVMStructModule: LVMModule
 local API = {};
 
---- @param definition ClassDefinitionParameter|ChildClassDefinitionParameter
---- @param enclosingDefinition ClassDefinition?
+--- @param definition StructDefinition|StructDefinitionParameter
+--- @param enclosingDefinition StructDefinition?
 ---
 --- @return {path: string, name: string, pkg: string}
 function API.calcPathNamePackage(definition, enclosingDefinition) end
