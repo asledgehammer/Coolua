@@ -88,6 +88,7 @@ LVM = {
     method = require 'lvm/method',
     class = require 'lvm/class',
     struct = require 'lvm/struct',
+    interface = require 'lvm/interface',
 
     isInside = function()
         return LVM.flags.internal ~= 0;
@@ -128,5 +129,6 @@ LVM.constructor.setLVM(LVM);
 LVM.method.setLVM(LVM);
 LVM.class.setLVM(LVM);
 LVM.struct.setLVM(LVM);
+LVM.interface.setLVM(LVM);
 
 return LVM;

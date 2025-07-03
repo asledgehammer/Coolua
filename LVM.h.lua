@@ -39,6 +39,7 @@ function LVMModule.setLVM(lvm) end
 --- @field method LVMMethodModule
 --- @field class LVMClassModule
 --- @field struct LVMStructModule
+--- @field interface LVMInterfaceModule
 --- 
 --- * Helper functions
 --- @field isInside fun(): boolean
