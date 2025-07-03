@@ -31,7 +31,6 @@ function API.newPackageStruct()
 end
 
 function API.addToPackageStruct(def)
-    debugf(LVM.debug.pkg, 'addToPackageStruct(pkg = %s, name = %s)', def.pkg, def.name);
     local pkg = def.pkg;
     local split = pkg:split('.');
     local pkgCurr = _G;
@@ -42,6 +41,7 @@ function API.addToPackageStruct(def)
         end
         pkgCurr = pkgCurr[pkgNext];
     end
+    debugf(LVM.debug.pkg, 'package (%s): Adding class: %s', def.pkg, LVM.print.printStruct(def));
     pkgCurr[def.name] = def;
 end
 

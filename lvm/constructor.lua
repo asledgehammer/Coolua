@@ -159,6 +159,24 @@ function API.createMiddleConstructor(classDef)
     end
 end
 
+function API.createSignature(definition)
+    local parameterLen = #definition.parameters;
+    if parameterLen ~= 0 then
+        local s = '';
+        for i = 1, parameterLen do
+            local parameter = definition.parameters[i];
+            local sParameter = table.concat(parameter.types, '|');
+            if s == '' then
+                s = sParameter;
+            else
+                s = s .. ', ' .. sParameter;
+            end
+        end
+        return string.format('new(%s)', s);
+    end
+    return 'new()';
+end
+
 --- @cast API LVMConstructorModule
 
 return API;

@@ -80,17 +80,18 @@ function API.createSuperTable(cd, o)
             return;
         end
 
+        local level, relPath = LVM.scope.getRelativePath();
+        
         LVM.stack.pushContext({
             class = cd,
             element = constructorDefinition,
             context = 'constructor',
-            line = DebugUtils.getCurrentLine(3),
-            path = DebugUtils.getPath(3)
+            line = DebugUtils.getCurrentLine(level),
+            path = DebugUtils.getPath(level)
         });
 
-        local level, relPath = LVM.scope.getRelativePath();
 
-        local callInfo = DebugUtils.getCallInfo(3, LVM.ROOT_PATH, true);
+        local callInfo = DebugUtils.getCallInfo(level, LVM.ROOT_PATH, true);
         callInfo.path = relPath;
         local scopeAllowed = LVM.scope.getScopeForCall(constructorDefinition.class, callInfo);
 
@@ -136,17 +137,17 @@ function API.createSuperTable(cd, o)
             return;
         end
 
+        local level, relPath = LVM.scope.getRelativePath();
+
         LVM.stack.pushContext({
             class = cd,
             element = md,
             context = 'method',
-            line = DebugUtils.getCurrentLine(3),
-            path = DebugUtils.getPath(3)
+            line = DebugUtils.getCurrentLine(level),
+            path = DebugUtils.getPath(level)
         });
 
-        local level, relPath = LVM.scope.getRelativePath();
-
-        local callInfo = DebugUtils.getCallInfo(3, LVM.ROOT_PATH, true);
+        local callInfo = DebugUtils.getCallInfo(level, LVM.ROOT_PATH, true);
         callInfo.path = relPath;
         local scopeAllowed = LVM.scope.getScopeForCall(md.class, callInfo);
 

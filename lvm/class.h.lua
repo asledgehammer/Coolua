@@ -13,6 +13,7 @@
 --- @field generics GenericsTypesDefinitionParameter? Any generic parameter definitions.
 --- @field static boolean? If the class is defined as static.
 --- @field abstract boolean? (Default: false)
+--- @field implements InterfaceStructDefinition|InterfaceStructDefinition[]?
 
 --- @class (exact) ChildClassStructDefinitionParameter: StructDefinitionParameter
 --- @field final boolean? (Default: false)
@@ -20,14 +21,16 @@
 --- @field extends ClassStructDefinition? (Default: nil)
 --- @field generics GenericsTypesDefinitionParameter? Any generic parameter definitions.
 --- @field abstract boolean? (Default: false)
+--- @field implements InterfaceStructDefinition|InterfaceStructDefinition[]?
 
---- @class (exact) ClassStructDefinition: StructDefinition, Genericable, Hierarchical, Constructable, Fieldable, Staticable, Abstractable, Auditable
+--- @class (exact) ClassStructDefinition: HierarchicalStructDefinition, Genericable, Constructable, Fieldable, Staticable, Abstractable, Auditable
 --- @field __type__ 'ClassStructDefinition'
 --- @field printHeader string
 --- @field type string
 --- @field lock boolean
 --- @field classObj Class?
 --- @field super ClassStructDefinition?
+--- @field interfaces InterfaceStructDefinition[]
 local ClassStructDefinition = {};
 
 --- @param definition FieldDefinitionParameter

@@ -38,3 +38,8 @@ function API.getVarargTypes(arg) end
 --- 
 --- @return boolean isVararg
 function API.isVararg(arg) end
+
+--- @param defParams ParameterDefinition
+--- 
+--- @return ParameterDefinition
+function API.compile(defParams) end

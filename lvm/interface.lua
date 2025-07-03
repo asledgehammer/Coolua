@@ -23,6 +23,9 @@ local API = {
     setLVM = function(lvm) LVM = lvm end
 };
 
+-- Internal API
+local IAPI = {};
+
 -- MARK: - Method
 
 --- @cast API LVMInterfaceModule
@@ -32,7 +35,7 @@ local API = {
 --- @param func function?
 ---
 --- @return MethodDefinition
-function API.addMethod(self, methodDefinition, func)
+function IAPI.addMethod(self, methodDefinition, func)
     local errHeader = string.format('InterfaceStructDefinition(%s):addMethod():', self.name);
 
     local types = {};
@@ -79,7 +82,6 @@ function API.addMethod(self, methodDefinition, func)
         lineStart, lineStop = DebugUtils.getFuncRange(func);
     end
 
-    --- @type MethodDefinition
     local md = {
 
         __type__ = 'MethodDefinition',
@@ -111,6 +113,10 @@ function API.addMethod(self, methodDefinition, func)
         -- Always falsify class flags in class method definitions. --
         abstract = false,
     };
+
+    md.signature = LVM.method.createSignature(md);
+
+    --- @cast md MethodDefinition
 
     if md.parameters then
         if type(md.parameters) ~= 'table' or not isArray(md.parameters) then
@@ -161,7 +167,7 @@ function API.addMethod(self, methodDefinition, func)
 end
 
 --- @param self InterfaceStructDefinition
-function API.compileMethods(self)
+function IAPI.compileMethods(self)
     debugf(LVM.debug.method, '%s Compiling method(s)..', self.printHeader);
 
     --- @type table<string, MethodDefinition[]>
@@ -169,7 +175,7 @@ function API.compileMethods(self)
 
     local methodNames = LVM.method.getMethodNames(self);
     for i = 1, #methodNames do
-        API.compileMethod(self, methodNames[i]);
+        IAPI.compileMethod(self, methodNames[i]);
     end
 
     local keysCount = 0;
@@ -182,7 +188,7 @@ end
 
 --- @param self InterfaceStructDefinition
 --- @param name string
-function API.compileMethod(self, name)
+function IAPI.compileMethod(self, name)
     local debugName = self.name .. '.' .. name .. '(...)';
 
     if not self.super then
@@ -264,7 +270,7 @@ end
 --- @param name string
 ---
 --- @return MethodDefinition[]? methods
-function API.getDeclaredMethods(self, name)
+function IAPI.getDeclaredMethods(self, name)
     return self.declaredMethods[name];
 end
 
@@ -273,7 +279,7 @@ end
 --- @param args any[]
 ---
 --- @return MethodDefinition|nil methodDefinition
-function API.getMethod(self, name, args)
+function IAPI.getMethod(self, name, args)
     local method = self:getDeclaredMethod(name, args);
     if not method and self.super then
         method = self.super:getMethod(name, args);
@@ -286,7 +292,7 @@ end
 --- @param args any[]
 ---
 --- @return MethodDefinition|nil methodDefinition
-function API.getDeclaredMethod(self, name, args)
+function IAPI.getDeclaredMethod(self, name, args)
     local argsLen = #args;
     local methods = self.declaredMethods[name];
 
@@ -324,7 +330,7 @@ end
 --- @param line integer
 ---
 --- @return MethodDefinition|nil method
-function API.getMethodFromLine(self, line)
+function IAPI.getMethodFromLine(self, line)
     --- @type MethodDefinition
     local md;
     for _, mdc in pairs(self.declaredMethods) do
@@ -346,11 +352,11 @@ end
 --- @param classToEval InterfaceStructDefinition
 ---
 --- @return boolean result True if the interface to evaluate is a super-class of the subClass.
-function API.__recurseSubInterface(subClass, classToEval)
+function IAPI.__recurseSubInterface(subClass, classToEval)
     local subLen = #subClass.sub;
     for i = 1, subLen do
         local next = subClass.sub[i];
-        if API.isAssignableFromType(next, classToEval) or API.__recurseSubInterface(next, classToEval) then
+        if IAPI.isAssignableFromType(next, classToEval) or IAPI.__recurseSubInterface(next, classToEval) then
             return true;
         end
     end
@@ -360,8 +366,8 @@ end
 --- @param interface InterfaceStructDefinition The interface to evaulate.
 ---
 --- @return boolean result True if the interface to evaluate is a super-interface of the sub-interface.
-function API:isSubInterface(self, interface)
-    if API.__recurseSubClass(self, interface) then
+function IAPI:isSubInterface(self, interface)
+    if IAPI.__recurseSubClass(self, interface) then
         return true;
     end
     return false;
@@ -371,20 +377,21 @@ end
 --- @param struct StructDefinition
 ---
 --- @return boolean
-function API.isAssignableFromType(self, struct)
+function IAPI.isAssignableFromType(self, struct)
     if struct.__type__ ~= 'InterfaceStructDefinition' then
         return false;
     end
 
     --- @cast struct InterfaceStructDefinition
 
-    return self == struct or API.isSuperInterface(self, struct);
+    return self == struct or IAPI.isSuperInterface(self, struct);
 end
 
+--- @param self InterfaceStructDefinition
 --- @param interface InterfaceStructDefinition?
 ---
 --- @return boolean
-function API.isSuperInterface(self, interface)
+function IAPI.isSuperInterface(self, interface)
     --- @type InterfaceStructDefinition|nil
     local next = self.super;
     while next do
@@ -399,7 +406,7 @@ end
 --- @param self InterfaceStructDefinition
 ---
 --- @return InterfaceStructDefinition interfaceDef
-function API.finalize(self)
+function IAPI.finalize(self)
     local errHeader = string.format('Class(%s):finalize():', self.path);
 
     if self.lock then
@@ -410,7 +417,7 @@ function API.finalize(self)
 
     -- TODO: Audit everything.
 
-    API.compileMethods(self);
+    IAPI.compileMethods(self);
 
     -- Change add methods.
     self.addMethod = function() errorf(2, '%s Cannot add methods. (Class is final!)', errHeader) end
@@ -466,7 +473,7 @@ function API.finalize(self)
     for k, v in pairs(self) do __properties[k] = v end
     mt.__metatable = false;
     mt.__index = __properties;
-    mt.__tostring = function() return 'Class ' .. self.path end
+    mt.__tostring = function() return LVM.print.printInterface(self) end
 
     mt.__index = __properties;
 
@@ -600,7 +607,6 @@ function API.finalize(self)
 end
 
 function API.newInterface(definition, enclosingStruct)
-
     -- Grab path / package / name context.
     local locInfo = LVM.struct.calcPathNamePackage(definition, enclosingStruct);
     local path = locInfo.path;
@@ -616,8 +622,11 @@ function API.newInterface(definition, enclosingStruct)
         name = name,
         pkg = pkg,
         type = 'interface:' .. path,
-        
+
         static = definition.static or false,
+
+        -- * Scopable Properties * --
+        scope = definition.scope or 'package',
 
         -- * Hierarchical Properties * --
         super = definition.extends,
@@ -629,13 +638,13 @@ function API.newInterface(definition, enclosingStruct)
         isChild = enclosingStruct ~= nil,
 
         -- * Fieldable Properties * --
-        declaredFields = {};
-        
+        declaredFields = {},
+
         -- * Methodable Properties * --
-        declaredMethods = {};
+        declaredMethods = {},
 
         -- * Debug Properties * --
-        printHeader = string.format('Interface(%s):', path),
+        printHeader = string.format('interface (%s):', path),
 
         lock = false
     };
@@ -653,25 +662,25 @@ function API.newInterface(definition, enclosingStruct)
 
     -- Enclosurable: Add the definition to the enclosing struct.
     if enclosingStruct then
-        enclosingStruct.sub[id.name] = id;
+        enclosingStruct.inner[id.name] = id;
     end
 
     -- * General API * --
-    id.finalize = API.finalize;
+    id.finalize = IAPI.finalize;
 
     -- * Methodable API * --
-    id.addMethod = API.addMethod;
-    id.compileMethods = API.compileMethods;
-    id.compileMethod = API.compileMethod;
-    id.getDeclaredMethods = API.getDeclaredMethods;
-    id.getMethod = API.getMethod;
-    id.getDeclaredMethod = API.getDeclaredMethod;
-    id.getMethodFromLine = API.getMethodFromLine;
+    id.addMethod = IAPI.addMethod;
+    id.compileMethods = IAPI.compileMethods;
+    id.compileMethod = IAPI.compileMethod;
+    id.getDeclaredMethods = IAPI.getDeclaredMethods;
+    id.getMethod = IAPI.getMethod;
+    id.getDeclaredMethod = IAPI.getDeclaredMethod;
+    id.getMethodFromLine = IAPI.getMethodFromLine;
 
     -- * Hierarchical API * --
-    id.isSuperInterface = API.isSuperInterface;
-    id.isSubInterface = API.isSubInterface;
-    id.isAssignableFromType = API.isAssignableFromType;
+    id.isSuperInterface = IAPI.isSuperInterface;
+    id.isSubInterface = IAPI.isSubInterface;
+    id.isAssignableFromType = IAPI.isAssignableFromType;
 
     return id;
 end

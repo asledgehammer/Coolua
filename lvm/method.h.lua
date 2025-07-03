@@ -9,6 +9,7 @@
 --- @class (exact) MethodDefinition
 ---
 --- @field __type__ 'MethodDefinition'
+--- @field signature string The identity of the method. used for comparison.
 ---
 --- @field audited boolean If true, the struct is audited and verified to be valid.
 --- @field class StructDefinition
@@ -69,6 +70,11 @@ function API.getDeclaredMethodNames(classDef, array) end
 ---
 --- @return string[] methodNames
 function API.getMethodNames(classDef, methodNames) end
+
+--- @param definition MethodDefinition
+--- 
+--- @return string
+function API.createSignature(definition) end
 
 --- @param methods MethodDefinition[]
 --- @param args any[]

@@ -62,7 +62,7 @@ local function getRootPath()
 end
 
 local ROOT_PATH = getRootPath();
-print('LVM.ROOT_PATH = ' .. ROOT_PATH);
+-- print('LVM.ROOT_PATH = ' .. ROOT_PATH);
 
 LVM = {
 
@@ -148,7 +148,7 @@ function LVM.forName(path)
 
     if not class then
         local def = LVM.DEFINITIONS[path];
-        printf('LVM.DEFINITIONS[%s] = %s', path, tostring(def));
+        -- printf('LVM.DEFINITIONS[%s] = %s', path, tostring(def));
         if def and (
                 def.__type__ == 'ClassStructDefinition' or
                 def.__type__ == 'InterfaceStructDefinition' or

@@ -87,16 +87,91 @@ function API.printMethod(def)
         sGenerics = API.printGenericTypes(def.generics);
     end
 
-    local sParams;
     local callSyntax;
     if def.static then
-        sParams = paramsToString(def.parameters);
         callSyntax = '.';
     else
-        sParams = paramsToString(def.parameters);
         callSyntax = ':';
     end
-    return string.format('%s%s%s%s%s%s(%s)', sStatic, sFinal, sGenerics, def.class.name, callSyntax, def.name, sParams);
+
+    return string.format('%s%s%s%s%s%s', sStatic, sFinal, sGenerics, def.class.name, callSyntax, def.signature);
+end
+
+function API.printInterface(def)
+    local sScope = def.scope .. ' ';
+    local sStatic = '';
+    local sPkg = def.pkg;
+    local sName = def.name;
+    local sExtends = '';
+    local sImplements = '';
+
+    if def.static then sStatic = 'static ' end
+    if sPkg ~= '' then sPkg = sPkg .. '.' end
+
+    if def.super then
+        local sSuperPkg = '';
+        if def.super.pkg then sSuperPkg = def.super.pkg .. '.' end
+        sExtends = string.format(' extends %s%s', sSuperPkg, def.super.name);
+    end
+
+    return string.format('%s%sclass %s%s%s',
+        sScope, sStatic, sPkg, sName, sExtends
+    );
+end
+
+function API.printStruct(def)
+    
+    if def.__type__ == 'ClassStructDefinition' then
+        return API.printClass(def);
+    elseif def.__type__ == 'InterfaceStructDefinition' then
+        return API.printInterface(def);
+    end
+
+    errorf(2, 'Unknown StructDefinition type: %s', def.__type__);
+    return nil;
+end
+
+function API.printClass(def)
+    local sScope = def.scope .. ' ';
+    local sStatic = '';
+    local sFinal = '';
+    local sAbstract = '';
+    local sPkg = def.pkg;
+    local sName = def.name;
+    local sExtends = '';
+    local sImplements = '';
+
+    if def.abstract then sAbstract = 'abstract ' end
+    if def.final then sFinal = 'final ' end
+    if def.static then sStatic = 'static ' end
+    if sPkg ~= '' then sPkg = sPkg .. '.' end
+
+    if def.super and def.super.path ~= 'lua.lang.Object' then
+        local sSuperPkg = '';
+        if def.super.pkg then sSuperPkg = def.super.pkg .. '.' end
+        sExtends = string.format(' extends %s%s', sSuperPkg, def.super.name);
+    end
+
+    if def.interfaces then
+        for i = 1, #def.interfaces do
+            local interface = def.interfaces[i];
+            local sInterfacePkg = '';
+            if interface.pkg then sInterfacePkg = interface.pkg .. '.' end
+            local sInterface = string.format('%s%s', sInterfacePkg, interface.name);
+            if sImplements == '' then
+                sImplements = sInterface;
+            else
+                sImplements = sImplements .. ', ' .. sInterface;
+            end
+        end
+        if sImplements ~= '' then
+            sImplements = ' implements ' .. sImplements;
+        end
+    end
+
+    return string.format('%s%s%s%sclass %s%s%s%s',
+        sScope, sStatic, sAbstract, sFinal, sPkg, sName, sExtends, sImplements
+    );
 end
 
 return API;

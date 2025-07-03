@@ -5,7 +5,7 @@
 local DebugUtils = require 'DebugUtils';
 
 local LVMUtils = require 'LVMUtils';
-local anyToString = LVMUtils.anyToString;
+-- local anyToString = LVMUtils.anyToString;
 local arrayContainsDuplicates = LVMUtils.arrayContainsDuplicates;
 local arrayToString = LVMUtils.arrayToString;
 local debugf = LVMUtils.debugf;
@@ -25,6 +25,8 @@ local API = {
     --- @param lvm LVM
     setLVM = function(lvm) LVM = lvm end
 };
+
+--- @cast API LVMClassModule
 
 --- Defined for all classes so that __eq actually fires.
 --- Reference: http://lua-users.org/wiki/MetatableEvents
@@ -72,6 +74,29 @@ function API.newClass(definition, outer)
         return;
     end
 
+    -- Prepare & validate interfaces array.
+    --- @type InterfaceStructDefinition[]
+    local interfaces = {};
+    if definition.implements then
+        if type(definition.implements) == 'table' then
+            if definition.implements.__type__ == 'InterfaceStructDefinition' then
+                table.insert(interfaces, definition.implements);
+            else
+                if not isArray(definition.implements) then
+                    error('Not interface array', 2);
+                end
+
+                for i = 1, #definition.implements do
+                    local interface = definition.implements[i];
+                    if interface.__type__ ~= 'InterfaceStructDefinition' then
+                        errorf(2, '%s Implements argument #%i is not a Interface.');
+                    end
+                    table.insert(interfaces, interface);
+                end
+            end
+        end
+    end
+
     local cd = {
 
         __type__ = 'ClassStructDefinition',
@@ -85,7 +110,7 @@ function API.newClass(definition, outer)
         final = definition.final or false,
 
         -- * Scopable Properties * --
-        scope = definition.scope,
+        scope = definition.scope or 'package',
 
         -- * Hierarchical Properties * --
         super = super,
@@ -97,7 +122,8 @@ function API.newClass(definition, outer)
         isChild = outer ~= nil,
 
         -- * Class-Specific Properties * --
-        abstract = definition.abstract or false
+        abstract = definition.abstract or false,
+        interfaces = interfaces
     };
 
     -- Make sure that no class is made twice.
@@ -109,7 +135,7 @@ function API.newClass(definition, outer)
     LVM.DEFINITIONS[cd.path] = cd;
 
     cd.type = 'class:' .. cd.path;
-    cd.printHeader = string.format('Class(%s):', cd.path);
+    cd.printHeader = string.format('class (%s):', cd.path);
     cd.declaredFields = {};
     cd.declaredMethods = {};
     cd.declaredConstructors = {};
@@ -422,7 +448,10 @@ function API.newClass(definition, outer)
                     end
                 end
 
-                debugf(LVM.debug.method, 'Creating auto-method: ', cd.name .. '.' .. mGetDef.name);
+                debugf(LVM.debug.method, '%s Creating auto-method: %s:%s()',
+                    self.printHeader,
+                    self.name, mGetDef.name
+                );
 
                 cd:addMethod(mGetDef, fGet);
             end
@@ -458,7 +487,10 @@ function API.newClass(definition, outer)
                     end
                 end
 
-                debugf(LVM.debug.method, 'Creating auto-method: ', cd.name .. '.' .. mSetDef.name);
+                debugf(LVM.debug.method, '%s Creating auto-method: %s:%s',
+                    self.printHeader,
+                    self.name, mSetDef.signature
+                );
 
                 cd:addMethod(mSetDef, fSet);
             end
@@ -535,78 +567,22 @@ function API.newClass(definition, outer)
             );
         end
 
-        --- @type ConstructorDefinition
+        local parameters = LVM.parameter.compile(constructorDefinition.parameters);
+
         local args = {
+
             __type__ = 'ConstructorDefinition',
+
             audited = false,
             class = cd,
             scope = constructorDefinition.scope or 'package',
-            parameters = constructorDefinition.parameters or {},
+            parameters = parameters,
             func = func
         };
 
-        if args.parameters then
-            if type(args.parameters) ~= 'table' or not isArray(args.parameters) then
-                error(
-                    string.format(
-                        '%s property "parameters" is not a ParameterDefinition[]. {type=%s, value=%s}',
-                        errHeader,
-                        LVM.type.getType(args.parameters),
-                        anyToString(args.parameters)
-                    ),
-                    2
-                );
-            end
+        args.signature = LVM.constructor.createSignature(args);
 
-            -- Convert any simplified type declarations.
-            local paramLen = #args.parameters;
-            if paramLen then
-                for i = 1, paramLen do
-                    local param = args.parameters[i];
-
-                    -- Validate parameter name.
-                    if not param.name then
-                        error(
-                            string.format(
-                                '%s Parameter #%i doesn\'t have a defined name string.',
-                                errHeader,
-                                i
-                            ), 2
-                        );
-                    elseif param.name == '' then
-                        error(
-                            string.format(
-                                '%s Parameter #%i has an empty name string.',
-                                errHeader,
-                                i
-                            ),
-                            2
-                        );
-                    end
-
-                    -- Validate parameter type(s).
-                    if not param.type and not param.types then
-                        error(
-                            string.format(
-                                '%s Parameter #%i doesn\'t have a defined type string or types string[]. (name = %s)',
-                                errHeader,
-                                i,
-                                param.name
-                            ),
-                            2
-                        );
-                    else
-                        if param.type and not param.types then
-                            param.types = { param.type };
-                            --- @diagnostic disable-next-line
-                            param.type = nil;
-                        end
-                    end
-                end
-            end
-        else
-            args.parameters = {};
-        end
+        --- @cast args ConstructorDefinition
 
         --- Validate function.
         if not args.func then
@@ -619,6 +595,11 @@ function API.newClass(definition, outer)
                     LVM.type.getType(args.func),
                     tostring(args.func)
                 ), 2);
+        end
+
+        if LVM.debug.constructor then
+            debugf(LVM.debug.constructor, '%s Adding class constructor: %s.%s', self.printHeader, self.name,
+                args.signature);
         end
 
         table.insert(self.declaredConstructors, args);
@@ -694,7 +675,9 @@ function API.newClass(definition, outer)
             errorf(2, '%s cannot name method "super".', errHeader);
         end
 
-        -- Validate parameter type(s).
+        local parameters = LVM.parameter.compile(methodDefinition.parameters);
+
+        -- Validate return type(s).
         if not returns then
             types = { 'void' };
         elseif type(returns) == 'table' then
@@ -732,7 +715,6 @@ function API.newClass(definition, outer)
             lineStart, lineStop = DebugUtils.getFuncRange(func);
         end
 
-        --- @type MethodDefinition
         local md = {
 
             __type__ = 'MethodDefinition',
@@ -741,7 +723,7 @@ function API.newClass(definition, outer)
             class = cd,
             name = methodDefinition.name,
             returns = types,
-            parameters = methodDefinition.parameters or {},
+            parameters = parameters,
             func = func,
 
             -- Used for scope-visibility analysis. --
@@ -763,49 +745,24 @@ function API.newClass(definition, outer)
             default = false,
         };
 
-        if md.parameters then
-            if type(md.parameters) ~= 'table' or not isArray(md.parameters) then
-                errorf(2, '%s property "parameters" is not a ParameterDefinition[]. {type=%s, value=%s}',
-                    errHeader, LVM.type.getType(md.parameters), tostring(md.parameters)
-                );
-            end
+        md.signature = LVM.method.createSignature(md);
 
-            -- Convert any simplified type declarations.
-            local paramLen = #md.parameters;
-            if paramLen then
-                for i = 1, paramLen do
-                    local param = md.parameters[i];
+        --- @cast md MethodDefinition
 
-                    -- Validate parameter type(s).
-                    if not param.type and not param.types then
-                        errorf(2, '%s Parameter #%i doesn\'t have a defined type string or types string[]. (name = %s)',
-                            errHeader, i, param.name
-                        );
-                    else
-                        if param.type and not param.types then
-                            param.types = { param.type };
-                            --- @diagnostic disable-next-line
-                            param.type = nil;
-                        end
-                    end
-
-                    -- Validate parameter name.
-                    if not param.name and not LVM.parameter.isVararg(param.types[1]) then
-                        errorf(2, '%s Parameter #%i doesn\'t have a defined name string.', errHeader, i);
-                    elseif param.name == '' then
-                        errorf(2, '%s Parameter #%i has an empty name string.', errHeader, i);
-                    end
-                end
-            end
-        else
-            md.parameters = {};
+        if LVM.debug.method then
+            local callSyntax = ':';
+            if md.static then callSyntax = '.' end
+            debugf(LVM.debug.method, '%s Adding class method: %s%s%s',
+                self.printHeader,
+                self.name, callSyntax, md.signature
+            );
         end
 
-        local name = md.name;
-        local methodCluster = self.declaredMethods[name];
+        -- Add the definition to the cluster array for the method's name.
+        local methodCluster = self.declaredMethods[md.name];
         if not methodCluster then
             methodCluster = {};
-            self.declaredMethods[name] = methodCluster;
+            self.declaredMethods[md.name] = methodCluster;
         end
         table.insert(methodCluster, md);
 
@@ -841,6 +798,35 @@ function API.newClass(definition, outer)
             end
         end
 
+
+        -- Go through each interface and its methods. Check and see if the method needs and is implemented.
+        local interfaceLen = #self.interfaces;
+        if interfaceLen ~= 0 then
+            debugf(LVM.debug.interface, 'interface: Auditing interface(s) for %s:', self.path);
+            for i = 1, interfaceLen do
+                local interface = self.interfaces[i];
+                debugf(LVM.debug.interface, 'interface: %s:', interface.path);
+                local methodLen = #interface.methods;
+                if methodLen ~= 0 then
+                    for j = 1, methodLen do
+                        local iMethod = interface.methods[j];
+                        debugf(LVM.debug.interface, 'interface:     Auditing method %s.%s:', interface.path, iMethod
+                            .name);
+                        -- If a method is `default` then it's already defined and isn't necessary to overload.
+                        if not iMethod.default then
+                            local cMethod = self:getMethod(iMethod.name, iMethod.parameters);
+                            if not cMethod then
+                                errorf(2, '%s Method not implemented: %s.%s(%s)',
+                                    self.printHeader,
+                                    iMethod.class.name, iMethod.name, LVMUtils.paramsToString(iMethod.parameters)
+                                );
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
         local keysCount = 0;
         for _, _ in pairs(self.methods) do
             keysCount = keysCount + 1;
@@ -850,10 +836,10 @@ function API.newClass(definition, outer)
     end
 
     function cd:compileMethod(name)
-        local debugName = self.name .. '.' .. name .. '(...)';
+        local debugName = self.name .. '.' .. name .. '()';
 
+        -- lua.lang.Object
         if not self.super then
-            debugf(LVM.debug.method, '%s Compiling original method(s): %s', self.printHeader, debugName);
             self.methods[name] = LVMUtils.copyArray(self.declaredMethods[name]);
             return;
         end
@@ -891,8 +877,9 @@ function API.newClass(definition, outer)
                 for j = 1, #methods do
                     local method = methods[j];
 
-                    if LVM.parameter.areCompatible(decMethod.parameters, method.parameters) then
-                        debugf(LVM.debug.method, '%s \t\t@override detected: %s', self.printHeader, debugName);
+                    -- if LVM.parameter.areCompatible(decMethod.parameters, method.parameters) then
+                    if decMethod.signature == method.signature then
+                        debugf(LVM.debug.method, '%s \t\t@override detected: %s', self.printHeader, decMethod.signature);
 
                         -- Cannot override final methods.
                         if method.final then
@@ -916,7 +903,14 @@ function API.newClass(definition, outer)
 
                 --- No overrided method. Add it instead.
                 if not isOverride then
-                    debugf(LVM.debug.method, '%s \t\tAdding class method: %s', self.printHeader, debugName);
+                    if LVM.debug.method then
+                        local callSyntax;
+                        if decMethod.static then callSyntax = '.' else callSyntax = ':' end
+                        debugf(LVM.debug.method, '%s \t\tAdding class method: %s%s%s',
+                            self.printHeader,
+                            decMethod.class.name, callSyntax, decMethod.signature
+                        );
+                    end
                     table.insert(methods, decMethod);
                 end
             end
@@ -1091,7 +1085,7 @@ function API.newClass(definition, outer)
         for k, v in pairs(cd) do __properties[k] = v end
         mt.__metatable = false;
         mt.__index = __properties;
-        mt.__tostring = function() return 'Class ' .. cd.path end
+        mt.__tostring = function() return LVM.print.printClass(cd) end
 
         mt.__index = __properties;
 
@@ -1115,7 +1109,6 @@ function API.newClass(definition, outer)
 
             -- Internal bypass for struct construction.
             if LVM.isInside() then
-
                 -- Set the value.
                 __properties[field] = value;
 
@@ -1134,7 +1127,7 @@ function API.newClass(definition, outer)
                     errorf(2, 'Cannot set inner class explicitly. Use the API.');
                 end
 
-                print('setting inner-class: ', field, tostring(value));
+                -- print('setting inner-class: ', field, tostring(value));
                 __properties[field] = value;
 
                 return;
@@ -1297,7 +1290,5 @@ function API.newClass(definition, outer)
 
     return cd;
 end
-
---- @cast API LVMClassModule
 
 return API;

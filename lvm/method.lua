@@ -22,7 +22,6 @@ local API = {
 --- @cast API LVMMethodModule
 
 function API.resolveMethod(methods, args)
-    
     local argsLen = #args;
 
     --- @type MethodDefinition?
@@ -93,7 +92,7 @@ function API.createMiddleMethod(cd, name, methods)
     return function(o, ...)
         local args = { ... };
         local md = API.resolveMethod(methods, args);
-        
+
         local errHeader = string.format('Class(%s):%s():', cd.name, name);
 
         if not md then
@@ -176,6 +175,24 @@ function API.createMiddleMethod(cd, name, methods)
 
         return retVal;
     end;
+end
+
+function API.createSignature(definition)
+    local parameterLen = #definition.parameters;
+    if parameterLen ~= 0 then
+        local s = '';
+        for i = 1, parameterLen do
+            local parameter = definition.parameters[i];
+            local sParameter = table.concat(parameter.types, '|');
+            if s == '' then
+                s = sParameter;
+            else
+                s = s .. ', ' .. sParameter;
+            end
+        end
+        return string.format('%s(%s)', definition.name, s);
+    end
+    return definition.name .. '()';
 end
 
 --- @param struct Methodable

@@ -12,10 +12,25 @@ local API = {};
 --- @return string explodedArgsString
 function API.argsToString(args) end
 
+--- @param def StructDefinition
+---
+--- @return string
+function API.printStruct(def) end
+
 --- @param def MethodDefinition
 ---
 --- @return string
 function API.printMethod(def) end
+
+--- @param def InterfaceStructDefinition
+--- 
+--- @return string
+function API.printInterface(def) end
+
+--- @param def ClassStructDefinition
+--- 
+--- @return string
+function API.printClass(def) end
 
 --- @param def GenericTypeDefinition
 --- 

@@ -31,3 +31,8 @@ function API.createMiddleConstructor(classDef) end
 --- 
 --- @return ConstructorDefinition|nil
 function API.resolveConstructor(constructors, args) end
+
+--- @param definition ConstructorDefinition
+--- 
+--- @return string
+function API.createSignature(definition) end

@@ -10,11 +10,13 @@ local API = {
     __type__ = 'LVMModule',
 
     -- Field(s)
-    internal = false,
-    method = false,
-    scope = false,
-    compile = false,
-    pkg = false,
+    internal = true,
+    method = true,
+    scope = true,
+    compile = true,
+    pkg = true,
+    interface = true,
+    constructor = true,
 
     -- Method(s)
     --- @param lvm LVM

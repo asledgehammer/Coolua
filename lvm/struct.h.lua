@@ -45,10 +45,13 @@
 --- @field path string
 --- @field pkg string
 --- @field name string
+--- @field scope ClassScope
 --- 
 --- * Enclosure Properties *
 --- @field outer StructDefinition
 --- @field inner table<string, StructDefinition>
+
+--- @class (exact) HierarchicalStructDefinition: StructDefinition, Hierarchical
 
 --- @class StructDefinitionParameter
 ---

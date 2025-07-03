@@ -13,7 +13,10 @@ local API = {
     __type__ = 'LVMModule',
 
     setLVM = function(lvm) LVM = lvm end
+
 };
+
+--- @cast API LVMParameterModule
 
 --- @param paramsA ParameterDefinition[]
 --- @param paramsB ParameterDefinition[]
@@ -49,6 +52,39 @@ function API.isVararg(arg)
     return string.sub(arg, len - 2, len) == '...';
 end
 
---- @cast API LVMParameterModule
+function API.compile(defParams)
+
+    if not defParams then return {} end
+
+    -- Convert any simplified type declarations.
+    local paramLen = #defParams;
+    if paramLen then
+        for i = 1, paramLen do
+            local param = defParams[i];
+
+            -- Validate parameter type(s).
+            if not param.type and not param.types then
+                errorf(2, 'Parameter #%i doesn\'t have a defined type string or types string[]. (name = %s)',
+                    i, param.name
+                );
+            else
+                if param.type and not param.types then
+                    param.types = { param.type };
+                    --- @diagnostic disable-next-line
+                    param.type = nil;
+                end
+            end
+
+            -- Validate parameter name.
+            if not param.name and not LVM.parameter.isVararg(param.types[1]) then
+                errorf(2, 'Parameter #%i doesn\'t have a defined name string.', i);
+            elseif param.name == '' then
+                errorf(2, 'Parameter #%i has an empty name string.', i);
+            end
+        end
+    end
+
+    return defParams;
+end
 
 return API;

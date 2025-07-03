@@ -11,4 +11,6 @@
 --- @field scope boolean
 --- @field compile boolean
 --- @field pkg boolean
+--- @field interface boolean
+--- @field constructor boolean
 local API = {};

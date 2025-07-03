@@ -6,9 +6,12 @@
 
 -- MARK: - Definition
 
+--- @class InterfaceInstance
+local InterfaceInstance = {};
+
 --- @class (exact) InterfaceMethodDefinitionParameter
 --- 
---- @field scope ClassScope? (Default: public)
+--- @field scope ClassScope? (Default: package)
 --- @field static boolean? (Default: false)
 --- @field name string
 --- @field generics GenericsTypesDefinitionParameter?
@@ -17,14 +20,18 @@
 --- NOTE: The `default` flag is automatically true if a function body is provided at the time of adding the method. 
 
 --- @class InterfaceStructDefinitionParameter: StructDefinitionParameter
+--- @field extends InterfaceStructDefinition?
+--- @field static boolean?
+--- @field scope ClassScope? (Default: package)
 local InterfaceStructDefinitionParameter = {};
 
---- @class InterfaceStructDefinition: StructDefinition, Hierarchical, Fieldable
+--- @class InterfaceStructDefinition: HierarchicalStructDefinition, Fieldable
 --- 
 --- @field printHeader string
 --- @field super InterfaceStructDefinition?
 --- @field sub InterfaceStructDefinition[]
 --- @field lock boolean
+--- @field static boolean
 local InterfaceStructDefinition = {};
 
 --- @param definition FieldDefinitionParameter
