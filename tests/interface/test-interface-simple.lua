@@ -4,6 +4,7 @@ local newInterface = LuaClass.newInterface;
 -- public interface SimpleInterface {
 local SimpleInterface = newInterface({
     scope = 'public',
+    package = 'tests',
     name = 'SimpleInterface',
 });
 
@@ -29,5 +30,6 @@ SimpleInterface:addMethod({
 
 SimpleInterface:finalize();
 
--- TODO: Where we left off: Creating the method params definition for interfaces.
--- Next, go into the interface addMethod and suit it for interface methods context.
+-- MARK: Test
+
+print(SimpleInterface);

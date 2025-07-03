@@ -10,7 +10,7 @@ local Dimension = require 'tests/Dimension';
 
 local Rectangle = newClass({
     scope = 'public',
-    superClass = Dimension
+    extends = Dimension
 });
 
 Rectangle:addField({

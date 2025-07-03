@@ -6,7 +6,7 @@ local AbstractClass = require 'tests/AbstractClass';
 local ImplAbstractClass = newClass({
     scope = 'public',
     final = true,
-    superClass = AbstractClass
+    extends = AbstractClass
 });
 
 ImplAbstractClass:addConstructor({ scope = 'public' });
