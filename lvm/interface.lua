@@ -23,6 +23,10 @@ local API = {
     setLVM = function(lvm) LVM = lvm end
 };
 
+-- MARK: - Method
+
+--- @cast API LVMInterfaceModule
+
 --- @param self InterfaceStructDefinition
 --- @param methodDefinition InterfaceMethodDefinitionParameter
 --- @param func function?
@@ -334,7 +338,63 @@ function API.getMethodFromLine(self, line)
     return nil;
 end
 
--- MARK: - finalize()
+-- MARK: - Hierarchical
+
+--- (Handles recursively going through sub-interfaces to see if a class is a sub-class)
+---
+--- @param subClass InterfaceStructDefinition
+--- @param classToEval InterfaceStructDefinition
+---
+--- @return boolean result True if the interface to evaluate is a super-class of the subClass.
+function API.__recurseSubInterface(subClass, classToEval)
+    local subLen = #subClass.sub;
+    for i = 1, subLen do
+        local next = subClass.sub[i];
+        if API.isAssignableFromType(next, classToEval) or API.__recurseSubInterface(next, classToEval) then
+            return true;
+        end
+    end
+    return false;
+end
+
+--- @param interface InterfaceStructDefinition The interface to evaulate.
+---
+--- @return boolean result True if the interface to evaluate is a super-interface of the sub-interface.
+function API:isSubInterface(self, interface)
+    if API.__recurseSubClass(self, interface) then
+        return true;
+    end
+    return false;
+end
+
+--- @param self InterfaceStructDefinition
+--- @param struct StructDefinition
+---
+--- @return boolean
+function API.isAssignableFromType(self, struct)
+    if struct.__type__ ~= 'InterfaceStructDefinition' then
+        return false;
+    end
+
+    --- @cast struct InterfaceStructDefinition
+
+    return self == struct or API.isSuperInterface(self, struct);
+end
+
+--- @param interface InterfaceStructDefinition?
+---
+--- @return boolean
+function API.isSuperInterface(self, interface)
+    --- @type InterfaceStructDefinition|nil
+    local next = self.super;
+    while next do
+        if next == interface then return true end
+        next = next.super;
+    end
+    return false;
+end
+
+-- MARK: Struct
 
 --- @param self InterfaceStructDefinition
 ---
@@ -539,81 +599,45 @@ function API.finalize(self)
     return self;
 end
 
---- (Handles recursively going through sub-interfaces to see if a class is a sub-class)
----
---- @param subClass InterfaceStructDefinition
---- @param classToEval InterfaceStructDefinition
----
---- @return boolean result True if the interface to evaluate is a super-class of the subClass.
-function API.__recurseSubInterface(subClass, classToEval)
-    local subLen = #subClass.sub;
-    for i = 1, subLen do
-        local next = subClass.sub[i];
-        if API.isAssignableFromType(next, classToEval) or API.__recurseSubInterface(next, classToEval) then
-            return true;
-        end
-    end
-    return false;
-end
-
---- @param interface InterfaceStructDefinition The interface to evaulate.
----
---- @return boolean result True if the interface to evaluate is a super-interface of the sub-interface.
-function API:isSubInterface(self, interface)
-    if API.__recurseSubClass(self, interface) then
-        return true;
-    end
-    return false;
-end
-
---- @param self InterfaceStructDefinition
---- @param struct StructDefinition
----
---- @return boolean
-function API.isAssignableFromType(self, struct)
-    if struct.__type__ ~= 'InterfaceStructDefinition' then
-        return false;
-    end
-
-    --- @cast struct InterfaceStructDefinition
-
-    return self == struct or API.isSuperInterface(self, struct);
-end
-
---- @param interface InterfaceStructDefinition?
----
---- @return boolean
-function API.isSuperInterface(self, interface)
-    --- @type InterfaceStructDefinition|nil
-    local next = self.super;
-    while next do
-        if next == interface then return true end
-        next = next.super;
-    end
-    return false;
-end
-
 function API.newInterface(definition, enclosingStruct)
+
+    -- Grab path / package / name context.
     local locInfo = LVM.struct.calcPathNamePackage(definition, enclosingStruct);
     local path = locInfo.path;
     local name = locInfo.name;
     local pkg = locInfo.pkg;
 
     local id = {
-        -- Internal Type --
+        -- * Internal Type * --
         __type__ = 'InterfaceStructDefinition',
 
+        -- * Struct Properties * --
         path = path,
         name = name,
         pkg = pkg,
-
-        super = definition.extends,
-        subClasses = {},
-        isChild = enclosingStruct ~= nil,
-        outer = enclosingStruct,
-        children = {},
+        type = 'interface:' .. path,
+        
         static = definition.static or false,
 
+        -- * Hierarchical Properties * --
+        super = definition.extends,
+        subClasses = {},
+
+        -- * Enclosurable Properties * --
+        outer = enclosingStruct,
+        inner = {},
+        isChild = enclosingStruct ~= nil,
+
+        -- * Fieldable Properties * --
+        declaredFields = {};
+        
+        -- * Methodable Properties * --
+        declaredMethods = {};
+
+        -- * Debug Properties * --
+        printHeader = string.format('Interface(%s):', path),
+
+        lock = false
     };
 
     -- Make sure that no class is made twice.
@@ -624,17 +648,12 @@ function API.newInterface(definition, enclosingStruct)
 
     LVM.DEFINITIONS[id.path] = id;
 
-    id.type = 'interface:' .. id.path;
-    id.printHeader = string.format('Interface(%s):', id.path);
-    id.declaredFields = {};
-    id.declaredMethods = {};
-    id.lock = false;
-
     -- Compile the generic parameters for the class.
     id.generics = LVM.generic.compileGenericTypesDefinition(id, definition.generics);
 
+    -- Enclosurable: Add the definition to the enclosing struct.
     if enclosingStruct then
-        enclosingStruct.children[id.name] = id;
+        enclosingStruct.sub[id.name] = id;
     end
 
     -- * General API * --
@@ -656,7 +675,5 @@ function API.newInterface(definition, enclosingStruct)
 
     return id;
 end
-
---- @cast API LVMInterfaceModule
 
 return API;
