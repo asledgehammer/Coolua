@@ -4,7 +4,7 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
---- @class PackageDefinition: LVMClassDefinition
+--- @class PackageDefinition: ClassStructDefinition
 local PackageDefinition = {};
 
 --- @param path string

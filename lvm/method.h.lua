@@ -9,7 +9,7 @@
 --- @class (exact) MethodDefinition
 --- @field __type__ 'MethodDefinition'
 --- @field audited boolean If true, the struct is audited and verified to be valid.
---- @field class LVMClassDefinition
+--- @field class ClassStructDefinition
 --- @field scope ClassScope
 --- @field static boolean
 --- @field final boolean
@@ -38,19 +38,19 @@
 --- @class LVMMethodModule: LVMModule
 local API = {};
 
---- @param classDef LVMClassDefinition
+--- @param classDef ClassStructDefinition
 --- @param name string
 --- @param methods MethodDefinition[]
 ---
 --- @return fun(o: ClassInstance, ...): (any?)
 function API.createMiddleMethod(classDef, name, methods) end
 
---- @param classDef LVMClassDefinition
+--- @param classDef ClassStructDefinition
 ---
 --- @return string[] methodNames
 function API.getDeclaredMethodNames(classDef, array) end
 
---- @param classDef LVMClassDefinition
+--- @param classDef ClassStructDefinition
 --- @param methodNames string[]?
 ---
 --- @return string[] methodNames

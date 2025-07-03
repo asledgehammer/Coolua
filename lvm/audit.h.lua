@@ -15,7 +15,7 @@ function API.auditGenericType(genDef) end
 
 --- Checks final fields in a class for uninitialization. This is for post-constructor analysis and audits.
 ---
---- @param classDef LVMClassDefinition
+--- @param classDef ClassStructDefinition
 --- @param o ClassInstance
 function API.auditFinalFields(classDef, o) end
 

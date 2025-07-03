@@ -17,7 +17,7 @@
 --- @class LVMScopeModule: LVMModule
 local API = {};
 
---- @param class LVMClassDefinition The class called.
+--- @param class ClassStructDefinition The class called.
 --- @param callInfo CallInfo
 ---
 --- @return ClassScope

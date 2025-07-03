@@ -177,14 +177,14 @@ function API.createMiddleMethod(cd, name, methods)
     end;
 end
 
---- @param classDef LVMClassDefinition
+--- @param struct Methodable
 ---
 --- @return string[] methodNames
-function API.getDeclaredMethodNames(classDef, array)
+function API.getDeclaredMethodNames(struct, array)
     --- @type string[]
     array = array or {};
 
-    local decMethods = classDef.declaredMethods;
+    local decMethods = struct.declaredMethods;
     for name, _ in pairs(decMethods) do
         if not arrayContains(array, name) then
             table.insert(array, name);
@@ -194,7 +194,7 @@ function API.getDeclaredMethodNames(classDef, array)
     return array;
 end
 
---- @param classDef LVMClassDefinition
+--- @param classDef ClassDefinition
 --- @param methodNames string[]?
 ---
 --- @return string[] methodNames

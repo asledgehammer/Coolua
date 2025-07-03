@@ -9,7 +9,7 @@
 --- @class (exact) ConstructorDefinition
 --- @field __type__ 'ConstructorDefinition'
 --- @field audited boolean If true, the struct is audited and verified to be valid.
---- @field class LVMClassDefinition
+--- @field class ClassStructDefinition
 --- @field scope ClassScope
 --- @field parameters ParameterDefinition[]
 --- @field func fun(o: any, ...)
@@ -23,7 +23,7 @@
 --- @class LVMConstructorModule: LVMModule
 local API = {};
 
---- @param classDef LVMClassDefinition
+--- @param classDef ClassStructDefinition
 function API.createMiddleConstructor(classDef) end
 
 --- @param constructors ConstructorDefinition[]

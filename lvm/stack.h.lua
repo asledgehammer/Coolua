@@ -8,7 +8,7 @@
 
 --- @class ClassContext The ClassContext is used to monitor and audit calls for scope-visible methods and fields.
 ---
---- @field class LVMClassDefinition The current class in the stack.
+--- @field class ClassStructDefinition The current class in the stack.
 --- @field context 'constructor'|'method'|'field-get'|'field-set' The current context. (Final fields can be set here)
 --- @field executable MethodDefinition|ConstructorDefinition? The definition of the context.
 --- @field field FieldDefinition?

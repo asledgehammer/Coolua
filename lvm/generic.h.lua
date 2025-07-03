@@ -30,7 +30,7 @@ local API = {};
 
 --- Compiles provided generic parameters for classes and methods.
 ---
---- @param cd LVMClassDefinition
+--- @param cd ClassStructDefinition
 --- @param gdefParam GenericsTypesDefinitionParameter
 ---
 --- @return GenericsTypesDefinition

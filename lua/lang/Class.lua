@@ -1,4 +1,4 @@
--- TODO: Create class object that wraps ClassDefinition.
+-- TODO: Create class object that wraps ClassStructDefinition.
 
 local LVM = require 'LVM';
 local newClass = LVM.class.newClass;
@@ -43,25 +43,25 @@ Class:addField({
     get = { scope = 'public' }
 });
 
--- private final ClassDefinition def { get; };
+-- private final ClassStructDefinition def { get; };
 Class:addField({
     scope = 'private',
     final = true,
     name = 'definition',
-    type = 'LVMClassDefinition',
+    type = 'ClassStructDefinition',
 
     get = { scope = 'public' }
 });
 
--- private Class(String package, String name, ClassDefinition def)
+-- private Class(String package, String name, ClassStructDefinition def)
 Class:addConstructor({
         scope = 'private',
         parameters = {
-            { name = 'def', type = 'ClassDefinition' }
+            { name = 'def', type = 'ClassStructDefinition' }
         }
     },
     --- @param self Class
-    --- @param definition ClassDefinition
+    --- @param definition ClassStructDefinition
     function(self, definition)
         self.definition = definition;
         self.name = definition.name;

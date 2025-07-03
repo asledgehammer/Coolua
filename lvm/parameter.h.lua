@@ -9,7 +9,7 @@
 --- @class (exact) ParameterDefinition
 --- @field __type__ 'ParameterDefinition'
 --- @field audited boolean If true, the struct is audited and verified to be valid.
---- @field class LVMClassDefinition
+--- @field class ClassStructDefinition
 --- @field name string
 --- @field types string[]
 

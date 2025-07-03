@@ -32,14 +32,14 @@ local API = {
 --- Classes are stored as their path.
 local CLASSES = {};
 
---- @type table<string, LVMClassDefinition>
+--- @type table<string, ClassStructDefinition>
 ---
 --- Class Definitions are stored as their path.
 local CLASS_DEFS = {};
 
 --- @param path string
 ---
---- @return LVMClassDefinition|nil
+--- @return ClassStructDefinition|nil
 function API.forNameDef(path)
     return CLASS_DEFS[path];
 end
@@ -49,7 +49,7 @@ function API.forName(path)
     local class = CLASSES[path];
 
     if not class then
-        --- @type LVMClassDefinition
+        --- @type ClassStructDefinition
         local def = CLASS_DEFS[path];
         if def then
             LVM.stepIn();
@@ -87,8 +87,8 @@ local function createPseudoClassInstance(def)
     return __class__;
 end
 
---- @param definition LVMClassDefinitionParameter|LVMChildClassDefinitionParameter
---- @param enclosingClass LVMClassDefinition?
+--- @param definition ClassStructDefinitionParameter|ChildClassStructDefinitionParameter
+--- @param enclosingClass ClassStructDefinition?
 function API.newClass(definition, enclosingClass)
 
     local locInfo = LVM.struct.calcPathNamePackage(definition, enclosingClass);
@@ -119,7 +119,7 @@ function API.newClass(definition, enclosingClass)
     end
 
     local cd = {
-        __type__ = 'ClassDefinition',
+        __type__ = 'ClassStructDefinition',
         pkg = pkg,
         name = name,
         scope = definition.scope,
@@ -172,7 +172,7 @@ function API.newClass(definition, enclosingClass)
         local errHeader = string.format('Class(%s):new():', cd.name);
 
         if not cd.lock then
-            errorf(2, '%s Cannot invoke constructor. (ClassDefinition is not finalized!)', errHeader);
+            errorf(2, '%s Cannot invoke constructor. (ClassStructDefinition is not finalized!)', errHeader);
         end
 
         -- TODO: Check if package-class exists.
@@ -500,8 +500,8 @@ function API.newClass(definition, enclosingClass)
         end
     end
 
-    --- Attempts to resolve a FieldDefinition in the ClassDefinition. If the field isn't declared for the class level, the
-    --- super-class(es) are checked.
+    --- Attempts to resolve a FieldDefinition in the ClassStructDefinition. If the field isn't declared for the class 
+    --- level, the super-class(es) are checked.
     ---
     --- @param name string
     ---
@@ -514,7 +514,7 @@ function API.newClass(definition, enclosingClass)
         return fd;
     end
 
-    --- Attempts to resolve a FieldDefinition in the ClassDefinition. If the field isn't defined in the class, nil
+    --- Attempts to resolve a FieldDefinition in the ClassStructDefinition. If the field isn't defined in the class, nil
     --- is returned.
     ---
     --- @param name string
@@ -558,7 +558,7 @@ function API.newClass(definition, enclosingClass)
             );
         end
 
-        local errHeader = string.format('ClassDefinition(%s):addConstructor():', cd.name);
+        local errHeader = string.format('ClassStructDefinition(%s):addConstructor():', cd.name);
 
         if not constructorDefinition then
             error(
@@ -708,7 +708,7 @@ function API.newClass(definition, enclosingClass)
             );
         end
 
-        local errHeader = string.format('Class(%s):addMethod():', cd.name);
+        local errHeader = string.format('ClassStructDefinition(%s):addMethod():', cd.name);
 
         local types = {};
         local returns = methodDefinition.returns;
@@ -948,8 +948,8 @@ function API.newClass(definition, enclosingClass)
         self.methods[name] = methods;
     end
 
-    --- Attempts to resolve a MethodDefinition in the ClassDefinition. If the method isn't defined in the class, nil
-    --- is returned.
+    --- Attempts to resolve a MethodDefinition in the ClassStructDefinition. If the method isn't defined in the class,
+    --- `nil` is returned.
     ---
     --- @param name string
     ---
@@ -1026,13 +1026,13 @@ function API.newClass(definition, enclosingClass)
 
     -- MARK: - finalize()
 
-    --- @return LVMClassDefinition class
+    --- @return ClassStructDefinition class
     function cd:finalize()
         local errHeader = string.format('Class(%s):finalize():', cd.path);
 
         if self.lock then
             errorf(2, '%s Cannot finalize. (Class is already finalized!)', errHeader);
-        elseif cd.superClass and (cd.superClass.__type__ == 'ClassDefinition' and not cd.superClass.lock) then
+        elseif cd.superClass and (cd.superClass.__type__ == 'ClassStructDefinition' and not cd.superClass.lock) then
             errorf(2, '%s Cannot finalize. (SuperClass %s is not finalized!)', errHeader, path);
         end
 
@@ -1255,7 +1255,7 @@ function API.newClass(definition, enclosingClass)
         return self:getMethodFromLine(line) or self:getConstructorFromLine(line) or nil;
     end
 
-    --- @param class LVMClassDefinition
+    --- @param class ClassStructDefinition
     ---
     --- @return boolean
     function cd:isSuperClass(class)
@@ -1269,8 +1269,8 @@ function API.newClass(definition, enclosingClass)
 
     --- (Handles recursively going through sub-classes to see if a class is a sub-class)
     ---
-    --- @param subClass LVMClassDefinition
-    --- @param classToEval LVMClassDefinition
+    --- @param subClass ClassStructDefinition
+    --- @param classToEval ClassStructDefinition
     ---
     --- @return boolean result True if the class to evaluate is a super-class of the subClass.
     local function __recurseSubClass(subClass, classToEval)
@@ -1284,7 +1284,7 @@ function API.newClass(definition, enclosingClass)
         return false;
     end
 
-    --- @param class LVMClassDefinition The class to evaulate.
+    --- @param class ClassStructDefinition The class to evaulate.
     ---
     --- @return boolean result True if the class to evaluate is a super-class of the subClass.
     function cd:isSubClass(class)
@@ -1294,7 +1294,7 @@ function API.newClass(definition, enclosingClass)
         return false;
     end
 
-    --- @param class LVMClassDefinition
+    --- @param class ClassStructDefinition
     ---
     --- @return boolean
     function cd:isAssignableFromType(class)

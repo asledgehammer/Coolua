@@ -17,15 +17,15 @@ local EnumDefinition = {};
 --- @return FieldDefinition
 function EnumDefinition:addField(definition) end
 
---- Attempts to resolve a FieldDefinition in the ClassDefinition. If the field isn't declared for the class level, the
---- super-class(es) are checked.
+--- Attempts to resolve a FieldDefinition in the EnumStructDefinition. If the field isn't declared for the class level,
+--- the super-class(es) are checked.
 ---
 --- @param name string
 ---
 --- @return FieldDefinition? fieldDefinition
 function EnumDefinition:getField(name) end
 
---- Attempts to resolve a FieldDefinition in the ClassDefinition. If the field isn't defined in the class, nil
+--- Attempts to resolve a FieldDefinition in the EnumStructDefinition. If the field isn't defined in the class, `nil`
 --- is returned.
 ---
 --- @param name string
@@ -60,8 +60,8 @@ function EnumDefinition:getDeclaredConstructor(args) end
 --- @return MethodDefinition
 function EnumDefinition:addMethod(definition, func) end
 
---- Attempts to resolve a MethodDefinition in the ClassDefinition. If the method isn't declared for the class level, the
---- super-class(es) are checked.
+--- Attempts to resolve a MethodDefinition in the EnumStructDefinition. If the method isn't declared for the class
+--- level, the super-class(es) are checked.
 ---
 --- @param name string
 ---
@@ -74,7 +74,7 @@ function EnumDefinition:getMethods(name) end
 --- @return MethodDefinition|nil methodDefinition
 function EnumDefinition:getMethod(name, args) end
 
---- Attempts to resolve a MethodDefinition in the ClassDefinition. If the method isn't defined in the class, nil
+--- Attempts to resolve a MethodDefinition in the EnumStructDefinition. If the method isn't defined in the class, `nil`
 --- is returned.
 ---
 --- @param name string
@@ -88,7 +88,7 @@ function EnumDefinition:getDeclaredMethods(name) end
 --- @return MethodDefinition|nil methodDefinition
 function EnumDefinition:getDeclaredMethod(name, args) end
 
---- @returns LVMClassDefinition
+--- @returns ClassStructDefinition
 function EnumDefinition:finalize() end
 
 -- MARK: - Module

@@ -49,7 +49,7 @@ else                        -- Native Lua Environment.
 
     --- @param levelOrFunc function|integer
     --- @param rootPath string?
-    --- @param isClassPath boolean? (Default: false) If true, the path is transformed to `ClassDefinition.path` syntax.
+    --- @param isClassPath boolean? (Default: false) If true, the path is transformed to `StructDefinition.path` syntax.
     ---
     --- @return string path
     function DebugUtils.getPath(levelOrFunc, rootPath, isClassPath)
@@ -67,7 +67,7 @@ else                        -- Native Lua Environment.
 
     --- @param level integer
     --- @param rootPath string?
-    --- @param isClassPath boolean? (Default: false) If true, the path is transformed to `ClassDefinition.path` syntax.
+    --- @param isClassPath boolean? (Default: false) If true, the path is transformed to `StructDefinition.path` syntax.
     ---
     --- @return CallInfo
     function DebugUtils.getCallInfo(level, rootPath, isClassPath)
@@ -96,7 +96,7 @@ else                        -- Native Lua Environment.
 
     --- @param func function
     --- @param rootPath string?
-    --- @param isClassPath boolean? (Default: false) If true, the path is transformed to `ClassDefinition.path` syntax.
+    --- @param isClassPath boolean? (Default: false) If true, the path is transformed to `StructDefinition.path` syntax.
     --- 
     --- @return FunctionInfo
     function DebugUtils.getFuncInfo(func, rootPath, isClassPath)

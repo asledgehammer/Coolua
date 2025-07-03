@@ -6,148 +6,130 @@
 
 -- MARK: - Definition
 
---- @class (exact) LVMClassDefinitionParameter: StructDefinitionParameter
+--- @class (exact) ClassStructDefinitionParameter: StructDefinitionParameter
 --- @field final boolean? (Default: false)
 --- @field scope ClassScope? (Default: package)
---- @field superClass LVMClassDefinition? (Default: nil)
+--- @field superClass ClassStructDefinition? (Default: nil)
 --- @field generics GenericsTypesDefinitionParameter? Any generic parameter definitions.
 --- @field static boolean? If the class is defined as static.
 --- @field abstract boolean? (Default: false)
 
---- @class (exact) LVMChildClassDefinitionParameter
+--- @class (exact) ChildClassStructDefinitionParameter
 --- @field final boolean? (Default: false)
 --- @field scope ClassScope? (Default: package)
---- @field superClass LVMClassDefinition? (Default: nil)
+--- @field superClass ClassStructDefinition? (Default: nil)
 --- @field generics GenericsTypesDefinitionParameter? Any generic parameter definitions.
 --- @field abstract boolean? (Default: false)
 
---- @class (exact) LVMClassDefinition: StructDefinition
---- @field __type__ 'ClassDefinition'
---- @field audited boolean If true, the struct is audited and verified to be valid.
---- @field __middleConstructor function
---- @field __middleMethods table<string, function>
+--- @class (exact) ClassStructDefinition: StructDefinition, Genericable, Hierarchical, Constructable, Methodable, Fieldable, Staticable, Abstractable, Auditable
+--- @field __type__ 'ClassStructDefinition'
 --- @field printHeader string
 --- @field type string
---- @field methods table<string, MethodDefinition[]>
---- @field superClass LVMClassDefinition
---- @field subClasses (LVMClassDefinition|Class)[]
 --- @field lock boolean
---- @field final boolean (Default: false) If the class is final and cannot be extended.
---- @field isChild boolean
 --- @field classObj Class?
---- @field declaredFields table<string, FieldDefinition>
---- @field declaredMethods table<string, MethodDefinition>
---- @field declaredConstructors ConstructorDefinition[]
---- @field staticFields table<string, any> Stores the static values for classes.
---- @field generics GenericsTypesDefinition? If the class supports generics, this is where its defined.
---- @field abstract boolean (Default: false)
----
---- @field children table<string, LVMClassDefinition> Any classes that are defined within the class's context.
---- @field static boolean (Default: false) If true, the class is considered static.
---- @field enclosingClass LVMClassDefinition
-local LVMClassDefinition = {};
+local ClassStructDefinition = {};
 
 --- @param definition FieldDefinitionParameter
 ---
 --- @return FieldDefinition
-function LVMClassDefinition:addField(definition) end
+function ClassStructDefinition:addField(definition) end
 
---- Attempts to resolve a FieldDefinition in the ClassDefinition. If the field isn't declared for the class level, the
+--- Attempts to resolve a FieldDefinition in the ClassStructDefinition. If the field isn't declared for the class level, the
 --- super-class(es) are checked.
 ---
 --- @param name string
 ---
 --- @return FieldDefinition? fieldDefinition
-function LVMClassDefinition:getField(name) end
+function ClassStructDefinition:getField(name) end
 
---- Attempts to resolve a FieldDefinition in the ClassDefinition. If the field isn't defined in the class, nil
+--- Attempts to resolve a FieldDefinition in the ClassStructDefinition. If the field isn't defined in the class, nil
 --- is returned.
 ---
 --- @param name string
 ---
 --- @return FieldDefinition? fieldDefinition
-function LVMClassDefinition:getDeclaredField(name) end
+function ClassStructDefinition:getDeclaredField(name) end
 
 --- @param constructorDefinition ConstructorDefinitionParameter
 --- @param func function
 ---
 --- @return ConstructorDefinition
-function LVMClassDefinition:addConstructor(constructorDefinition, func) end
+function ClassStructDefinition:addConstructor(constructorDefinition, func) end
 
 --- @param constructorDefinition ConstructorDefinitionParameter
 ---
 --- @return ConstructorDefinition
-function LVMClassDefinition:addConstructor(constructorDefinition) end
+function ClassStructDefinition:addConstructor(constructorDefinition) end
 
 --- @param args any[]
 ---
 --- @return ConstructorDefinition|nil constructorDefinition
-function LVMClassDefinition:getConstructor(args) end
+function ClassStructDefinition:getConstructor(args) end
 
 --- @param args any[]
 ---
 --- @return ConstructorDefinition|nil constructorDefinition
-function LVMClassDefinition:getDeclaredConstructor(args) end
+function ClassStructDefinition:getDeclaredConstructor(args) end
 
 --- @param definition MethodDefinitionParameter
 --- @param func function?
 ---
 --- @return MethodDefinition
-function LVMClassDefinition:addMethod(definition, func) end
+function ClassStructDefinition:addMethod(definition, func) end
 
---- Attempts to resolve a MethodDefinition in the ClassDefinition. If the method isn't declared for the class level, the
+--- Attempts to resolve a MethodDefinition in the ClassStructDefinition. If the method isn't declared for the class level, the
 --- super-class(es) are checked.
 ---
 --- @param name string
 ---
 --- @return MethodDefinition[]? methods
-function LVMClassDefinition:getMethods(name) end
+function ClassStructDefinition:getMethods(name) end
 
 --- @param name string
 --- @param args any[]
 ---
 --- @return MethodDefinition|nil methodDefinition
-function LVMClassDefinition:getMethod(name, args) end
+function ClassStructDefinition:getMethod(name, args) end
 
---- Attempts to resolve a MethodDefinition in the ClassDefinition. If the method isn't defined in the class, nil
+--- Attempts to resolve a MethodDefinition in the ClassStructDefinition. If the method isn't defined in the class, nil
 --- is returned.
 ---
 --- @param name string
 ---
 --- @return MethodDefinition[]? methods
-function LVMClassDefinition:getDeclaredMethods(name) end
+function ClassStructDefinition:getDeclaredMethods(name) end
 
 --- @param name string
 --- @param args any[]
 ---
 --- @return MethodDefinition|nil methodDefinition
-function LVMClassDefinition:getDeclaredMethod(name, args) end
+function ClassStructDefinition:getDeclaredMethod(name, args) end
 
---- @returns LVMClassDefinition
-function LVMClassDefinition:finalize() end
+--- @returns ClassStructDefinition
+function ClassStructDefinition:finalize() end
 
---- @param class LVMClassDefinition
+--- @param class ClassStructDefinition
 ---
 --- @return boolean
-function LVMClassDefinition:isAssignableFromType(class) end
+function ClassStructDefinition:isAssignableFromType(class) end
 
 --- @param line integer
 ---
 --- @return ConstructorDefinition|nil method
-function LVMClassDefinition:getExecutableFromLine(line) end
+function ClassStructDefinition:getExecutableFromLine(line) end
 
 --- @param line integer
 ---
 --- @return MethodDefinition|nil method
-function LVMClassDefinition:getMethodFromLine(line) end
+function ClassStructDefinition:getMethodFromLine(line) end
 
 --- @param line integer
 ---
 --- @return ConstructorDefinition|nil method
-function LVMClassDefinition:getConstructorFromLine(line) end
+function ClassStructDefinition:getConstructorFromLine(line) end
 
 --- @return Class
-function LVMClassDefinition:create() end
+function ClassStructDefinition:create() end
 
 -- MARK: - Module
 
@@ -158,7 +140,7 @@ local API = {};
 ---
 --- @param path string The path to the class. syntax: `<package>.<class>`
 ---
---- @return LVMClassDefinition|nil The LVM class definition struct. If no definition exists with the path then nil is returned.
+--- @return ClassStructDefinition|nil The LVM class definition struct. If no definition exists with the path then nil is returned.
 function API.forNameDef(path) end
 
 --- Simulates path resolution from Java via `Class.forName(..)`. Resolves (or builds) a Class object.
@@ -177,13 +159,13 @@ function API.forName(path) end
 --- @return boolean result
 function API.equals(a, b) end
 
---- @param defParams LVMClassDefinitionParameter
+--- @param defParams ClassStructDefinitionParameter
 ---
---- @return LVMClassDefinition
+--- @return ClassStructDefinition
 function API.newClass(defParams) end
 
---- @param defParams LVMChildClassDefinitionParameter
---- @param enclosingClass LVMClassDefinition
+--- @param defParams ChildClassStructDefinitionParameter
+--- @param enclosingClass ClassStructDefinition
 ---
---- @return LVMClassDefinition
+--- @return ClassStructDefinition
 function API.newClass(defParams, enclosingClass) end

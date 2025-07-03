@@ -38,7 +38,7 @@ end
 --- @class (exact) ContextArgs
 --- @field path string
 --- @field line number
---- @field class LVMClassDefinition
+--- @field class StructDefinition
 --- @field context string
 --- @field element FieldDefinition|ConstructorDefinition|MethodDefinition
 
