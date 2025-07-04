@@ -43,3 +43,6 @@
 
 --- @class LVMFieldModule: LVMModule
 local API = {};
+
+--- @param self ClassStructDefinition|InterfaceStructDefinition
+function API.compileFieldAutoMethods(self) end
