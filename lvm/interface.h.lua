@@ -11,13 +11,21 @@ local InterfaceInstance = {};
 
 --- @class (exact) InterfaceMethodDefinitionParameter
 --- 
---- @field scope ClassScope? (Default: package)
---- @field static boolean? (Default: false)
+--- NOTE: All instanced interface methods are public.
 --- @field name string
 --- @field generics GenericsTypesDefinitionParameter?
 --- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
 --- @field returns (string[]|string)? (Default: void)
 --- NOTE: The `default` flag is automatically true if a function body is provided at the time of adding the method. 
+
+--- @class (exact) InterfaceStaticMethodDefinitionParameter
+--- 
+--- @field scope ClassScope? (Default: package)
+--- @field name string
+--- @field generics GenericsTypesDefinitionParameter?
+--- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
+--- @field returns (string[]|string)? (Default: void)
+
 
 --- @class InterfaceStructDefinitionParameter: StructDefinitionParameter
 --- @field extends InterfaceStructDefinition?
@@ -60,6 +68,13 @@ function InterfaceStructDefinition:getDeclaredField(name) end
 ---
 --- @return MethodDefinition
 function InterfaceStructDefinition:addMethod(definition, func) end
+
+--- @param definition InterfaceStaticMethodDefinitionParameter
+--- @param func function?
+---
+--- @return MethodDefinition
+function InterfaceStructDefinition:addStaticMethod(definition, func) end
+
 
 --- Attempts to resolve a MethodDefinition in the InterfaceStructDefinition. If the method isn't declared for the class
 --- level, the super-class(es) are checked.

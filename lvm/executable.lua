@@ -24,6 +24,14 @@ local API = {
     end
 };
 
+function API.getExecutableInfo(func)
+    if not func then
+        return { start = -1, stop = -1, path = '' };
+    end
+    local info = DebugUtils.getFuncInfo(func, LVM.ROOT_PATH, true);
+    return { start = info.start, stop = info.stop, path = info.path };
+end
+
 --- @cast API LVMExecutableModule
 
 --- @param name string The name of the method called.
@@ -452,7 +460,7 @@ end
 function API.getDeclaredMethodFromLine(self, path, line)
     for _, mCluster in pairs(self.declaredMethods) do
         for _, md in pairs(mCluster) do
-            if path == md.path and line >= md.lineRange.start and line <= md.lineRange.stop then
+            if path == md.funcInfo.path and line >= md.funcInfo.start and line <= md.funcInfo.stop then
                 return md;
             end
         end

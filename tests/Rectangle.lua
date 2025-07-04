@@ -29,7 +29,6 @@ Rectangle:addField({
 
 Rectangle:addConstructor({
         scope = 'public',
-        parameters = {}
     },
     --- @param o Rectangle
     function(o)

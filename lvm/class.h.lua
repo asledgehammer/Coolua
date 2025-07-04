@@ -6,6 +6,14 @@
 
 -- MARK: - Definition
 
+--- @class (exact) ClassMethodDefinitionParameter 
+--- @field scope ClassScope? (Default: public)
+--- @field final boolean? (Default: false)
+--- @field name string
+--- @field generics GenericsTypesDefinitionParameter?
+--- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
+--- @field returns (string[]|string)? (Default: void)
+
 --- @class (exact) ClassStructDefinitionParameter: StructDefinitionParameter
 --- @field final boolean? (Default: false)
 --- @field scope ClassScope? (Default: package)
@@ -87,6 +95,17 @@ function ClassStructDefinition:getDeclaredConstructor(args) end
 ---
 --- @return MethodDefinition
 function ClassStructDefinition:addMethod(definition, func) end
+
+--- @param definition ClassMethodDefinitionParameter
+---
+--- @return MethodDefinition
+function ClassStructDefinition:addAbstractMethod(definition) end
+
+--- @param definition ClassMethodDefinitionParameter
+--- @param func function?
+---
+--- @return MethodDefinition
+function ClassStructDefinition:addStaticMethod(definition, func) end
 
 --- Attempts to resolve a MethodDefinition in the ClassStructDefinition. If the method isn't declared for the class level, the
 --- super-class(es) are checked.

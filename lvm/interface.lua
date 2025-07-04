@@ -41,49 +41,10 @@ local IAPI = {};
 function IAPI.addMethod(self, methodDefinition, func)
     local errHeader = string.format('InterfaceStructDefinition(%s):addMethod():', self.name);
 
-    local types = {};
-    local returns = methodDefinition.returns;
-
-    -- Validate name.
-    if not methodDefinition.name then
-        errorf(2, '%s string property "name" is not provided.', errHeader);
-    elseif type(methodDefinition.name) ~= 'string' then
-        errorf(2, '%s property "name" is not a valid string. {type=%s, value=%s}',
-            errHeader, type(methodDefinition.name), tostring(methodDefinition.name)
-        );
-    elseif methodDefinition.name == '' then
-        errorf(2, '%s property "name" is an empty string.', errHeader);
-    elseif not isValidName(methodDefinition.name) then
-        errorf(2,
-            '%s property "name" is invalid. (value = %s) (Should only contain A-Z, a-z, 0-9, _, or $ characters)',
-            errHeader, methodDefinition.name
-        );
-    elseif methodDefinition.name == 'super' then
-        errorf(2, '%s cannot name method "super".', errHeader);
-    end
-
-    -- Validate parameter type(s).
-    if not returns then
-        types = { 'void' };
-    elseif type(returns) == 'table' then
-        --- @cast returns table
-        if not isArray(returns) then
-            errorf(2, '%s The property "returns" is not a string[] or string[]. {type = %s, value = %s}',
-                errHeader, LVM.type.getType(returns), tostring(returns)
-            );
-        end
-        --- @cast returns string[]
-        types = returns;
-    elseif type(methodDefinition.returns) == 'string' then
-        --- @cast returns string
-        types = { returns };
-    end
-
-    -- TODO: Implement all definition property checks.
-    local lineStart, lineStop = -1, -1;
-    if func then
-        lineStart, lineStop = DebugUtils.getFuncRange(func);
-    end
+    local name = LVM.audit.auditMethodParamName(methodDefinition.name, errHeader);
+    local types = LVM.audit.auditMethodReturnsProperty(methodDefinition.returns, errHeader);
+    local parameters = LVM.audit.auditParameters(methodDefinition.parameters, errHeader);
+    local funcInfo = LVM.executable.getExecutableInfo(func);
 
     local md = {
 
@@ -91,17 +52,17 @@ function IAPI.addMethod(self, methodDefinition, func)
 
         -- Base properties. --
         class = self,
-        name = methodDefinition.name,
+        name = name,
         returns = types,
-        parameters = methodDefinition.parameters or {},
+        parameters = parameters,
         func = func,
 
         -- Used for scope-visibility analysis. --
-        scope = methodDefinition.scope or 'package',
-        lineRange = { start = lineStart, stop = lineStop },
+        scope = 'public',
+        funcInfo = funcInfo,
 
         -- General method flags --
-        static = methodDefinition.static or false,
+        static = false,
         final = false, -- Cannot define finals in a interface context.
 
         -- Compiled method flags --
@@ -110,7 +71,7 @@ function IAPI.addMethod(self, methodDefinition, func)
         super = nil,
 
         -- Interface definition. --
-        interface = true, -- Lets the LVM know this belongs to an interface.
+        interface = self, -- Lets the LVM know this belongs to an interface.
         default = func ~= nil,
 
         -- Always falsify class flags in class method definitions. --
@@ -121,43 +82,67 @@ function IAPI.addMethod(self, methodDefinition, func)
 
     --- @cast md MethodDefinition
 
-    if md.parameters then
-        if type(md.parameters) ~= 'table' or not isArray(md.parameters) then
-            errorf(2, '%s property "parameters" is not a ParameterDefinition[]. {type=%s, value=%s}',
-                errHeader, LVM.type.getType(md.parameters), tostring(md.parameters)
-            );
-        end
-
-        -- Convert any simplified type declarations.
-        local paramLen = #md.parameters;
-        if paramLen then
-            for i = 1, paramLen do
-                local param = md.parameters[i];
-
-                -- Validate parameter type(s).
-                if not param.type and not param.types then
-                    errorf(2, '%s Parameter #%i doesn\'t have a defined type string or types string[]. (name = %s)',
-                        errHeader, i, param.name
-                    );
-                else
-                    if param.type and not param.types then
-                        param.types = { param.type };
-                        --- @diagnostic disable-next-line
-                        param.type = nil;
-                    end
-                end
-
-                -- Validate parameter name.
-                if not param.name and not LVM.executable.isVararg(param.types[1]) then
-                    errorf(2, '%s Parameter #%i doesn\'t have a defined name string.', errHeader, i);
-                elseif param.name == '' then
-                    errorf(2, '%s Parameter #%i has an empty name string.', errHeader, i);
-                end
-            end
-        end
-    else
-        md.parameters = {};
+    local methodCluster = self.declaredMethods[md.name];
+    if not methodCluster then
+        methodCluster = {};
+        self.declaredMethods[md.name] = methodCluster;
     end
+    methodCluster[md.signature] = md;
+
+    return md;
+end
+
+--- @cast API LVMInterfaceModule
+
+--- @param self InterfaceStructDefinition
+--- @param definition InterfaceStaticMethodDefinitionParameter
+--- @param func function?
+---
+--- @return MethodDefinition
+function IAPI.addStaticMethod(self, definition, func)
+    local errHeader = string.format('InterfaceStructDefinition(%s):addStaticMethod():', self.name);
+
+    local scope = LVM.audit.auditStructPropertyScope(self.scope, definition.scope, errHeader);
+    local name = LVM.audit.auditMethodParamName(definition.name, errHeader);
+    local types = LVM.audit.auditMethodReturnsProperty(definition.returns, errHeader);
+    local parameters = LVM.audit.auditParameters(definition.parameters, errHeader);
+    local funcInfo = LVM.executable.getExecutableInfo(func);
+
+    local md = {
+
+        __type__ = 'MethodDefinition',
+
+        -- Base properties. --
+        class = self,
+        name = name,
+        returns = types,
+        parameters = parameters,
+        func = func,
+        funcInfo = funcInfo,
+
+        -- Used for scope-visibility analysis. --
+        scope = scope,
+
+        -- General method flags --
+        static = true,
+        final = false, -- Cannot define finals in a interface context.
+
+        -- Compiled method flags --
+        audited = false,
+        override = false,
+        super = nil,
+
+        -- Interface definition. --
+        interface = self, -- Lets the LVM know this belongs to an interface.
+        default = func ~= nil,
+
+        -- Always falsify class flags in class method definitions. --
+        abstract = false,
+    };
+
+    md.signature = LVM.executable.createSignature(md);
+
+    --- @cast md MethodDefinition
 
     local methodCluster = self.declaredMethods[md.name];
     if not methodCluster then
@@ -583,7 +568,7 @@ function API.newInterface(definition, enclosingStruct)
 
     -- * Methodable API * --
     id.addMethod = IAPI.addMethod;
-    id.compileMethod = IAPI.compileMethod;
+    id.addStaticMethod = IAPI.addStaticMethod;
 
     function id:getDeclaredMethods(name)
         return self.declaredMethods[name];

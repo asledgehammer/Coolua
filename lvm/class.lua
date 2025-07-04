@@ -546,77 +546,13 @@ function API.newClass(definition, outer)
 
     -- MARK: - Method
 
-    function cd:addMethod(methodDefinition, func)
-        -- Friendly check for implementation.
-        if not self or type(methodDefinition) == 'function' then
-            error(
-                'Improper method call. (Not instanced) Use MyClass:addMethod() instead of MyClass.addMethod()',
-                2
-            );
-        end
-
+    function cd:addStaticMethod(methodDefinition, func)
         local errHeader = string.format('ClassStructDefinition(%s):addMethod():', cd.name);
-
-        local types = {};
-        local returns = methodDefinition.returns;
-
-        -- Validate name.
-        if not methodDefinition.name then
-            errorf(2, '%s string property "name" is not provided.', errHeader);
-        elseif type(methodDefinition.name) ~= 'string' then
-            errorf(2, '%s property "name" is not a valid string. {type=%s, value=%s}',
-                errHeader, type(methodDefinition.name), tostring(methodDefinition.name)
-            );
-        elseif methodDefinition.name == '' then
-            errorf(2, '%s property "name" is an empty string.', errHeader);
-        elseif not isValidName(methodDefinition.name) then
-            errorf(2,
-                '%s property "name" is invalid. (value = %s) (Should only contain A-Z, a-z, 0-9, _, or $ characters)',
-                errHeader, methodDefinition.name
-            );
-        elseif methodDefinition.name == 'super' then
-            errorf(2, '%s cannot name method "super".', errHeader);
-        end
-
-        local parameters = LVM.executable.compile(methodDefinition.parameters);
-
-        -- Validate return type(s).
-        if not returns then
-            types = { 'void' };
-        elseif type(returns) == 'table' then
-            --- @cast returns table
-            if not isArray(returns) then
-                errorf(2, '%s The property "returns" is not a string[] or string[]. {type = %s, value = %s}',
-                    errHeader, LVM.type.getType(returns), tostring(returns)
-                );
-            end
-            --- @cast returns string[]
-            types = returns;
-        elseif type(methodDefinition.returns) == 'string' then
-            --- @cast returns string
-            types = { returns };
-        end
-
-        -- Validate abstract flag.
-        if methodDefinition.abstract then
-            if not cd.abstract then
-                errorf(2, '%s The method cannot be abstract when the class is not: %s.%s',
-                    errHeader, cd.name, methodDefinition.name
-                );
-                return;
-            elseif func then
-                errorf(2, '%s The method cannot be abstract and have a defined function block: %s.%s',
-                    errHeader, cd.name, methodDefinition.name
-                );
-                return;
-            end
-        end
-
-        -- TODO: Implement all definition property checks.
-        local lineStart, lineStop = -1, -1;
-        if func then
-            lineStart, lineStop = DebugUtils.getFuncRange(func);
-        end
+        local scope = LVM.audit.auditStructPropertyScope(self.scope, methodDefinition.scope, errHeader);
+        local name = LVM.audit.auditMethodParamName(methodDefinition.name, errHeader);
+        local types = LVM.audit.auditMethodReturnsProperty(methodDefinition.returns, errHeader);
+        local parameters = LVM.audit.auditParameters(methodDefinition.parameters, errHeader);
+        local funcInfo = LVM.executable.getExecutableInfo(func);
 
         local md = {
 
@@ -624,19 +560,17 @@ function API.newClass(definition, outer)
 
             -- Base properties. --
             class = cd,
-            name = methodDefinition.name,
+            name = name,
             returns = types,
             parameters = parameters,
             func = func,
-
-            -- Used for scope-visibility analysis. --
-            scope = methodDefinition.scope or 'package',
-            lineRange = { start = lineStart, stop = lineStop },
+            funcInfo = funcInfo,
+            scope = scope,
 
             -- General method flags --
-            static = methodDefinition.static or false,
-            final = methodDefinition.final or false,
-            abstract = methodDefinition.abstract or false,
+            static = true,
+            final = false,
+            abstract = false,
 
             -- Compiled method flags --
             audited = false,
@@ -655,7 +589,126 @@ function API.newClass(definition, outer)
         if LVM.debug.method then
             local callSyntax = ':';
             if md.static then callSyntax = '.' end
-            debugf(LVM.debug.method, '%s Adding class method: %s%s%s',
+            debugf(LVM.debug.method, '%s Adding static method: %s%s%s',
+                self.printHeader,
+                self.name, callSyntax, md.signature
+            );
+        end
+
+        -- Add the definition to the cluster array for the method's name.
+        local methodCluster = self.declaredMethods[md.name];
+        if not methodCluster then
+            methodCluster = {};
+            self.declaredMethods[md.name] = methodCluster;
+        end
+        methodCluster[md.signature] = md;
+
+        return md;
+    end
+
+    function cd:addAbstractMethod(methodDefinition)
+        local errHeader = string.format('ClassStructDefinition(%s):addAbstractMethod():', cd.name);
+        local scope = LVM.audit.auditStructPropertyScope(self.scope, methodDefinition.scope, errHeader);
+        local name = LVM.audit.auditMethodParamName(methodDefinition.name, errHeader);
+        local types = LVM.audit.auditMethodReturnsProperty(methodDefinition.returns, errHeader);
+        local parameters = LVM.audit.auditParameters(methodDefinition.parameters, errHeader);
+        local funcInfo = LVM.executable.getExecutableInfo();
+
+        local md = {
+            __type__ = 'MethodDefinition',
+
+            -- Base properties. --
+            class = cd,
+            name = name,
+            returns = types,
+            parameters = parameters,
+            func = nil,
+            funcInfo = funcInfo,
+            scope = scope,
+
+            -- General method flags --
+            static = false,
+            final = false,
+            abstract = true,
+
+            -- Compiled method flags --
+            audited = false,
+            override = false,
+            super = nil,
+
+            -- Always falsify interface flags in class method definitions. --
+            interface = false,
+            default = false,
+        };
+
+        md.signature = LVM.executable.createSignature(md);
+
+        --- @cast md MethodDefinition
+
+        if LVM.debug.method then
+            local callSyntax = ':';
+            if md.static then callSyntax = '.' end
+            debugf(LVM.debug.method, '%s Adding abstract method: %s%s%s',
+                self.printHeader,
+                self.name, callSyntax, md.signature
+            );
+        end
+
+        -- Add the definition to the cluster array for the method's name.
+        local methodCluster = self.declaredMethods[md.name];
+        if not methodCluster then
+            methodCluster = {};
+            self.declaredMethods[md.name] = methodCluster;
+        end
+        methodCluster[md.signature] = md;
+
+        return md;
+    end
+
+    function cd:addMethod(methodDefinition, func)
+        local errHeader = string.format('ClassStructDefinition(%s):addMethod():', cd.name);
+        local scope = LVM.audit.auditStructPropertyScope(self.scope, methodDefinition.scope, errHeader);
+        local name = LVM.audit.auditMethodParamName(methodDefinition.name, errHeader);
+        local types = LVM.audit.auditMethodReturnsProperty(methodDefinition.returns, errHeader);
+        local parameters = LVM.audit.auditParameters(methodDefinition.parameters, errHeader);
+        local funcInfo = LVM.executable.getExecutableInfo(func);
+
+        local md = {
+
+            __type__ = 'MethodDefinition',
+
+            -- Base properties. --
+            class = cd,
+            name = name,
+            returns = types,
+            parameters = parameters,
+            func = func,
+            funcInfo = funcInfo,
+            scope = scope,
+
+            -- General method flags --
+            static = false,
+            final = methodDefinition.final or false,
+            abstract = false,
+
+            -- Compiled method flags --
+            audited = false,
+            override = false,
+            super = nil,
+
+            -- Always falsify interface flags in class method definitions. --
+            interface = false,
+            default = false,
+        };
+
+        md.signature = LVM.executable.createSignature(md);
+
+        --- @cast md MethodDefinition
+
+        if LVM.debug.method then
+            local callSyntax = ':';
+            if md.static then callSyntax = '.' end
+            debugf(LVM.debug.method, '%s Adding instance method: %s%s%s',
                 self.printHeader,
                 self.name, callSyntax, md.signature
             );

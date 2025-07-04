@@ -3,8 +3,7 @@
 - FIXME: Store file path and line range for functions to not limit class definitions to one file path for visibility scopes.
 
 #################################
-NEXT: Make constructors signature-based with caching.
-THEN: Make interface methods signature-based.
+NEXT: Make constructors signature-based.
 AFTER: Make enums work.
 #################################
 
@@ -20,7 +19,6 @@ AFTER: Make enums work.
 
 # INTERFACE:
 - TODO: Implement.
-- TODO: Implement default methods.
 - TODO: Implement static methods.
 
 # CLASS:

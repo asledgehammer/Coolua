@@ -7,6 +7,8 @@ local newClass = LuaClass.newClass;
 
 local Math = newClass({ scope = 'public' });
 
+--- @cast Math MathDefinition
+
 Math:addField({
     scope = 'public',
     static = true,
@@ -21,12 +23,10 @@ Math:addConstructor({
     parameters = {}
 }, function() end);
 
-Math:addMethod({
+Math:addStaticMethod({
         scope = 'public',
-        static = true,
         final = true,
         name = 'getPI',
-        parameters = {},
         returns = 'number'
     },
     function() return Math.PI end

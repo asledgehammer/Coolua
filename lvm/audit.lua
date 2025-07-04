@@ -21,39 +21,7 @@ local API = {
     end
 };
 
---- @cast API LVMAuditModule
-
---- @param def ParameterDefinition
-function API.auditParameter(def)
-    if not def then
-        error('Parameter is nil.', 2);
-    elseif def.__type__ ~= 'ParameterDefinition' then
-        errorf(2, 'Parameter is not a ParameterDefinition. {type = %s, value = %s}',
-            LVM.type.getType(def),
-            tostring(def)
-        );
-    end
-
-    -- Audit name.
-    if not def.name then
-        error('The parameter doesn\'t have a name.', 2);
-    elseif def.name == '' then
-        error('The parameter has an empty name.', 2);
-    elseif isValidName(def.name) then
-        errorf(2, 'The parameter has a name with invalid characters: %s (Valid characters: [A-Z, a,z, 0-9, $, _, -])');
-    end
-
-    -- Audit types.
-    if not def.types then
-        errorf(2, 'The parameter "%s" has no type(s).', def.name);
-    elseif #def.types == 0 then
-        errorf(2, 'The parameter "%s" has no type(s).', def.name);
-    end
-
-    LVM.flags.canSetAudit = true;
-    def.audited = true;
-    LVM.flags.canSetAudit = false;
-end
+-- --- @cast API LVMAuditModule
 
 --- @param def GenericTypeDefinition
 function API.auditGenericType(def)
@@ -94,6 +62,120 @@ end
 
 function API.auditConstructor(def)
 
+end
+
+function API.auditParameter(parameter, i, errHeader)
+    -- Validate parameter type(s).
+    if not parameter.type and not parameter.types then
+        errorf(2, '%s Parameter #%i doesn\'t have a defined type string or types string[]. (name = %s)',
+            errHeader, i, parameter.name
+        );
+    else
+        if parameter.type and not parameter.types then
+            parameter.types = { parameter.type };
+            --- @diagnostic disable-next-line
+            parameter.type = nil;
+        end
+    end
+
+    -- Validate parameter name.
+    if not parameter.name and not LVM.executable.isVararg(parameter.types[1]) then
+        errorf(2, '%s Parameter #%i doesn\'t have a defined name string.', errHeader, i);
+    elseif parameter.name == '' then
+        errorf(2, '%s Parameter #%i has an empty name string.', errHeader, i);
+    end
+end
+
+function API.auditParameters(parameters, errHeader)
+    if parameters then
+        if type(parameters) ~= 'table' or not isArray(parameters) then
+            errorf(2, '%s property "parameters" is not a ParameterDefinition[]. {type=%s, value=%s}',
+                errHeader, LVM.type.getType(parameters), tostring(parameters)
+            );
+        end
+        -- Convert any simplified type declarations.
+        local paramLen = #parameters;
+        if paramLen then
+            for i = 1, paramLen do
+                local param = parameters[i];
+                API.auditParameter(param, i, errHeader);
+            end
+        end
+    else
+        parameters = {};
+    end
+    return parameters;
+end
+
+function API.auditMethodReturnsProperty(returns, errHeader)
+    local types = {};
+    -- Validate parameter type(s).
+    if not returns then
+        types = { 'void' };
+    elseif type(returns) == 'table' then
+        --- @cast returns table
+        if not isArray(returns) then
+            errorf(2, '%s The property "returns" is not a any or any[]. {type = %s, value = %s}',
+                errHeader, LVM.type.getType(returns), tostring(returns)
+            );
+        end
+        --- @cast returns string[]
+        types = returns;
+    elseif type(returns) == 'string' then
+        --- @cast returns string
+        types = { returns };
+    end
+    return types;
+end
+
+function API.auditMethodParamName(name, errHeader)
+    -- Validate name.
+    if not name then
+        errorf(2, '%s string property "name" is not provided.', errHeader);
+    elseif type(name) ~= 'string' then
+        errorf(2, '%s property "name" is not a valid string. {type=%s, value=%s}',
+            errHeader, type(name), tostring(name)
+        );
+    elseif name == '' then
+        errorf(2, '%s property "name" is an empty string.', errHeader);
+    elseif not isValidName(name) then
+        errorf(2,
+            '%s property "name" is invalid. (value = %s) (Should only contain A-Z, a-z, 0-9, _, or $ characters)',
+            errHeader, name
+        );
+    elseif name == 'super' then
+        errorf(2, '%s cannot name method "super".', errHeader);
+    end
+
+    return name;
+end
+
+function API.auditStructPropertyScope(structScope, propertyScope, errHeader)
+    if not propertyScope then
+        if structScope == 'protected' then
+            return 'protected';
+        elseif structScope == 'private' then
+            return 'private';
+        else
+            return 'package';
+        end
+    end
+
+    local invalid = false;
+    if structScope == 'package' and propertyScope == 'public' then
+        invalid = true;
+    elseif structScope == 'protected' and propertyScope == 'public' or propertyScope == 'package' then
+        invalid = true;
+    elseif structScope == 'private' and propertyScope ~= 'private' then
+        invalid = true;
+    end
+    if invalid then
+        errorf(2, '%s Property scope is invalid: {structScope = %s, propertyScope = %s}',
+            errHeader, structScope, propertyScope
+        );
+    end
+
+    return propertyScope;
 end
 
 return API;

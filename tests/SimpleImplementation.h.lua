@@ -1,10 +1,10 @@
 --- @meta
 
---- @class SimpleImplementationDefinition: ObjectDefinition
+--- @class SimpleImplementationDefinition: ObjectDefinition, SimpleInterface
 local SimpleImplementationDefinition = {};
 
 --- @return SimpleImplementation
 function SimpleImplementationDefinition.new() end
 
---- @class SimpleImplementation: Object
+--- @class SimpleImplementation: SimpleInterface
 local SimpleImplementation = {};

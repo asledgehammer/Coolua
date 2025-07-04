@@ -12,11 +12,8 @@
 --- @field audited boolean If true, the struct is audited and verified to be valid.
 --- @field parameters ParameterDefinition[]
 --- @field func function?
+--- @field funcInfo FunctionInfo The function's information. (line-range and path)
 --- @field scope ClassScope
----
---- * Scope properties *
---- @field path string
---- @field lineRange {start: number, stop: number} The function's start and stop line.
 
 --- @class (exact) MethodDefinition: ExecutableDefinition
 --- @field __type__ 'MethodDefinition'
@@ -48,10 +45,6 @@
 --- @field generics GenericsTypesDefinitionParameter?
 --- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
 --- @field returns (string[]|string)? (Default: void)
-
---- @class (exact) ClassMethodDefinitionParameter: MethodDefinitionParameter
----
---- @field abstract boolean? (Default: false)
 
 --- @class (exact) ConstructorDefinition: ExecutableDefinition
 --- @field __type__ 'ConstructorDefinition'
@@ -151,6 +144,11 @@ function API.getDeclaredMethodFromLine(self, path, line) end
 ---
 --- @return ExecutableDefinition
 function API.getExecutableFromLine(self, path, line) end
+
+--- @param func function?
+--- 
+--- @return FunctionInfo
+function API.getExecutableInfo(func) end
 
 --- @param classDef ClassStructDefinition
 function API.createMiddleConstructor(classDef) end

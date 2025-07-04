@@ -14,7 +14,6 @@ ImplAbstractClass:addConstructor({ scope = 'public' });
 ImplAbstractClass:addMethod({
     scope = 'public',
     name = 'aMethod',
-    parameters = {},
     returns = 'void'
 }, function()
     print('Running from implemented abstract class!');

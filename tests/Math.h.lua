@@ -9,6 +9,7 @@
 --- @field PI number (Static)
 local MathDefinition = {};
 
+
 --- @return Math
 function MathDefinition.new() end
 

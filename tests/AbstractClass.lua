@@ -8,11 +8,9 @@ local AbstractClass = newClass({
 
 AbstractClass:addConstructor({ scope = 'public' });
 
-AbstractClass:addMethod({
+AbstractClass:addAbstractMethod({
     scope = 'public',
-    abstract = true,
     name = 'aMethod',
-    parameters = {},
     returns = 'void'
 });
 
