@@ -10,9 +10,19 @@ local SimpleInterface = newInterface({
 
 -- public void aMethod();
 SimpleInterface:addMethod({
-    scope = 'public',
     name = 'aMethod'
 });
+
+-- public void aMethod();
+SimpleInterface:addMethod({
+        scope = 'public',
+        name = 'aStaticMethod',
+        static = true
+    },
+    function()
+        print('Hello from a static method()!');
+    end
+);
 
 -- public default void bMethod() {
 --   System.out.println("Hello from bMethod()!");

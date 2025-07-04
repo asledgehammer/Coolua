@@ -7,3 +7,5 @@ print('Class: \t' .. tostring(SimpleImplementation));
 local o = SimpleImplementation:new();
 o:bMethod();
 o:aMethod();
+
+SimpleInterface.aStaticMethod();

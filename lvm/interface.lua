@@ -374,6 +374,11 @@ function IAPI.finalize(self)
         self.__middleMethods[name] = LVM.executable.createMiddleMethod(self, name, methods);
     end
 
+    -- Add static method references.
+    for name, mCluster in pairs(self.declaredMethods) do
+        self[name] = self.__middleMethods[name];
+    end
+
     local mt = getmetatable(self) or {};
     local __properties = {};
     for k, v in pairs(self) do __properties[k] = v end
