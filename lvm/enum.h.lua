@@ -34,12 +34,6 @@ function EnumStructDefinition:getField(name) end
 function EnumStructDefinition:getDeclaredField(name) end
 
 --- @param constructorDefinition ConstructorDefinitionParameter
---- @param func function
----
---- @return ConstructorDefinition
-function EnumStructDefinition:addConstructor(constructorDefinition, func) end
-
---- @param constructorDefinition ConstructorDefinitionParameter
 ---
 --- @return ConstructorDefinition
 function EnumStructDefinition:addConstructor(constructorDefinition) end

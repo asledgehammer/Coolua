@@ -11,8 +11,8 @@
 --- @field signature string The identity of the method. used for comparison.
 --- @field audited boolean If true, the struct is audited and verified to be valid.
 --- @field parameters ParameterDefinition[]
---- @field func function?
---- @field funcInfo FunctionInfo The function's information. (line-range and path)
+--- @field body function?
+--- @field bodyInfo FunctionInfo The function's information. (line-range and path)
 --- @field scope ClassScope
 
 --- @class (exact) MethodDefinition: ExecutableDefinition
@@ -50,11 +50,14 @@
 --- @field __type__ 'ConstructorDefinition'
 --- @field class ClassStructDefinition
 --- @field parameters ParameterDefinition[]
---- @field func fun(o: any, ...)
+--- @field super fun(super: SuperTable, ...) This function is called prior to the body function.
+--- @field body fun(o: any, ...) TODO: Rename as `body`.
 
 --- @class (exact) ConstructorDefinitionParameter
 --- @field scope ClassScope? (Default: "package")
 --- @field parameters ParameterDefinitionParameter[]?
+--- @field super fun(super: SuperTable, ...)? This function is called prior to the body function. If not defined, an attempt at `super()` is called. If not exists, an error occurs.
+--- @field body fun(o: any, ...)? TODO: Rename as `body`.
 
 --- @class (exact) ParameterDefinition
 --- @field __type__ 'ParameterDefinition'
@@ -146,7 +149,7 @@ function API.getDeclaredMethodFromLine(self, path, line) end
 function API.getExecutableFromLine(self, path, line) end
 
 --- @param func function?
---- 
+---
 --- @return FunctionInfo
 function API.getExecutableInfo(func) end
 

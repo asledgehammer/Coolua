@@ -59,62 +59,58 @@ Class:addField({
 
 -- private Class(String package, String name, ClassStructDefinition def)
 Class:addConstructor({
-        scope = 'private',
-        parameters = {
-            {
-                name = 'def',
-                types = {
-                    'ClassStructDefinition',
-                    'InterfaceStructDefinition',
-                    'EnumStructDefinition'
-                }
+    scope = 'private',
+    parameters = {
+        {
+            name = 'def',
+            types = {
+                'ClassStructDefinition',
+                'InterfaceStructDefinition',
+                'EnumStructDefinition'
             }
         }
     },
     --- @param self Class
     --- @param definition ClassStructDefinition
-    function(self, definition)
+    body = function(self, definition)
         self.definition = definition;
         self.name = definition.name;
         self.__type__ = 'lua.lang.Class';
     end
-);
+});
 
 Class:addMethod({
-        scope = 'public',
-        final = true,
-        name = 'new',
-        parameters = {
-            { type = 'any...' }
-        },
-        returns = 'lua.lang.Object'
+    scope = 'public',
+    final = true,
+    name = 'new',
+    parameters = {
+        { type = 'any...' }
     },
-    function(self, ...)
+    returns = 'lua.lang.Object',
+    body = function(self, ...)
         return self.definition.new(...);
     end
-);
+});
 
 Class:addMethod({
-        scope = 'public',
-        final = true,
-        name = 'isInterface',
-        returns = 'boolean',
-    },
-    function(self)
+    scope = 'public',
+    final = true,
+    name = 'isInterface',
+    returns = 'boolean',
+    body = function(self)
         return self.definition.__type__ == 'InterfaceStructDefinition';
     end
-);
+});
 
 Class:addMethod({
-        scope = 'public',
-        final = true,
-        name = 'isEnum',
-        returns = 'boolean',
-    },
-    function(self)
+    scope = 'public',
+    final = true,
+    name = 'isEnum',
+    returns = 'boolean',
+    body = function(self)
         return self.definition.__type__ == 'EnumStructDefinition';
     end
-);
+});
 
 -- }
 

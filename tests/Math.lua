@@ -18,19 +18,18 @@ Math:addField({
     value = math.pi
 })
 
-Math:addConstructor({
-    scope = 'public',
-    parameters = {}
-}, function() end);
+Math:addConstructor({ scope = 'public' });
 
 Math:addStaticMethod({
-        scope = 'public',
-        final = true,
-        name = 'getPI',
-        returns = 'number'
-    },
-    function() return Math.PI end
-);
+    scope = 'public',
+    final = true,
+    name = 'getPI',
+    returns = 'number',
+
+    body = function()
+        return Math.PI;
+    end
+});
 
 Math:finalize();
 

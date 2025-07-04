@@ -17,72 +17,75 @@ Stack:addField({
 
 Stack:addConstructor({
     scope = 'public',
-    parameters = {},
 });
 
 Stack:addMethod({
-        scope = 'public',
-        name = 'push',
-        parameters = { name = 'item', type = 'E' },
-        returns = 'E'
+    scope = 'public',
+    name = 'push',
+    parameters = {
+        { name = 'item', type = 'E' }
     },
+    returns = 'E',
+
     --- @generic E: any
     ---
     --- @param self Stack<E>
     --- @param item E
     ---
     --- @return E
-    function(self, item)
+    body = function(self, item)
         table.insert(self.stack, item);
         return item;
     end
-);
+});
 
 Stack:addMethod({
-        scope = 'public',
-        name = 'peek',
-        parameters = {},
-        returns = 'E'
-    },
-    function(self)
+    scope = 'public',
+    name = 'peek',
+    returns = 'E',
+
+    --- @param self Stack
+    body = function(self)
         local stack = self.stack;
         return stack[#stack];
     end
-);
+});
 
 Stack:addMethod({
-        scope = 'public',
-        name = 'pop',
-        parameters = {},
-        returns = 'E'
-    },
+    scope = 'public',
+    name = 'pop',
+    parameters = {},
+    returns = 'E',
     --- @param self Stack
-    function(self)
+    body = function(self)
         local stack = self.stack;
         return table.remove(stack, #stack);
     end
-);
+});
 
 Stack:addMethod({
-        scope = 'public',
-        name = 'isEmpty',
-        parameters = {},
-        returns = 'boolean'
-    },
-    function(self)
+    scope = 'public',
+    name = 'isEmpty',
+    parameters = {},
+    returns = 'boolean',
+
+    --- @param self Stack
+    body = function(self)
         return #self.stack ~= 0;
     end
-);
+});
 
 Stack:addMethod({
-        scope = 'public',
-        name = 'search',
-        parameters = {
-            item = { name = 'item', type = 'E' }
-        },
-        returns = 'number'
+    scope = 'public',
+    name = 'search',
+    parameters = {
+        { name = 'item', type = 'E' }
     },
-    function(self, item)
+    returns = 'number',
+
+    --- @param self Stack
+    --- @param item E
+    body = function(self, item)
         local stack = self.stack;
         local stackLen = #stack;
         if stackLen == 0 then return 0 end
@@ -91,7 +94,7 @@ Stack:addMethod({
         end
         return 0;
     end
-);
+});
 
 Stack:finalize();
 

@@ -384,32 +384,35 @@ function API.newClass(definition, outer)
 
         local funcName = firstCharToUpper(args.name);
 
-        -- Validate get:
-        local tGet = type(args.get);
-        if tGet ~= 'nil' then
-            local mGetDef = {
-                name = 'get' .. funcName,
-                scope = args.scope, -- NOTE: We can only assume the same scope without further info.
-                returns = args.types
-            };
-
-            if tGet == 'boolean' then
-
-            elseif tGet == 'table' then
-                --- @type FieldGetDefinition
-                local getDef = args.get;
-
-                if mGetDef.scope then
-                    mGetDef.scope = getDef.scope;
-                end
-            end
-
-            cd:addMethod(mGetDef,
-                function(ins)
-                    return ins[args.name];
-                end
-            );
-        end
+        -- -- Validate get:
+        -- local tGet = type(args.get);
+        -- if tGet ~= 'nil' then
+        --     local mGetDef = {
+        --         name = 'get' .. funcName,
+        --         scope = args.scope, -- NOTE: We can only assume the same scope without further info.
+        --         returns = args.types,
+        --         body = function(ins)
+        --             return ins[args.name];
+        --         end
+        --     };
+        -- 
+        --     if tGet == 'boolean' then
+        -- 
+        --     elseif tGet == 'table' then
+        --         --- @type FieldGetDefinition
+        --         local getDef = args.get;
+        -- 
+        --         if mGetDef.scope then
+        --             mGetDef.scope = getDef.scope;
+        --         end
+        -- 
+        --         if mGetDef.body then
+        --             mGetDef.body = getDef.body;
+        --         end
+        --     end
+        -- 
+        --     cd:addMethod(mGetDef);
+        -- end
 
         self.declaredFields[args.name] = args;
 
@@ -461,9 +464,10 @@ function API.newClass(definition, outer)
     --- @param func function?
     ---
     --- @return ConstructorDefinition
-    function cd:addConstructor(constructorDefinition, func)
+    function cd:addConstructor(constructorDefinition)
         -- Some constructors are empty. Allow this to be optional.
-        if not func then func = function() end end
+        local body = constructorDefinition.body;
+        if not body then body = function() end end
 
         -- Friendly check for implementation.
         if not self or type(constructorDefinition) == 'function' then
@@ -495,7 +499,7 @@ function API.newClass(definition, outer)
             class = cd,
             scope = constructorDefinition.scope or 'package',
             parameters = parameters,
-            func = func
+            body = body
         };
 
         args.signature = LVM.executable.createSignature(args);
@@ -503,15 +507,15 @@ function API.newClass(definition, outer)
         --- @cast args ConstructorDefinition
 
         --- Validate function.
-        if not args.func then
+        if not args.body then
             error(string.format('%s function not provided.', errHeader), 2);
-        elseif type(args.func) ~= 'function' then
+        elseif type(args.body) ~= 'function' then
             error(
                 string.format(
                     '%s property "func" provided is not a function. {type = %s, value = %s}',
                     errHeader,
-                    LVM.type.getType(args.func),
-                    tostring(args.func)
+                    LVM.type.getType(args.body),
+                    tostring(args.body)
                 ), 2);
         end
 
@@ -546,13 +550,16 @@ function API.newClass(definition, outer)
 
     -- MARK: - Method
 
-    function cd:addStaticMethod(methodDefinition, func)
+    function cd:addStaticMethod(methodDefinition)
         local errHeader = string.format('ClassStructDefinition(%s):addMethod():', cd.name);
+
+        local body = methodDefinition.body;
+        local bodyInfo = LVM.executable.getExecutableInfo(body);
+
         local scope = LVM.audit.auditStructPropertyScope(self.scope, methodDefinition.scope, errHeader);
         local name = LVM.audit.auditMethodParamName(methodDefinition.name, errHeader);
         local types = LVM.audit.auditMethodReturnsProperty(methodDefinition.returns, errHeader);
         local parameters = LVM.audit.auditParameters(methodDefinition.parameters, errHeader);
-        local funcInfo = LVM.executable.getExecutableInfo(func);
 
         local md = {
 
@@ -563,8 +570,8 @@ function API.newClass(definition, outer)
             name = name,
             returns = types,
             parameters = parameters,
-            func = func,
-            funcInfo = funcInfo,
+            body = body,
+            bodyInfo = bodyInfo,
             scope = scope,
 
             -- General method flags --
@@ -608,11 +615,13 @@ function API.newClass(definition, outer)
 
     function cd:addAbstractMethod(methodDefinition)
         local errHeader = string.format('ClassStructDefinition(%s):addAbstractMethod():', cd.name);
+
+        local bodyInfo = LVM.executable.getExecutableInfo();
+
         local scope = LVM.audit.auditStructPropertyScope(self.scope, methodDefinition.scope, errHeader);
         local name = LVM.audit.auditMethodParamName(methodDefinition.name, errHeader);
         local types = LVM.audit.auditMethodReturnsProperty(methodDefinition.returns, errHeader);
         local parameters = LVM.audit.auditParameters(methodDefinition.parameters, errHeader);
-        local funcInfo = LVM.executable.getExecutableInfo();
 
         local md = {
             __type__ = 'MethodDefinition',
@@ -622,8 +631,8 @@ function API.newClass(definition, outer)
             name = name,
             returns = types,
             parameters = parameters,
-            func = nil,
-            funcInfo = funcInfo,
+            body = nil,
+            bodyInfo = bodyInfo,
             scope = scope,
 
             -- General method flags --
@@ -665,13 +674,14 @@ function API.newClass(definition, outer)
         return md;
     end
 
-    function cd:addMethod(methodDefinition, func)
+    function cd:addMethod(methodDefinition)
+        local body = methodDefinition.body;
+        local bodyInfo = LVM.executable.getExecutableInfo(body);
         local errHeader = string.format('ClassStructDefinition(%s):addMethod():', cd.name);
         local scope = LVM.audit.auditStructPropertyScope(self.scope, methodDefinition.scope, errHeader);
         local name = LVM.audit.auditMethodParamName(methodDefinition.name, errHeader);
         local types = LVM.audit.auditMethodReturnsProperty(methodDefinition.returns, errHeader);
         local parameters = LVM.audit.auditParameters(methodDefinition.parameters, errHeader);
-        local funcInfo = LVM.executable.getExecutableInfo(func);
 
         local md = {
 
@@ -682,8 +692,8 @@ function API.newClass(definition, outer)
             name = name,
             returns = types,
             parameters = parameters,
-            func = func,
-            funcInfo = funcInfo,
+            body = body,
+            bodyInfo = bodyInfo,
             scope = scope,
 
             -- General method flags --

@@ -13,6 +13,25 @@
 --- @field generics GenericsTypesDefinitionParameter?
 --- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
 --- @field returns (string[]|string)? (Default: void)
+--- @field body function
+
+--- @class (exact) ClassStaticMethodDefinitionParameter 
+--- @field scope ClassScope? (Default: public)
+--- @field final boolean? (Default: false)
+--- @field name string
+--- @field generics GenericsTypesDefinitionParameter?
+--- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
+--- @field returns (string[]|string)? (Default: void)
+--- @field body function
+
+--- @class (exact) ClassAbstractMethodDefinitionParameter 
+--- @field scope ClassScope? (Default: public)
+--- @field final boolean? (Default: false)
+--- @field name string
+--- @field generics GenericsTypesDefinitionParameter?
+--- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
+--- @field returns (string[]|string)? (Default: void)
+--- @field body nil
 
 --- @class (exact) ClassStructDefinitionParameter: StructDefinitionParameter
 --- @field final boolean? (Default: false)
@@ -70,12 +89,6 @@ function ClassStructDefinition:getFields() end
 function ClassStructDefinition:getDeclaredField(name) end
 
 --- @param constructorDefinition ConstructorDefinitionParameter
---- @param func function
----
---- @return ConstructorDefinition
-function ClassStructDefinition:addConstructor(constructorDefinition, func) end
-
---- @param constructorDefinition ConstructorDefinitionParameter
 ---
 --- @return ConstructorDefinition
 function ClassStructDefinition:addConstructor(constructorDefinition) end
@@ -91,21 +104,19 @@ function ClassStructDefinition:getConstructor(args) end
 function ClassStructDefinition:getDeclaredConstructor(args) end
 
 --- @param definition ClassMethodDefinitionParameter
---- @param func function?
 ---
 --- @return MethodDefinition
-function ClassStructDefinition:addMethod(definition, func) end
+function ClassStructDefinition:addMethod(definition) end
 
 --- @param definition ClassMethodDefinitionParameter
 ---
 --- @return MethodDefinition
 function ClassStructDefinition:addAbstractMethod(definition) end
 
---- @param definition ClassMethodDefinitionParameter
---- @param func function?
+--- @param definition ClassStaticMethodDefinitionParameter
 ---
 --- @return MethodDefinition
-function ClassStructDefinition:addStaticMethod(definition, func) end
+function ClassStructDefinition:addStaticMethod(definition) end
 
 --- Attempts to resolve a MethodDefinition in the ClassStructDefinition. If the method isn't declared for the class level, the
 --- super-class(es) are checked.

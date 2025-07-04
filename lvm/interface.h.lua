@@ -16,6 +16,7 @@ local InterfaceInstance = {};
 --- @field generics GenericsTypesDefinitionParameter?
 --- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
 --- @field returns (string[]|string)? (Default: void)
+--- @field body function?
 --- NOTE: The `default` flag is automatically true if a function body is provided at the time of adding the method. 
 
 --- @class (exact) InterfaceStaticMethodDefinitionParameter
@@ -25,6 +26,7 @@ local InterfaceInstance = {};
 --- @field generics GenericsTypesDefinitionParameter?
 --- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
 --- @field returns (string[]|string)? (Default: void)
+--- @field body function?
 
 
 --- @class InterfaceStructDefinitionParameter: StructDefinitionParameter
@@ -64,16 +66,14 @@ function InterfaceStructDefinition:getField(name) end
 function InterfaceStructDefinition:getDeclaredField(name) end
 
 --- @param definition InterfaceMethodDefinitionParameter
---- @param func function?
 ---
 --- @return MethodDefinition
-function InterfaceStructDefinition:addMethod(definition, func) end
+function InterfaceStructDefinition:addMethod(definition) end
 
 --- @param definition InterfaceStaticMethodDefinitionParameter
---- @param func function?
 ---
 --- @return MethodDefinition
-function InterfaceStructDefinition:addStaticMethod(definition, func) end
+function InterfaceStructDefinition:addStaticMethod(definition) end
 
 
 --- Attempts to resolve a MethodDefinition in the InterfaceStructDefinition. If the method isn't declared for the class

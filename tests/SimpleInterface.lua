@@ -9,33 +9,31 @@ local SimpleInterface = newInterface({
 });
 
 -- public void aMethod();
-SimpleInterface:addMethod({
-    name = 'aMethod'
-});
+SimpleInterface:addMethod({ name = 'aMethod' });
 
 -- public default void bMethod() {
 --   System.out.println("Hello from bMethod!");
 -- }
 SimpleInterface:addMethod({
-        scope = 'public',
-        name = 'bMethod',
-    },
-    function()
+    scope = 'public',
+    name = 'bMethod',
+
+    body = function()
         print('Hello from bMethod!');
     end
-);
+});
 
 -- public static void aStaticMethod() {
 --   System.out.println('Hello from a static method!');
 -- }
 SimpleInterface:addStaticMethod({
-        scope = 'public',
-        name = 'aStaticMethod',
-    },
-    function()
+    scope = 'public',
+    name = 'aStaticMethod',
+
+    body = function()
         print('Hello from a static method!');
     end
-);
+});
 
 -- }
 

@@ -111,7 +111,7 @@ function API.createSuperTable(cd, o)
         end
 
         local result, errMsg = xpcall(function()
-            local retValue = constructorDefinition.func(o, unpack(args));
+            local retValue = constructorDefinition.body(o, unpack(args));
 
             -- Make sure that constructors don't return anything.
             if retValue ~= nil then
@@ -170,9 +170,9 @@ function API.createSuperTable(cd, o)
         local retVal;
         local result, errMsg = xpcall(function()
             if md.static then
-                retVal = md.func(unpack(args));
+                retVal = md.body(unpack(args));
             else
-                retVal = md.func(o, unpack(args));
+                retVal = md.body(o, unpack(args));
             end
             -- TODO: Check type-cast of returned value.
         end, debug.traceback);

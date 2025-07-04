@@ -234,9 +234,9 @@ function API.createMiddleMethod(cd, name, methods)
         local retVal = nil;
         local result, errMsg = xpcall(function()
             if md.static then
-                retVal = md.func(unpack(args));
+                retVal = md.body(unpack(args));
             else
-                retVal = md.func(o, unpack(args));
+                retVal = md.body(o, unpack(args));
             end
             -- TODO: Check type-cast of returned value.
         end, debug.traceback);
@@ -460,7 +460,7 @@ end
 function API.getDeclaredMethodFromLine(self, path, line)
     for _, mCluster in pairs(self.declaredMethods) do
         for _, md in pairs(mCluster) do
-            if path == md.funcInfo.path and line >= md.funcInfo.start and line <= md.funcInfo.stop then
+            if path == md.bodyInfo.path and line >= md.bodyInfo.start and line <= md.bodyInfo.stop then
                 return md;
             end
         end
@@ -595,7 +595,7 @@ function API.createMiddleConstructor(classDef)
         LVM.flags.canSetSuper = false;
 
         local result, errMsg = xpcall(function()
-            local retValue = cons.func(o, unpack(args));
+            local retValue = cons.body(o, unpack(args));
 
             -- Make sure that constructors don't return anything.
             if retValue ~= nil then

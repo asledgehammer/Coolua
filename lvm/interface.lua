@@ -35,16 +35,17 @@ local IAPI = {};
 
 --- @param self InterfaceStructDefinition
 --- @param methodDefinition InterfaceMethodDefinitionParameter
---- @param func function?
 ---
 --- @return MethodDefinition
-function IAPI.addMethod(self, methodDefinition, func)
+function IAPI.addMethod(self, methodDefinition)
     local errHeader = string.format('InterfaceStructDefinition(%s):addMethod():', self.name);
+
+    local body = methodDefinition.body;
+    local bodyInfo = LVM.executable.getExecutableInfo(body);
 
     local name = LVM.audit.auditMethodParamName(methodDefinition.name, errHeader);
     local types = LVM.audit.auditMethodReturnsProperty(methodDefinition.returns, errHeader);
     local parameters = LVM.audit.auditParameters(methodDefinition.parameters, errHeader);
-    local funcInfo = LVM.executable.getExecutableInfo(func);
 
     local md = {
 
@@ -55,11 +56,11 @@ function IAPI.addMethod(self, methodDefinition, func)
         name = name,
         returns = types,
         parameters = parameters,
-        func = func,
+        body = body,
 
         -- Used for scope-visibility analysis. --
         scope = 'public',
-        funcInfo = funcInfo,
+        bodyInfo = bodyInfo,
 
         -- General method flags --
         static = false,
@@ -72,7 +73,7 @@ function IAPI.addMethod(self, methodDefinition, func)
 
         -- Interface definition. --
         interface = self, -- Lets the LVM know this belongs to an interface.
-        default = func ~= nil,
+        default = body ~= nil,
 
         -- Always falsify class flags in class method definitions. --
         abstract = false,
@@ -96,17 +97,18 @@ end
 
 --- @param self InterfaceStructDefinition
 --- @param definition InterfaceStaticMethodDefinitionParameter
---- @param func function?
 ---
 --- @return MethodDefinition
-function IAPI.addStaticMethod(self, definition, func)
+function IAPI.addStaticMethod(self, definition)
     local errHeader = string.format('InterfaceStructDefinition(%s):addStaticMethod():', self.name);
+
+    local body = definition.body;
 
     local scope = LVM.audit.auditStructPropertyScope(self.scope, definition.scope, errHeader);
     local name = LVM.audit.auditMethodParamName(definition.name, errHeader);
     local types = LVM.audit.auditMethodReturnsProperty(definition.returns, errHeader);
     local parameters = LVM.audit.auditParameters(definition.parameters, errHeader);
-    local funcInfo = LVM.executable.getExecutableInfo(func);
+    local bodyInfo = LVM.executable.getExecutableInfo(body);
 
     local md = {
 
@@ -117,8 +119,8 @@ function IAPI.addStaticMethod(self, definition, func)
         name = name,
         returns = types,
         parameters = parameters,
-        func = func,
-        funcInfo = funcInfo,
+        body = body,
+        bodyInfo = bodyInfo,
 
         -- Used for scope-visibility analysis. --
         scope = scope,
@@ -134,7 +136,7 @@ function IAPI.addStaticMethod(self, definition, func)
 
         -- Interface definition. --
         interface = self, -- Lets the LVM know this belongs to an interface.
-        default = func ~= nil,
+        default = body ~= nil,
 
         -- Always falsify class flags in class method definitions. --
         abstract = false,

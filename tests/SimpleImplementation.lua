@@ -3,6 +3,7 @@ local newClass = LuaClass.newClass;
 
 local SimpleInterface = require 'tests/SimpleInterface';
 
+-- public class SimpleImplementation implements SimpleInterface {
 local SimpleImplementation = newClass({
     scope = 'public',
     implements = {
@@ -10,17 +11,24 @@ local SimpleImplementation = newClass({
     }
 });
 
-SimpleImplementation:addConstructor({scope = 'public'});
+-- public SimpleImplementation() {}
+SimpleImplementation:addConstructor({ scope = 'public' });
 
--- public void aMethod();
+-- @Override
+-- public void aMethod() {
+--   System.out.println("Hello from aMethod!");
+-- }
 SimpleImplementation:addMethod({
-        scope = 'public',
-        name = 'aMethod',
-    },
-    function()
-        print('Hello form aMethod()!');
+    scope = 'public',
+    name = 'aMethod',
+
+    --- @param self SimpleImplementation
+    body = function(self)
+        print('Hello form aMethod!');
     end
-);
+});
+
+-- }
 
 SimpleImplementation:finalize();
 

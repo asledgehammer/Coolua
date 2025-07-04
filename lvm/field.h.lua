@@ -33,11 +33,11 @@
 
 --- @class (exact) FieldGetDefinition
 --- @field scope ClassScope?
---- @field func function?
+--- @field body function?
 
 --- @class (exact) FieldSetDefinition
 --- @field scope ClassScope?
---- @field func function?
+--- @field body function?
 
 -- MARK: - Module
 

@@ -52,18 +52,18 @@ function API.compileFieldAutoMethods(self)
                 if fieldDef.get.scope then
                     mGetDef.scope = fieldDef.get.scope;
                 end
-                if fieldDef.get.func then
-                    if type(fieldDef.get.func) ~= 'function' then
+                if fieldDef.get.body then
+                    if type(fieldDef.get.body) ~= 'function' then
                         errorf(2,
                             '%s The getter method definition for field "%s" is not a function; {type = %s, value = %s}',
                             self.printHeader,
                             name,
-                            LVM.type.getType(fieldDef.get.func),
-                            tostring(fieldDef.get.func)
+                            LVM.type.getType(fieldDef.get.body),
+                            tostring(fieldDef.get.body)
                         );
                     end
 
-                    fGet = fieldDef.get.func;
+                    fGet = fieldDef.get.body;
                 else
                     fGet = function(ins)
                         return ins[name];
@@ -71,12 +71,14 @@ function API.compileFieldAutoMethods(self)
                 end
             end
 
+            mGetDef.body = fGet;
+
             debugf(LVM.debug.method, '%s Creating auto-method: %s:%s()',
                 self.printHeader,
                 self.name, mGetDef.name
             );
 
-            self:addMethod(mGetDef, fGet);
+            self:addMethod(mGetDef);
         end
 
         if tSet ~= 'nil' then
@@ -92,17 +94,17 @@ function API.compileFieldAutoMethods(self)
                 if fieldDef.set.scope then
                     mSetDef.scope = fieldDef.set.scope;
                 end
-                if fieldDef.set.func then
-                    if type(fieldDef.get.func) ~= 'function' then
+                if fieldDef.set.body then
+                    if type(fieldDef.get.body) ~= 'function' then
                         errorf(2,
                             '%s The setter method definition for field "%s" is not a function; {type = %s, value = %s}',
                             self.printHeader,
                             name,
-                            LVM.type.getType(fieldDef.get.func),
-                            tostring(fieldDef.get.func)
+                            LVM.type.getType(fieldDef.get.body),
+                            tostring(fieldDef.get.body)
                         );
                     end
-                    fSet = fieldDef.set.func;
+                    fSet = fieldDef.set.body;
                 else
                     fSet = function(ins, value)
                         ins[name] = value;
@@ -110,12 +112,14 @@ function API.compileFieldAutoMethods(self)
                 end
             end
 
+            mSetDef.body = fSet;
+
             debugf(LVM.debug.method, '%s Creating auto-method: %s:%s',
                 self.printHeader,
                 self.name, mSetDef.signature
             );
 
-            self:addMethod(mSetDef, fSet);
+            self:addMethod(mSetDef);
         end
     end
 end

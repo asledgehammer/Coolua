@@ -46,12 +46,11 @@ Package:addField({
 
 -- private Package(String path)
 Package:addConstructor({
-        scope = 'private',
-        parameters = {
-            { name = 'path', type = 'string' }
-        }
+    scope = 'private',
+    parameters = {
+        { name = 'path', type = 'string' }
     },
-    function(self, path)
+    body = function(self, path)
         local split = path:split('.');
         local name = table.remove(split, #split);
         local pkg = table.join(split, '.');
@@ -59,7 +58,7 @@ Package:addConstructor({
         self.path = pkg;
         self.classes = {};
     end
-);
+});
 
 -- }
 
