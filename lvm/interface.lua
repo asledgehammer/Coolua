@@ -117,7 +117,7 @@ function IAPI.addMethod(self, methodDefinition, func)
         abstract = false,
     };
 
-    md.signature = LVM.method.createSignature(md);
+    md.signature = LVM.executable.createSignature(md);
 
     --- @cast md MethodDefinition
 
@@ -148,7 +148,7 @@ function IAPI.addMethod(self, methodDefinition, func)
                 end
 
                 -- Validate parameter name.
-                if not param.name and not LVM.parameter.isVararg(param.types[1]) then
+                if not param.name and not LVM.executable.isVararg(param.types[1]) then
                     errorf(2, '%s Parameter #%i doesn\'t have a defined name string.', errHeader, i);
                 elseif param.name == '' then
                     errorf(2, '%s Parameter #%i has an empty name string.', errHeader, i);
@@ -173,7 +173,7 @@ end
 function IAPI.compileMethods(self)
     debugf(LVM.debug.method, '%s Compiling method(s)..', self.printHeader);
 
-    local methodNames = LVM.method.getMethodNames(self);
+    local methodNames = LVM.executable.getMethodNames(self);
     for i = 1, #methodNames do
         IAPI.compileMethod(self, methodNames[i]);
     end
@@ -230,7 +230,7 @@ function IAPI.compileMethod(self, name)
             for j = 1, #methods do
                 local method = methods[j];
 
-                if LVM.parameter.areCompatible(decMethod.parameters, method.parameters) then
+                if LVM.executable.areCompatible(decMethod.parameters, method.parameters) then
                     debugf(LVM.debug.method, '%s \t\t@override detected: %s', self.printHeader, debugName);
 
                     -- Cannot override final methods.
@@ -465,7 +465,7 @@ function IAPI.finalize(self)
                 end
             end
         end
-        self.__middleMethods[name] = LVM.method.createMiddleMethod(self, name, methods);
+        self.__middleMethods[name] = LVM.executable.createMiddleMethod(self, name, methods);
     end
 
     local mt = getmetatable(self) or {};
@@ -683,6 +683,18 @@ function API.newInterface(definition, enclosingStruct)
     id.isSuperInterface = IAPI.isSuperInterface;
     id.isSubInterface = IAPI.isSubInterface;
     id.isAssignableFromType = IAPI.isAssignableFromType;
+
+    function id:isAssignableFromType(superStruct)
+        -- All other super-structs fail on assignable check.
+        if not superStruct or
+            superStruct.__type__ == 'ClassStructDefinition' or
+            superStruct.__type__ == 'InterfaceStructDefinition' then
+            return false;
+        end
+
+        --- @cast superStruct InterfaceStructDefinition
+        return self == superStruct or self:isSuperInterface(superStruct);
+    end
 
     return id;
 end

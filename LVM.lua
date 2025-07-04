@@ -93,9 +93,7 @@ LVM = {
     stack = require 'lvm/stack',
     super = require 'lvm/super',
     field = require 'lvm/field',
-    parameter = require 'lvm/parameter',
-    constructor = require 'lvm/constructor',
-    method = require 'lvm/method',
+    executable = require 'lvm/executable',
     class = require 'lvm/class',
     struct = require 'lvm/struct',
     interface = require 'lvm/interface',
@@ -134,9 +132,7 @@ LVM.meta.setLVM(LVM);
 LVM.stack.setLVM(LVM);
 LVM.super.setLVM(LVM);
 LVM.field.setLVM(LVM);
-LVM.parameter.setLVM(LVM);
-LVM.constructor.setLVM(LVM);
-LVM.method.setLVM(LVM);
+LVM.executable.setLVM(LVM);
 LVM.class.setLVM(LVM);
 LVM.struct.setLVM(LVM);
 LVM.interface.setLVM(LVM);

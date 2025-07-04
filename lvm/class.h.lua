@@ -124,30 +124,20 @@ function ClassStructDefinition:finalize() end
 --- @return boolean
 function ClassStructDefinition:isAssignableFromType(class) end
 
---- @param line integer
----
---- @return ConstructorDefinition|nil method
-function ClassStructDefinition:getExecutableFromLine(line) end
-
---- @param line integer
----
---- @return MethodDefinition|nil method
-function ClassStructDefinition:getMethodFromLine(line) end
-
---- @param line integer
----
---- @return ConstructorDefinition|nil method
-function ClassStructDefinition:getConstructorFromLine(line) end
-
 --- @param class Hierarchical?
 ---
 --- @return boolean
 function ClassStructDefinition:isSuperClass(class) end
 
-  --- @param class ClassStructDefinition The class to evaulate.
-    ---
-    --- @return boolean result True if the class to evaluate is a super-class of the subClass.
+--- @param class ClassStructDefinition The class to evaulate.
+---
+--- @return boolean result True if the class to evaluate is a super-class of the subClass.
 function ClassStructDefinition:isSubClass(class) end
+
+--- @param superInterface InterfaceStructDefinition
+---
+--- @return boolean
+function ClassStructDefinition:isSuperInterface(superInterface) end
 
 -- MARK: - Module
 

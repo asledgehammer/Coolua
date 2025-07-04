@@ -2,6 +2,12 @@
 - Implement generics type-casting.
 - FIXME: Store file path and line range for functions to not limit class definitions to one file path for visibility scopes.
 
+#################################
+NEXT: Make constructors signature-based with caching.
+THEN: Make interface methods signature-based.
+AFTER: Make enums work.
+#################################
+
 # GENERAL:
 - TODO: Implement Package object.
 - TODO: Implement Stack object.

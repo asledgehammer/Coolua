@@ -41,18 +41,25 @@
 
 -- MARK: - Definition
 
---- @class (exact) StructDefinition: Methodable
+--- @class StructDefinition: Methodable
 --- @field __type__ string The internal type. Used for evaluation for several components inside the LVM.
 --- @field path string
 --- @field pkg string
 --- @field name string
 --- @field scope ClassScope
---- 
+--- @field printHeader string Used for informational prints.
+---
 --- * Enclosure Properties *
 --- @field outer StructDefinition
 --- @field inner table<string, StructDefinition>
+local StructDefinition = {};
 
---- @class (exact) HierarchicalStructDefinition: StructDefinition, Hierarchical
+--- @param struct StructDefinition
+---
+--- @return boolean
+function StructDefinition:isAssignableFromType(struct) end
+
+--- @class HierarchicalStructDefinition: StructDefinition, Hierarchical
 
 --- @class StructDefinitionParameter
 ---

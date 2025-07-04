@@ -38,9 +38,7 @@ function LVMModule.setLVM(lvm) end
 --- @field stack LVMStackModule
 --- @field super LVMSuperModule
 --- @field field LVMFieldModule
---- @field parameter LVMParameterModule
---- @field constructor LVMConstructorModule
---- @field method LVMMethodModule
+--- @field executable LVMExecutableModule
 --- @field class LVMClassModule
 --- @field struct LVMStructModule
 --- @field interface LVMInterfaceModule

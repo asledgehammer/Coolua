@@ -29,131 +29,6 @@ local API = {
     end
 };
 
-local IAPI = {
-
-};
-
-
-
---- @param self ClassStructDefinition
---- @param name string
---- @param comb table<string, table<string, MethodDefinition>>?
----
---- @return table<string, table<string, MethodDefinition>>
-function IAPI.combineAllMethods(self, name, comb)
-    comb = comb or {};
-
-    -- Grab all the super-context methods first.
-    if self.super then
-        IAPI.combineAllMethods(self.super, name, comb);
-    end
-
-    -- Copy any interface method array.
-    local interfaceLen = #self.interfaces;
-    if interfaceLen ~= 0 then
-        for i = 1, interfaceLen do
-            local interface = self.interfaces[i];
-            if interface.methods[name] then
-                local mCluster = interface.methods[name];
-                local defCluster = comb[name];
-                if not defCluster then
-                    defCluster = {};
-                    comb[name] = mCluster;
-                end
-                for mSignature, md in pairs(mCluster) do
-                    -- Here we ignore re-applied interface methods since they're already applied.
-                    if not defCluster[mSignature] then
-                        debugf(LVM.debug.method, '%s IGNORING re-applied interface method in hierarchy: %s',
-                            self.printHeader,
-                            LVM.print.printMethod(md)
-                        );
-                    else
-                        debugf(LVM.debug.method, '%s applying interface method in hierarchy: %s',
-                            self.printHeader,
-                            LVM.print.printMethod(md)
-                        );
-                        defCluster[mSignature] = md;
-                    end
-                end
-            end
-        end
-    end
-
-    local combCluster = comb[name];
-    if not combCluster then
-        combCluster = {};
-        comb[name] = combCluster;
-    end
-
-    local combCluster = comb[name];
-    if not combCluster then
-        combCluster = {};
-        comb[name] = combCluster;
-    end
-
-    local decCluster = self.declaredMethods[name];
-
-    if decCluster then
-        -- Go through each declaration and try to find a super-class one.
-        for decSig, decMethod in pairs(decCluster) do
-            -- If signatures match, an override is detected.
-            if combCluster[decSig] then
-                decMethod.override = true;
-                decMethod.super = combCluster[decSig];
-
-                debugf(LVM.debug.method, '%s OVERRIDING class method %s in hierarchy: %s',
-                    self.printHeader,
-                    LVM.print.printMethod(combCluster[decSig]),
-                    LVM.print.printMethod(decMethod)
-                );
-            end
-            -- Assign the top-most class method definition.
-            combCluster[decSig] = decMethod;
-        end
-    end
-
-    return comb;
-end
-
---- @param self ClassStructDefinition
-function IAPI.compileMethods(self)
-    debugf(LVM.debug.method, '%s Compiling method(s)..', self.printHeader);
-
-    self.methods = {};
-
-    local methodNames = LVM.method.getMethodNames(self);
-    for i = 1, #methodNames do
-        local mName = methodNames[i];
-        IAPI.combineAllMethods(self, mName, self.methods);
-    end
-
-    local count = 0;
-
-    -- Make sure that all methods exposed are not abstract in non-abstract classes.
-    if not self.abstract then
-        for _, methodCluster in pairs(self.methods) do
-            for _, method in pairs(methodCluster) do
-                if method.abstract then
-                    local errMsg = string.format('%s Abstract method not implemented: %s',
-                        self.printHeader, LVM.print.printMethod(method)
-                    );
-                    print(errMsg);
-                    error(errMsg, 3);
-                elseif (method.interface and not method.default) then
-                    local errMsg = string.format('%s Interface method not implemented: %s',
-                        self.printHeader, LVM.print.printMethod(method)
-                    );
-                    print(errMsg);
-                    error(errMsg, 3);
-                end
-                count = count + 1;
-            end
-        end
-    end
-
-    debugf(LVM.debug.method, '%s Compiled %i method(s).', self.printHeader, count);
-end
-
 --- @cast API LVMClassModule
 
 --- Defined for all classes so that __eq actually fires.
@@ -276,7 +151,7 @@ function API.newClass(definition, outer)
     -- Compile the generic parameters for the class.
     cd.generics = LVM.generic.compileGenericTypesDefinition(cd, definition.generics);
 
-    cd.__middleConstructor = LVM.constructor.createMiddleConstructor(cd);
+    cd.__middleConstructor = LVM.executable.createMiddleConstructor(cd);
 
     if not cd.super and cd.path ~= 'lua.lang.Object' then
         cd.super = LVM.forNameDef('lua.lang.Object');
@@ -610,7 +485,7 @@ function API.newClass(definition, outer)
             );
         end
 
-        local parameters = LVM.parameter.compile(constructorDefinition.parameters);
+        local parameters = LVM.executable.compile(constructorDefinition.parameters);
 
         local args = {
 
@@ -623,7 +498,7 @@ function API.newClass(definition, outer)
             func = func
         };
 
-        args.signature = LVM.constructor.createSignature(args);
+        args.signature = LVM.executable.createSignature(args);
 
         --- @cast args ConstructorDefinition
 
@@ -666,22 +541,7 @@ function API.newClass(definition, outer)
     --- @return ConstructorDefinition|nil constructorDefinition
     function cd:getDeclaredConstructor(args)
         args = args or LVM.constants.EMPTY_TABLE;
-        return LVM.constructor.resolveConstructor(self.declaredConstructors, args);
-    end
-
-    --- @param line integer
-    ---
-    --- @return ConstructorDefinition|nil method
-    function cd:getConstructorFromLine(line)
-        --- @type ConstructorDefinition
-        local cons;
-        for i = 1, #self.declaredConstructors do
-            cons = self.declaredConstructors[i];
-            if line >= cons.lineRange.start and line <= cons.lineRange.stop then
-                return cons;
-            end
-        end
-        return nil;
+        return LVM.executable.resolveConstructor(self.declaredConstructors, args);
     end
 
     -- MARK: - Method
@@ -718,7 +578,7 @@ function API.newClass(definition, outer)
             errorf(2, '%s cannot name method "super".', errHeader);
         end
 
-        local parameters = LVM.parameter.compile(methodDefinition.parameters);
+        local parameters = LVM.executable.compile(methodDefinition.parameters);
 
         -- Validate return type(s).
         if not returns then
@@ -788,7 +648,7 @@ function API.newClass(definition, outer)
             default = false,
         };
 
-        md.signature = LVM.method.createSignature(md);
+        md.signature = LVM.executable.createSignature(md);
 
         --- @cast md MethodDefinition
 
@@ -827,7 +687,7 @@ function API.newClass(definition, outer)
     ---
     --- @return MethodDefinition|nil methodDefinition
     function cd:getMethod(name, args)
-        return LVM.method.resolveMethod(self, name, self.methods[name], args);
+        return LVM.executable.resolveMethod(self, name, self.methods[name], args);
     end
 
     --- @param name string
@@ -835,24 +695,7 @@ function API.newClass(definition, outer)
     ---
     --- @return MethodDefinition|nil methodDefinition
     function cd:getDeclaredMethod(name, args)
-        return LVM.method.resolveMethod(self, name, self.declaredMethods[name], args);
-    end
-
-    --- @param line integer
-    ---
-    --- @return MethodDefinition|nil method
-    function cd:getMethodFromLine(line)
-        --- @type MethodDefinition
-        local md;
-        for _, mdc in pairs(self.declaredMethods) do
-            for i = 1, #mdc do
-                md = mdc[i];
-                if line >= md.lineRange.start and line <= md.lineRange.stop then
-                    return md;
-                end
-            end
-        end
-        return nil;
+        return LVM.executable.resolveMethod(self, name, self.declaredMethods[name], args);
     end
 
     -- MARK: - finalize()
@@ -873,7 +716,7 @@ function API.newClass(definition, outer)
         -- TODO: Audit everything.
 
         --- @type table<string, MethodDefinition[]>
-        IAPI.compileMethods(self);
+        LVM.executable.compileMethods(self);
 
         -- Change add methods.
         self.addMethod = function() errorf(2, '%s Cannot add methods. (Class is final!)', errHeader) end
@@ -938,7 +781,7 @@ function API.newClass(definition, outer)
                     end
                 end
             end
-            self.__middleMethods[mName] = LVM.method.createMiddleMethod(cd, mName, methodCluster);
+            self.__middleMethods[mName] = LVM.executable.createMiddleMethod(cd, mName, methodCluster);
         end
 
         local mt = getmetatable(cd) or {};
@@ -1090,10 +933,6 @@ function API.newClass(definition, outer)
         return cd;
     end
 
-    function cd:getExecutableFromLine(line)
-        return self:getMethodFromLine(line) or self:getConstructorFromLine(line) or nil;
-    end
-
     function cd:isSuperClass(class)
         --- @type Hierarchical|nil
         local next = self.super;
@@ -1128,12 +967,38 @@ function API.newClass(definition, outer)
         return false;
     end
 
-    --- @param class ClassStructDefinition
+    --- @param superInterface InterfaceStructDefinition
     ---
     --- @return boolean
-    function cd:isAssignableFromType(class)
-        -- TODO: Implement interfaces.
-        return self == class or self:isSuperClass(class);
+    function cd:isSuperInterface(superInterface)
+        for i = 1, #self.interfaces do
+            local interface = self.interfaces[i];
+            if superInterface == interface then
+                return true;
+            end
+        end
+
+        if cd.super then
+            return cd.super:isSuperInterface(superInterface);
+        end
+
+        return false;
+    end
+
+    function cd:isAssignableFromType(superStruct)
+        -- Enum super-structs fail on assignable check.
+        if not superStruct or
+            superStruct.__type__ == 'EnumStructDefinition' then
+            return false;
+        end
+
+        if superStruct.__type__ == 'ClassStructDefinition' then
+            return self == superStruct or self:isSuperClass(superStruct);
+        elseif superStruct.__type__ == 'InterfaceStructDefinition' then
+            return self:isSuperInterface(superStruct);
+        end
+
+        return false;
     end
 
     return cd;
