@@ -65,14 +65,14 @@ function API.createSuperTable(cd, o)
     properties.__middleConstructor = cd.__middleConstructor;
 
     -- Copy middle-methods.
-    properties.__middleMethods = {};
-    local ssd = superClass;
-    while ssd do
-        for k, v in pairs(cd.super.__middleMethods) do
-            properties.__middleMethods[k] = v;
-        end
-        ssd = ssd.super;
-    end
+    properties.__middleMethods = superClass.__middleMethods;
+    -- local ssd = superClass;
+    -- while ssd do
+    --     for k, v in pairs(cd.super.__middleMethods) do
+    --         properties.__middleMethods[k] = v;
+    --     end
+    --     ssd = ssd.super;
+    -- end
 
     -- Assign / discover the inferred method in the super-class.
 
@@ -84,7 +84,7 @@ function API.createSuperTable(cd, o)
         end
 
         local level, relPath = LVM.scope.getRelativePath();
-        
+
         LVM.stack.pushContext({
             class = cd,
             element = constructorDefinition,
@@ -92,7 +92,6 @@ function API.createSuperTable(cd, o)
             line = DebugUtils.getCurrentLine(level),
             path = DebugUtils.getPath(level)
         });
-
 
         local callInfo = DebugUtils.getCallInfo(level, LVM.ROOT_PATH, true);
         callInfo.path = relPath;

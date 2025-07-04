@@ -21,6 +21,7 @@
 --- @field returns string[]
 --- @field func function?
 --- @field lineRange {start: number, stop: number} The function's start and stop line.
+
 --- 
 --- * General Flags *
 --- @field static boolean
@@ -55,7 +56,7 @@ local API = {};
 
 --- @param classDef StructDefinition
 --- @param name string
---- @param methods MethodDefinition[]
+--- @param methods table<string, MethodDefinition>
 ---
 --- @return fun(o: ClassInstance, ...): (any?)
 function API.createMiddleMethod(classDef, name, methods) end
@@ -76,8 +77,27 @@ function API.getMethodNames(classDef, methodNames) end
 --- @return string
 function API.createSignature(definition) end
 
---- @param methods MethodDefinition[]
+--- @param struct StructDefinition Used to cache results at class-level.
+--- @param name string
+--- @param methods table<string, MethodDefinition>
 --- @param args any[]
 ---
 --- @return MethodDefinition|nil
-function API.resolveMethod(methods, args) end
+function API.resolveMethod(struct, name, methods, args) end
+
+--- @param name string
+--- @param args string[]
+--- 
+--- @return string methodSignature
+function API.createCallSignature(name, args) end
+
+--- @param args any[]
+---
+--- @return string[] argsAsTypes
+function API.argsToTypes(args) end
+
+--- @param methods table<string, MethodDefinition>
+--- @param args any[]
+---
+--- @return MethodDefinition|nil
+function API.resolveMethodDeep(methods, args) end

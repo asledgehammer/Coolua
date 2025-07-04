@@ -12,6 +12,7 @@ local API = {
     -- Field(s)
     internal = false,
     method = true,
+    methodCache = false,
     scope = false,
     compile = false,
     pkg = false,

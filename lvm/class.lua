@@ -126,7 +126,11 @@ function API.newClass(definition, outer)
 
         -- * Class-Specific Properties * --
         abstract = definition.abstract or false,
-        interfaces = interfaces
+        interfaces = interfaces,
+
+        -- * Method Properties * --
+        methods = {},
+        methodCache = {},
     };
 
     -- Make sure that no class is made twice.
@@ -137,7 +141,7 @@ function API.newClass(definition, outer)
 
     LVM.DEFINITIONS[cd.path] = cd;
 
-    cd.type = 'class:' .. cd.path;
+    cd.type = cd.path;
     cd.printHeader = string.format('class (%s):', cd.path);
     cd.declaredFields = {};
     cd.declaredMethods = {};
@@ -155,6 +159,8 @@ function API.newClass(definition, outer)
             errorf(2, '%s lua.lang.Object not defined!', cd.printHeader);
         end
     end
+
+    --- @cast cd ClassStructDefinition
 
     if outer then
         outer.inner[cd.name] = cd;
@@ -767,158 +773,127 @@ function API.newClass(definition, outer)
             methodCluster = {};
             self.declaredMethods[md.name] = methodCluster;
         end
-        table.insert(methodCluster, md);
+        methodCluster[md.signature] = md;
 
         return md;
+    end
+
+    --- @param def ClassStructDefinition
+    --- @param name string
+    --- @param comb table<string, table<string, MethodDefinition>>?
+    ---
+    --- @return table<string, table<string, MethodDefinition>>
+    local function combineAllMethods(def, name, comb)
+        comb = comb or {};
+
+        -- Grab all the super-context methods first.
+        if def.super then
+            combineAllMethods(def.super, name, comb);
+        end
+
+        -- Copy any interface method array.
+        local interfaceLen = #def.interfaces;
+        if interfaceLen ~= 0 then
+            for i = 1, interfaceLen do
+                local interface = def.interfaces[i];
+                if interface.methods[name] then
+                    local mCluster = interface.methods[name];
+                    local defCluster = comb[name];
+                    if not defCluster then
+                        defCluster = {};
+                        comb[name] = mCluster;
+                    end
+                    for mSignature, md in pairs(mCluster) do
+                        -- Here we ignore re-applied interface methods since they're already applied.
+                        if not defCluster[mSignature] then
+                            debugf(LVM.debug.method, '%s IGNORING re-applied interface method in hierarchy: %s',
+                                def.printHeader,
+                                LVM.print.printMethod(md)
+                            );
+                        else
+                            debugf(LVM.debug.method, '%s applying interface method in hierarchy: %s',
+                                def.printHeader,
+                                LVM.print.printMethod(md)
+                            );
+                            defCluster[mSignature] = md;
+                        end
+                    end
+                end
+            end
+        end
+
+        local combCluster = comb[name];
+        if not combCluster then
+            combCluster = {};
+            comb[name] = combCluster;
+        end
+
+        local combCluster = comb[name];
+        if not combCluster then
+            combCluster = {};
+            comb[name] = combCluster;
+        end
+
+        local decCluster = def.declaredMethods[name];
+
+        if decCluster then
+            -- Go through each declaration and try to find a super-class one.
+            for decSig, decMethod in pairs(decCluster) do
+                -- If signatures match, an override is detected.
+                if combCluster[decSig] then
+                    decMethod.override = true;
+                    decMethod.super = combCluster[decSig];
+
+                    debugf(LVM.debug.method, '%s OVERRIDING class method %s in hierarchy: %s',
+                        def.printHeader,
+                        LVM.print.printMethod(combCluster[decSig]),
+                        LVM.print.printMethod(decMethod)
+                    );
+                end
+                -- Assign the top-most class method definition.
+                combCluster[decSig] = decMethod;
+            end
+        end
+
+        return comb;
     end
 
     function cd:compileMethods()
         debugf(LVM.debug.method, '%s Compiling method(s)..', self.printHeader);
 
-        --- @type table<string, MethodDefinition[]>
         self.methods = {};
 
         local methodNames = LVM.method.getMethodNames(cd);
         for i = 1, #methodNames do
-            self:compileMethod(methodNames[i]);
+            local mName = methodNames[i];
+            combineAllMethods(self, mName, self.methods);
         end
+
+        local count = 0;
 
         -- Make sure that all methods exposed are not abstract in non-abstract classes.
         if not cd.abstract then
-            for _, methods in pairs(self.methods) do
-                for i = 1, #methods do
-                    --- @type MethodDefinition
-                    local method = methods[i];
-
+            for mName, methodCluster in pairs(self.methods) do
+                for mSignature, method in pairs(methodCluster) do
                     if method.abstract then
                         local errMsg = string.format('%s Abstract method not implemented: %s',
                             cd.printHeader, LVM.print.printMethod(method)
                         );
                         print(errMsg);
                         error(errMsg, 3);
-                    end
-                end
-            end
-        end
-
-
-        -- Go through each interface and its methods. Check and see if the method needs and is implemented.
-        local interfaceLen = #self.interfaces;
-        if interfaceLen ~= 0 then
-            debugf(LVM.debug.interface, 'interface: Auditing interface(s) for %s:', self.path);
-            for i = 1, interfaceLen do
-                local interface = self.interfaces[i];
-                debugf(LVM.debug.interface, 'interface: %s:', interface.path);
-                local methodLen = #interface.methods;
-                if methodLen ~= 0 then
-                    for j = 1, methodLen do
-                        local iMethod = interface.methods[j];
-                        debugf(LVM.debug.interface, 'interface:     Auditing method %s.%s:', interface.path, iMethod
-                            .name);
-                        -- If a method is `default` then it's already defined and isn't necessary to overload.
-                        if not iMethod.default then
-                            local cMethod = self:getMethod(iMethod.name, iMethod.parameters);
-                            if not cMethod then
-                                errorf(2, '%s Method not implemented: %s.%s(%s)',
-                                    self.printHeader,
-                                    iMethod.class.name, iMethod.name, LVMUtils.paramsToString(iMethod.parameters)
-                                );
-                            end
-                        end
-                    end
-                end
-            end
-        end
-
-        local keysCount = 0;
-        for _, _ in pairs(self.methods) do
-            keysCount = keysCount + 1;
-        end
-
-        debugf(LVM.debug.method, '%s Compiled %i method(s).', self.printHeader, keysCount);
-    end
-
-    function cd:compileMethod(name)
-        local debugName = self.name .. '.' .. name .. '()';
-
-        -- lua.lang.Object
-        if not self.super then
-            self.methods[name] = LVMUtils.copyArray(self.declaredMethods[name]);
-            return;
-        end
-
-        debugf(LVM.debug.method, '%s Compiling compound method(s): %s', self.printHeader, debugName);
-
-        local decMethods = self.declaredMethods[name];
-
-        -- The current class doesn't have any definitions at all.
-        if not decMethods then
-            debugf(LVM.debug.method, '%s \tUsing super-class array: %s', self.printHeader, debugName);
-
-            -- Copy the super-class array.
-            self.methods[name] = LVMUtils.copyArray(self.super.methods[name]);
-            return;
-        end
-
-        -- In this case, all methods with this name are original.
-        if not cd.super.methods[name] then
-            debugf(LVM.debug.method, '%s \tUsing class declaration array: %s', self.printHeader, debugName);
-            self.methods[name] = LVMUtils.copyArray(decMethods);
-            return;
-        end
-
-        --- @type table<string, MethodDefinition[]>
-        local methods = LVMUtils.copyArray(cd.super.methods[name]);
-
-        if decMethods then
-            for i = 1, #decMethods do
-                local decMethod = decMethods[i];
-
-                local isOverride = false;
-
-                -- Go through each super-class method.
-                for j = 1, #methods do
-                    local method = methods[j];
-
-                    -- if LVM.parameter.areCompatible(decMethod.parameters, method.parameters) then
-                    if decMethod.signature == method.signature then
-                        debugf(LVM.debug.method, '%s \t\t@override detected: %s', self.printHeader, decMethod.signature);
-
-                        -- Cannot override final methods.
-                        if method.final then
-                            errorf(2, '%s Class method cannot override super-method because it is final: %s',
-                                cd.printHeader, LVM.print.printMethod(method)
-                            );
-                        end
-
-                        -- Overrided methods must maintain static / non-static with exact signatures.
-                        -- if method.static ~= decMethod.static then
-                        -- TODO: Implement.
-                        -- end
-
-                        isOverride = true;
-                        decMethod.super = method;
-                        decMethod.override = true;
-                        methods[j] = decMethod;
-                        break;
-                    end
-                end
-
-                --- No overrided method. Add it instead.
-                if not isOverride then
-                    if LVM.debug.method then
-                        local callSyntax;
-                        if decMethod.static then callSyntax = '.' else callSyntax = ':' end
-                        debugf(LVM.debug.method, '%s \t\tAdding class method: %s%s%s',
-                            self.printHeader,
-                            decMethod.class.name, callSyntax, decMethod.signature
+                    elseif (method.interface and not method.default) then
+                        local errMsg = string.format('%s Interface method not implemented: %s',
+                            cd.printHeader, LVM.print.printMethod(method)
                         );
+                        print(errMsg);
+                        error(errMsg, 3);
                     end
-                    table.insert(methods, decMethod);
+                    count = count + 1;
                 end
             end
         end
-        self.methods[name] = methods;
+
+        debugf(LVM.debug.method, '%s Compiled %i method(s).', self.printHeader, count);
     end
 
     --- Attempts to resolve a MethodDefinition in the ClassStructDefinition. If the method isn't defined in the class,
@@ -936,11 +911,7 @@ function API.newClass(definition, outer)
     ---
     --- @return MethodDefinition|nil methodDefinition
     function cd:getMethod(name, args)
-        local method = self:getDeclaredMethod(name, args);
-        if not method and self.super then
-            method = self.super:getMethod(name, args);
-        end
-        return method;
+        return LVM.method.resolveMethod(self, name, self.methods[name], args);
     end
 
     --- @param name string
@@ -948,36 +919,7 @@ function API.newClass(definition, outer)
     ---
     --- @return MethodDefinition|nil methodDefinition
     function cd:getDeclaredMethod(name, args)
-        local argsLen = #args;
-        local methods = cd.declaredMethods[name];
-
-        -- No declared methods with name.
-        if not methods then
-            return nil;
-        end
-
-        for i = 1, #methods do
-            local method = methods[i];
-            local methodParams = method.parameters;
-            local paramsLen = #methodParams;
-            if argsLen == paramsLen then
-                --- Empty args methods.
-                if argsLen == 0 then
-                    return method;
-                else
-                    for j = 1, #methodParams do
-                        local arg = args[j];
-                        local parameter = methodParams[j];
-                        if not LVM.type.isAssignableFromType(arg, parameter.types) then
-                            method = nil;
-                            break;
-                        end
-                    end
-                    if method then return method end
-                end
-            end
-        end
-        return nil;
+        return LVM.method.resolveMethod(self, name, self.declaredMethods[name], args);
     end
 
     --- @param line integer
@@ -1048,8 +990,8 @@ function API.newClass(definition, outer)
         self.__middleMethods = {};
 
         -- Insert boilerplate method invoker function.
-        for name, methods in pairs(self.methods) do
-            for i, md in pairs(methods) do
+        for mName, methodCluster in pairs(self.methods) do
+            for _, md in pairs(methodCluster) do
                 if md.override then
                     -- RULE: Cannot override method if super-method is final.
                     if md.super.final then
@@ -1080,7 +1022,7 @@ function API.newClass(definition, outer)
                     end
                 end
             end
-            self.__middleMethods[name] = LVM.method.createMiddleMethod(cd, name, methods);
+            self.__middleMethods[mName] = LVM.method.createMiddleMethod(cd, mName, methodCluster);
         end
 
         local mt = getmetatable(cd) or {};

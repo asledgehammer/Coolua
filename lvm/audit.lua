@@ -21,6 +21,8 @@ local API = {
     end
 };
 
+--- @cast API LVMAuditModule
+
 --- @param def ParameterDefinition
 function API.auditParameter(def)
     if not def then
@@ -93,7 +95,5 @@ end
 function API.auditConstructor(def)
 
 end
-
---- @cast API LVMAuditModule
 
 return API;

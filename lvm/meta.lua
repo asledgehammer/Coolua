@@ -48,6 +48,8 @@ function API.createInstanceMetatable(cd, o)
             return fields[field];
         end
 
+        print(cd.printHeader .. ' Trying to access fieldDefinition: ' .. field);
+
         local fd = cd:getField(field);
         if not fd then
             errorf(2, 'FieldNotFoundException: Field doesn\'t exist: %s.%s',

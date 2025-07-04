@@ -173,9 +173,6 @@ end
 function IAPI.compileMethods(self)
     debugf(LVM.debug.method, '%s Compiling method(s)..', self.printHeader);
 
-    --- @type table<string, MethodDefinition[]>
-    self.methods = {};
-
     local methodNames = LVM.method.getMethodNames(self);
     for i = 1, #methodNames do
         IAPI.compileMethod(self, methodNames[i]);
@@ -645,6 +642,8 @@ function API.newInterface(definition, enclosingStruct)
 
         -- * Methodable Properties * --
         declaredMethods = {},
+        methods = {},
+        methodCache = {},
 
         -- * Debug Properties * --
         printHeader = string.format('interface (%s):', path),

@@ -7,6 +7,7 @@ local DebugUtils = require 'DebugUtils';
 local LVMUtils = require 'LVMUtils';
 local arrayContains = LVMUtils.arrayContains;
 local errorf = LVMUtils.errorf;
+local debugf = LVMUtils.debugf;
 
 --- @type LVM
 local LVM;
@@ -24,16 +25,95 @@ local API = {
 
 --- @cast API LVMMethodModule
 
-function API.resolveMethod(methods, args)
+--- @param name string The name of the method called.
+--- @param args any[] The arguments passed to the middle-function.
+---
+--- @return string callSignature The simulated method signature.
+function API.createCallSignature(name, args)
+    local tArgs = API.argsToTypes(args);
+    local s = '';
+    for i = 1, #args do
+        if s == '' then
+            s = tArgs[i];
+        else
+            s = s .. ', ' .. tArgs[i];
+        end
+    end
+    return string.format('%s(%s)', name, s);
+end
+
+function API.argsToTypes(args)
+    local tArgs = {};
+    for i = 1, #args do
+        table.insert(tArgs, LVM.type.getType(args[i]));
+    end
+    return tArgs;
+end
+
+function API.resolveMethod(struct, name, methods, args)
+    local callSignature = LVM.method.createCallSignature(name, args);
+
+    --- @type MethodDefinition|nil
+    local md;
+
+    -- Check the cache.
+    -- md = struct.methodCache[callSignature];
+    -- if md then return md end
+
+    debugf(LVM.debug.methodCache, '%s No cache found for method %s call signature: %s',
+        struct.printHeader,
+        name,
+        callSignature
+    );
+
+    -- Attempt to resolve the method using exact method signature checks.
+    local md = methods[callSignature];
+    if md then
+        debugf(LVM.debug.methodCache, '%s Caching exact method %s call signature: %s',
+            struct.printHeader,
+            LVM.print.printMethod(md),
+            callSignature
+        );
+
+        -- Cache the result.
+        struct.methodCache[callSignature] = md;
+
+        return md;
+    end
+
+    -- If the method still isn't identified, look into each argument and match.
+    if not md then
+        md = API.resolveMethodDeep(methods, args);
+    end
+
+    if md then
+        debugf(LVM.debug.methodCache, '%s Caching method %s call signature: %s',
+            struct.printHeader,
+            LVM.print.printMethod(md),
+            callSignature
+        );
+
+        -- Cache the result.
+        struct.methodCache[callSignature] = md;
+    end
+
+    return md;
+end
+
+--- @param methods table<string, MethodDefinition>
+--- @param args any[]
+---
+--- @return MethodDefinition|nil
+function API.resolveMethodDeep(methods, args)
     local argsLen = #args;
 
     --- @type MethodDefinition?
     local md = nil;
 
     -- Try to find the method without varargs first.
-    for i = 1, #methods do
+    for _, method in pairs(methods) do
         if md then break end
-        md = methods[i];
+        md = method;
         local parameters = md.parameters or {};
         local paramLen = #parameters;
         if argsLen == paramLen then
@@ -52,9 +132,9 @@ function API.resolveMethod(methods, args)
 
     -- Check and see if a vararg method exists.
     if not md then
-        for i = 1, #methods do
+        for _, method in pairs(methods) do
             if md then break end
-            md = methods[i];
+            md = method;
             local parameters = md.parameters or {};
             local paramLen = #parameters;
             if paramLen ~= 0 then
@@ -94,7 +174,7 @@ end
 function API.createMiddleMethod(cd, name, methods)
     return function(o, ...)
         local args = { ... };
-        local md = API.resolveMethod(methods, args);
+        local md = API.resolveMethod(cd, name, methods, args);
 
         local errHeader = string.format('Class(%s):%s():', cd.name, name);
 
@@ -217,10 +297,25 @@ end
 
 function API.getMethodNames(classDef, methodNames)
     methodNames = methodNames or {};
+
+    -- Grab any super-struct declarations.
     if classDef.super then
         API.getMethodNames(classDef.super, methodNames);
     end
+
+    -- Grab any interface declarations.
+    if classDef.interfaces then
+        local interfaceLen = #classDef.interfaces;
+        if interfaceLen ~= 0 then
+            for i = 1, interfaceLen do
+                API.getMethodNames(classDef.interfaces[i], methodNames);
+            end
+        end
+    end
+
+    -- Get struct-specific declarations.
     API.getDeclaredMethodNames(classDef, methodNames);
+
     return methodNames;
 end
 

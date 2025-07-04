@@ -20,12 +20,13 @@
 
 --- @class (exact) Constructable Any struct that supports self-construction. (Classes, Enums)
 --- @field __middleConstructor function
---- @field declaredConstructors ConstructorDefinition[]
+--- @field declaredConstructors table<string, ConstructorDefinition>
 
 --- @class (exact) Methodable Any struct that supports methods. (Class, Interface, Enum)
 --- @field __middleMethods table<string, function> All middle functables for methods.
---- @field declaredMethods table<string, MethodDefinition[]> All compiled methods for the class.
---- @field methods table<string, MethodDefinition[]> All compiled methods. If the struct is extendable then all directly-accessable methods from super-classes are assigned here.
+--- @field declaredMethods table<string, table<string, MethodDefinition>> All compiled methods for the class.
+--- @field methods table<string, table<string, MethodDefinition>> All compiled methods. If the struct is extendable then all directly-accessable methods from super-classes are assigned here.
+--- @field methodCache table<string, MethodDefinition> Cache all method call signatures with their resolved method definitions. This is used to optimize method routing.
 
 --- @class (exact) Fieldable Any struct that supports fields. (Class, Interface, Enum)
 --- @field declaredFields table<string, FieldDefinition>
