@@ -21,7 +21,6 @@
 --- @field returns string[]
 --- @field func function?
 --- @field lineRange {start: number, stop: number} The function's start and stop line.
-
 --- 
 --- * General Flags *
 --- @field static boolean

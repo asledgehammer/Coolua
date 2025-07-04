@@ -29,6 +29,222 @@ local API = {
     end
 };
 
+local IAPI = {
+
+};
+
+--- @param self ClassStructDefinition
+function IAPI.compileFieldAutoMethods(self)
+    for name, fieldDef in pairs(self.declaredFields) do
+        local funcName = firstCharToUpper(fieldDef.name);
+        local tGet = type(fieldDef.get);
+        local tSet = type(fieldDef.set);
+
+        --- @type function
+        local fGet;
+        --- @type function
+        local fSet;
+
+        if tGet ~= 'nil' then
+            local mGetDef = {
+                name = 'get' .. funcName,
+                scope = fieldDef.scope,
+                returns = fieldDef.types
+            };
+
+            if tGet == 'boolean' then
+
+            elseif tGet == 'table' then
+                if fieldDef.get.scope then
+                    mGetDef.scope = fieldDef.get.scope;
+                end
+                if fieldDef.get.func then
+                    if type(fieldDef.get.func) ~= 'function' then
+                        errorf(2,
+                            '%s The getter method definition for field "%s" is not a function; {type = %s, value = %s}',
+                            self.printHeader,
+                            name,
+                            LVM.type.getType(fieldDef.get.func),
+                            tostring(fieldDef.get.func)
+                        );
+                    end
+
+                    fGet = fieldDef.get.func;
+                else
+                    fGet = function(ins)
+                        return ins[name];
+                    end;
+                end
+            end
+
+            debugf(LVM.debug.method, '%s Creating auto-method: %s:%s()',
+                self.printHeader,
+                self.name, mGetDef.name
+            );
+
+            self:addMethod(mGetDef, fGet);
+        end
+
+        if tSet ~= 'nil' then
+            local mSetDef = {
+                name = 'set' .. funcName,
+                scope = fieldDef.scope,
+                parameters = {
+                    { name = 'value', types = fieldDef.types }
+                }
+            };
+
+            if tSet == 'table' then
+                if fieldDef.set.scope then
+                    mSetDef.scope = fieldDef.set.scope;
+                end
+                if fieldDef.set.func then
+                    if type(fieldDef.get.func) ~= 'function' then
+                        errorf(2,
+                            '%s The setter method definition for field "%s" is not a function; {type = %s, value = %s}',
+                            self.printHeader,
+                            name,
+                            LVM.type.getType(fieldDef.get.func),
+                            tostring(fieldDef.get.func)
+                        );
+                    end
+                    fSet = fieldDef.set.func;
+                else
+                    fSet = function(ins, value)
+                        ins[name] = value;
+                    end;
+                end
+            end
+
+            debugf(LVM.debug.method, '%s Creating auto-method: %s:%s',
+                self.printHeader,
+                self.name, mSetDef.signature
+            );
+
+            self:addMethod(mSetDef, fSet);
+        end
+    end
+end
+
+--- @param self ClassStructDefinition
+--- @param name string
+--- @param comb table<string, table<string, MethodDefinition>>?
+---
+--- @return table<string, table<string, MethodDefinition>>
+function IAPI.combineAllMethods(self, name, comb)
+    comb = comb or {};
+
+    -- Grab all the super-context methods first.
+    if self.super then
+        IAPI.combineAllMethods(self.super, name, comb);
+    end
+
+    -- Copy any interface method array.
+    local interfaceLen = #self.interfaces;
+    if interfaceLen ~= 0 then
+        for i = 1, interfaceLen do
+            local interface = self.interfaces[i];
+            if interface.methods[name] then
+                local mCluster = interface.methods[name];
+                local defCluster = comb[name];
+                if not defCluster then
+                    defCluster = {};
+                    comb[name] = mCluster;
+                end
+                for mSignature, md in pairs(mCluster) do
+                    -- Here we ignore re-applied interface methods since they're already applied.
+                    if not defCluster[mSignature] then
+                        debugf(LVM.debug.method, '%s IGNORING re-applied interface method in hierarchy: %s',
+                            self.printHeader,
+                            LVM.print.printMethod(md)
+                        );
+                    else
+                        debugf(LVM.debug.method, '%s applying interface method in hierarchy: %s',
+                            self.printHeader,
+                            LVM.print.printMethod(md)
+                        );
+                        defCluster[mSignature] = md;
+                    end
+                end
+            end
+        end
+    end
+
+    local combCluster = comb[name];
+    if not combCluster then
+        combCluster = {};
+        comb[name] = combCluster;
+    end
+
+    local combCluster = comb[name];
+    if not combCluster then
+        combCluster = {};
+        comb[name] = combCluster;
+    end
+
+    local decCluster = self.declaredMethods[name];
+
+    if decCluster then
+        -- Go through each declaration and try to find a super-class one.
+        for decSig, decMethod in pairs(decCluster) do
+            -- If signatures match, an override is detected.
+            if combCluster[decSig] then
+                decMethod.override = true;
+                decMethod.super = combCluster[decSig];
+
+                debugf(LVM.debug.method, '%s OVERRIDING class method %s in hierarchy: %s',
+                    self.printHeader,
+                    LVM.print.printMethod(combCluster[decSig]),
+                    LVM.print.printMethod(decMethod)
+                );
+            end
+            -- Assign the top-most class method definition.
+            combCluster[decSig] = decMethod;
+        end
+    end
+
+    return comb;
+end
+
+--- @param self ClassStructDefinition
+function IAPI.compileMethods(self)
+    debugf(LVM.debug.method, '%s Compiling method(s)..', self.printHeader);
+
+    self.methods = {};
+
+    local methodNames = LVM.method.getMethodNames(self);
+    for i = 1, #methodNames do
+        local mName = methodNames[i];
+        IAPI.combineAllMethods(self, mName, self.methods);
+    end
+
+    local count = 0;
+
+    -- Make sure that all methods exposed are not abstract in non-abstract classes.
+    if not self.abstract then
+        for _, methodCluster in pairs(self.methods) do
+            for _, method in pairs(methodCluster) do
+                if method.abstract then
+                    local errMsg = string.format('%s Abstract method not implemented: %s',
+                        self.printHeader, LVM.print.printMethod(method)
+                    );
+                    print(errMsg);
+                    error(errMsg, 3);
+                elseif (method.interface and not method.default) then
+                    local errMsg = string.format('%s Interface method not implemented: %s',
+                        self.printHeader, LVM.print.printMethod(method)
+                    );
+                    print(errMsg);
+                    error(errMsg, 3);
+                end
+                count = count + 1;
+            end
+        end
+    end
+
+    debugf(LVM.debug.method, '%s Compiled %i method(s).', self.printHeader, count);
+end
+
 --- @cast API LVMClassModule
 
 --- Defined for all classes so that __eq actually fires.
@@ -191,6 +407,7 @@ function API.newClass(definition, outer)
 
         --- Assign the middle-functions to the object.
         for name, func in pairs(cd.__middleMethods) do
+            --- @diagnostic disable-next-line
             o[name] = func;
         end
 
@@ -220,6 +437,7 @@ function API.newClass(definition, outer)
 
         local middleMethods = cd.__middleMethods;
         for name, func in pairs(middleMethods) do
+            --- @diagnostic disable-next-line
             o[name] = func;
             -- print(string.format('Method: o[%s] = %s', name, tostring(func)));
         end
@@ -414,98 +632,6 @@ function API.newClass(definition, outer)
         return args;
     end
 
-    function cd:compileFieldAutoMethods()
-        for name, fieldDef in pairs(cd.declaredFields) do
-            local funcName = firstCharToUpper(fieldDef.name);
-            local tGet = type(fieldDef.get);
-            local tSet = type(fieldDef.set);
-
-            --- @type function
-            local fGet;
-            --- @type function
-            local fSet;
-
-            if tGet ~= 'nil' then
-                local mGetDef = {
-                    name = 'get' .. funcName,
-                    scope = fieldDef.scope,
-                    returns = fieldDef.types
-                };
-
-                if tGet == 'boolean' then
-
-                elseif tGet == 'table' then
-                    if fieldDef.get.scope then
-                        mGetDef.scope = fieldDef.get.scope;
-                    end
-                    if fieldDef.get.func then
-                        if type(fieldDef.get.func) ~= 'function' then
-                            errorf(2,
-                                '%s The getter method definition for field "%s" is not a function; {type = %s, value = %s}',
-                                cd.printHeader,
-                                name,
-                                LVM.type.getType(fieldDef.get.func),
-                                tostring(fieldDef.get.func)
-                            );
-                        end
-
-                        fGet = fieldDef.get.func;
-                    else
-                        fGet = function(ins)
-                            return ins[name];
-                        end;
-                    end
-                end
-
-                debugf(LVM.debug.method, '%s Creating auto-method: %s:%s()',
-                    self.printHeader,
-                    self.name, mGetDef.name
-                );
-
-                cd:addMethod(mGetDef, fGet);
-            end
-
-            if tSet ~= 'nil' then
-                local mSetDef = {
-                    name = 'set' .. funcName,
-                    scope = fieldDef.scope,
-                    parameters = {
-                        { name = 'value', types = fieldDef.types }
-                    }
-                };
-
-                if tSet == 'table' then
-                    if fieldDef.set.scope then
-                        mSetDef.scope = fieldDef.set.scope;
-                    end
-                    if fieldDef.set.func then
-                        if type(fieldDef.get.func) ~= 'function' then
-                            errorf(2,
-                                '%s The setter method definition for field "%s" is not a function; {type = %s, value = %s}',
-                                cd.printHeader,
-                                name,
-                                LVM.type.getType(fieldDef.get.func),
-                                tostring(fieldDef.get.func)
-                            );
-                        end
-                        fSet = fieldDef.set.func;
-                    else
-                        fSet = function(ins, value)
-                            ins[name] = value;
-                        end;
-                    end
-                end
-
-                debugf(LVM.debug.method, '%s Creating auto-method: %s:%s',
-                    self.printHeader,
-                    self.name, mSetDef.signature
-                );
-
-                cd:addMethod(mSetDef, fSet);
-            end
-        end
-    end
-
     --- Attempts to resolve a FieldDefinition in the ClassStructDefinition. If the field isn't declared for the class
     --- level, the super-class(es) are checked.
     ---
@@ -530,7 +656,6 @@ function API.newClass(definition, outer)
         return cd.declaredFields[name];
     end
 
-    --- @return FieldDefinition[]
     function cd:getFields()
         --- @type FieldDefinition[]
         local array = {};
@@ -778,124 +903,6 @@ function API.newClass(definition, outer)
         return md;
     end
 
-    --- @param def ClassStructDefinition
-    --- @param name string
-    --- @param comb table<string, table<string, MethodDefinition>>?
-    ---
-    --- @return table<string, table<string, MethodDefinition>>
-    local function combineAllMethods(def, name, comb)
-        comb = comb or {};
-
-        -- Grab all the super-context methods first.
-        if def.super then
-            combineAllMethods(def.super, name, comb);
-        end
-
-        -- Copy any interface method array.
-        local interfaceLen = #def.interfaces;
-        if interfaceLen ~= 0 then
-            for i = 1, interfaceLen do
-                local interface = def.interfaces[i];
-                if interface.methods[name] then
-                    local mCluster = interface.methods[name];
-                    local defCluster = comb[name];
-                    if not defCluster then
-                        defCluster = {};
-                        comb[name] = mCluster;
-                    end
-                    for mSignature, md in pairs(mCluster) do
-                        -- Here we ignore re-applied interface methods since they're already applied.
-                        if not defCluster[mSignature] then
-                            debugf(LVM.debug.method, '%s IGNORING re-applied interface method in hierarchy: %s',
-                                def.printHeader,
-                                LVM.print.printMethod(md)
-                            );
-                        else
-                            debugf(LVM.debug.method, '%s applying interface method in hierarchy: %s',
-                                def.printHeader,
-                                LVM.print.printMethod(md)
-                            );
-                            defCluster[mSignature] = md;
-                        end
-                    end
-                end
-            end
-        end
-
-        local combCluster = comb[name];
-        if not combCluster then
-            combCluster = {};
-            comb[name] = combCluster;
-        end
-
-        local combCluster = comb[name];
-        if not combCluster then
-            combCluster = {};
-            comb[name] = combCluster;
-        end
-
-        local decCluster = def.declaredMethods[name];
-
-        if decCluster then
-            -- Go through each declaration and try to find a super-class one.
-            for decSig, decMethod in pairs(decCluster) do
-                -- If signatures match, an override is detected.
-                if combCluster[decSig] then
-                    decMethod.override = true;
-                    decMethod.super = combCluster[decSig];
-
-                    debugf(LVM.debug.method, '%s OVERRIDING class method %s in hierarchy: %s',
-                        def.printHeader,
-                        LVM.print.printMethod(combCluster[decSig]),
-                        LVM.print.printMethod(decMethod)
-                    );
-                end
-                -- Assign the top-most class method definition.
-                combCluster[decSig] = decMethod;
-            end
-        end
-
-        return comb;
-    end
-
-    function cd:compileMethods()
-        debugf(LVM.debug.method, '%s Compiling method(s)..', self.printHeader);
-
-        self.methods = {};
-
-        local methodNames = LVM.method.getMethodNames(cd);
-        for i = 1, #methodNames do
-            local mName = methodNames[i];
-            combineAllMethods(self, mName, self.methods);
-        end
-
-        local count = 0;
-
-        -- Make sure that all methods exposed are not abstract in non-abstract classes.
-        if not cd.abstract then
-            for mName, methodCluster in pairs(self.methods) do
-                for mSignature, method in pairs(methodCluster) do
-                    if method.abstract then
-                        local errMsg = string.format('%s Abstract method not implemented: %s',
-                            cd.printHeader, LVM.print.printMethod(method)
-                        );
-                        print(errMsg);
-                        error(errMsg, 3);
-                    elseif (method.interface and not method.default) then
-                        local errMsg = string.format('%s Interface method not implemented: %s',
-                            cd.printHeader, LVM.print.printMethod(method)
-                        );
-                        print(errMsg);
-                        error(errMsg, 3);
-                    end
-                    count = count + 1;
-                end
-            end
-        end
-
-        debugf(LVM.debug.method, '%s Compiled %i method(s).', self.printHeader, count);
-    end
-
     --- Attempts to resolve a MethodDefinition in the ClassStructDefinition. If the method isn't defined in the class,
     --- `nil` is returned.
     ---
@@ -952,12 +959,12 @@ function API.newClass(definition, outer)
         end
 
         -- If any auto-methods are defined for fields (get, set), create them before compiling class methods.
-        self:compileFieldAutoMethods();
+        IAPI.compileFieldAutoMethods(self);
 
         -- TODO: Audit everything.
 
         --- @type table<string, MethodDefinition[]>
-        self:compileMethods();
+        IAPI.compileMethods(self);
 
         -- Change add methods.
         self.addMethod = function() errorf(2, '%s Cannot add methods. (Class is final!)', errHeader) end
@@ -1034,7 +1041,7 @@ function API.newClass(definition, outer)
 
         mt.__index = __properties;
 
-        mt.__newindex = function(tbl, field, value)
+        mt.__newindex = function(_, field, value)
             -- TODO: Visibility scope analysis.
             -- TODO: Type-checking.
 
@@ -1048,7 +1055,6 @@ function API.newClass(definition, outer)
                 __properties['classObj'] = value;
                 return;
             end
-
 
             local fd = cd:getField(field);
 
@@ -1071,10 +1077,7 @@ function API.newClass(definition, outer)
                 if LVM.isOutside() then
                     errorf(2, 'Cannot set inner class explicitly. Use the API.');
                 end
-
-                -- print('setting inner-class: ', field, tostring(value));
                 __properties[field] = value;
-
                 return;
             end
 
@@ -1178,16 +1181,10 @@ function API.newClass(definition, outer)
         return cd;
     end
 
-    --- @param line integer
-    ---
-    --- @return ConstructorDefinition|MethodDefinition|nil method
     function cd:getExecutableFromLine(line)
         return self:getMethodFromLine(line) or self:getConstructorFromLine(line) or nil;
     end
 
-    --- @param class Hierarchical?
-    ---
-    --- @return boolean
     function cd:isSuperClass(class)
         --- @type Hierarchical|nil
         local next = self.super;
@@ -1215,9 +1212,6 @@ function API.newClass(definition, outer)
         return false;
     end
 
-    --- @param class ClassStructDefinition The class to evaulate.
-    ---
-    --- @return boolean result True if the class to evaluate is a super-class of the subClass.
     function cd:isSubClass(class)
         if __recurseSubClass(cd, class) then
             return true;

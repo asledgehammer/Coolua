@@ -11,12 +11,12 @@ local API = {
 
     -- Field(s)
     internal = false,
-    method = true,
+    method = false,
     methodCache = false,
     scope = false,
     compile = false,
     pkg = false,
-    interface = true,
+    interface = false,
     constructor = false,
 
     -- Method(s)

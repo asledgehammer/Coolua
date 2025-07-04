@@ -30,8 +30,12 @@
 --- @field lock boolean
 --- @field classObj Class?
 --- @field super ClassStructDefinition?
+--- @field sub ClassStructDefinition[]
 --- @field interfaces InterfaceStructDefinition[]
 local ClassStructDefinition = {};
+
+--- @return ClassInstance
+function ClassStructDefinition:new(...) end
 
 --- @param definition FieldDefinitionParameter
 ---
@@ -45,6 +49,9 @@ function ClassStructDefinition:addField(definition) end
 ---
 --- @return FieldDefinition? fieldDefinition
 function ClassStructDefinition:getField(name) end
+
+--- @return FieldDefinition[]
+function ClassStructDefinition:getFields() end
 
 --- Attempts to resolve a FieldDefinition in the ClassStructDefinition. If the field isn't defined in the class, nil
 --- is returned.
@@ -132,8 +139,15 @@ function ClassStructDefinition:getMethodFromLine(line) end
 --- @return ConstructorDefinition|nil method
 function ClassStructDefinition:getConstructorFromLine(line) end
 
---- @return Class
-function ClassStructDefinition:create() end
+--- @param class Hierarchical?
+---
+--- @return boolean
+function ClassStructDefinition:isSuperClass(class) end
+
+  --- @param class ClassStructDefinition The class to evaulate.
+    ---
+    --- @return boolean result True if the class to evaluate is a super-class of the subClass.
+function ClassStructDefinition:isSubClass(class) end
 
 -- MARK: - Module
 
