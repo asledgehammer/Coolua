@@ -21,6 +21,8 @@ function LVMModule.setLVM(lvm) end
 --- @field DEFINITIONS table<string, StructDefinition> Key = `StructDefinition.path`
 --- @field CLASSES table<string, Class> Key = `StructDefinition.path`
 --- 
+--- @field moduleCount number
+--- 
 --- * Modules
 --- @field debug LVMDebugModule
 --- @field enum LVMEnumModule

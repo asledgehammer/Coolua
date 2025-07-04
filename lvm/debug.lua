@@ -10,17 +10,20 @@ local API = {
     __type__ = 'LVMModule',
 
     -- Field(s)
-    internal = true,
+    internal = false,
     method = true,
-    scope = true,
-    compile = true,
-    pkg = true,
+    scope = false,
+    compile = false,
+    pkg = false,
     interface = true,
-    constructor = true,
+    constructor = false,
 
     -- Method(s)
     --- @param lvm LVM
-    setLVM = function(lvm) LVM = lvm end
+    setLVM = function(lvm)
+        LVM = lvm;
+        LVM.moduleCount = LVM.moduleCount + 1;
+    end
 };
 
 --- @cast API LVMDebugModule

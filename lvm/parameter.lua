@@ -12,7 +12,11 @@ local API = {
 
     __type__ = 'LVMModule',
 
-    setLVM = function(lvm) LVM = lvm end
+    --- @param lvm LVM
+    setLVM = function(lvm)
+        LVM = lvm;
+        LVM.moduleCount = LVM.moduleCount + 1;
+    end
 
 };
 

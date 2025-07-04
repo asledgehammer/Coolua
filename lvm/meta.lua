@@ -15,7 +15,10 @@ local API = {
     __type__ = 'LVMModule',
 
     --- @param lvm LVM
-    setLVM = function(lvm) LVM = lvm end
+    setLVM = function(lvm)
+        LVM = lvm;
+        LVM.moduleCount = LVM.moduleCount + 1;
+    end
 };
 
 function API.createInstanceMetatable(cd, o)

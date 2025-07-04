@@ -3,6 +3,8 @@
 ---]]
 
 local LVM = require 'LVM';
+local LVMUtils = require 'LVMUtils';
+local debugf = LVMUtils.debugf;
 
 local LuaClass = {
     newClass = LVM.class.newClass,
@@ -12,13 +14,13 @@ local LuaClass = {
 LVM.stepIn();
 
 -- Language-level
-LuaClass.Object = require 'lua/lang/Object';
-LuaClass.Package = require 'lua/lang/Package';
-LuaClass.Class = require 'lua/lang/Class';
+require 'lua/lang/Object';
+require 'lua/lang/Package';
+require 'lua/lang/Class';
 
 -- Language-util-level
-LuaClass.StackTraceElement = require 'lua/lang/StackTraceElement';
-LVM.forName(LuaClass.StackTraceElement.path);
+local StackTraceElement = require 'lua/lang/StackTraceElement';
+LVM.forName(StackTraceElement.path);
 
 LVM.stepOut();
 

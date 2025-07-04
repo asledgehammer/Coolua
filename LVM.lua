@@ -5,6 +5,7 @@
 local LVMUtils = require 'LVMUtils';
 local errorf = LVMUtils.errorf;
 local printf = LVMUtils.printf;
+local debugf = LVMUtils.debugf;
 
 --- @type LVM
 local LVM;
@@ -61,19 +62,24 @@ local function getRootPath()
     return rootPath;
 end
 
+local debug = require 'lvm/debug';
+
+debugf(debug.internal, '\n### LVM INIT ###\n');
+
 local ROOT_PATH = getRootPath();
--- print('LVM.ROOT_PATH = ' .. ROOT_PATH);
 
 LVM = {
 
     __type__ = 'LVM',
 
+    moduleCount = 0,
+
     ROOT_PATH = ROOT_PATH,
-    
+
     DEFINITIONS = {},
     CLASSES = {},
 
-    debug = require 'lvm/debug',
+    debug = debug,
     enum = require 'lvm/enum',
     constants = require 'lvm/constants',
     flags = require 'lvm/flags',
@@ -166,5 +172,10 @@ function LVM.forName(path)
 
     return class;
 end
+
+debugf(LVM.debug.internal, 'LVM: Loaded %i Modules.', LVM.moduleCount);
+debugf(LVM.debug.internal, 'LVM: ROOT_PATH = ' .. ROOT_PATH);
+
+debugf(LVM.debug.internal, '\n### LVM READY ###\n');
 
 return LVM;

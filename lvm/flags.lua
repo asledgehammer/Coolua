@@ -20,7 +20,10 @@ local API = {
 
     -- Method(s)
     --- @param lvm LVM
-    setLVM = function(lvm) LVM = lvm end
+    setLVM = function(lvm)
+        LVM = lvm;
+        LVM.moduleCount = LVM.moduleCount + 1;
+    end
 };
 
 --- @cast API LVMFlagsModule
