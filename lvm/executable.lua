@@ -262,6 +262,14 @@ function API.createMiddleMethod(cd, name, methods)
 end
 
 function API.createSignature(definition)
+    local name;
+
+    if definition.__type__ == 'ConstructorDefinition' then
+        name = 'new';
+    else
+        name = definition.name;
+    end
+
     local parameterLen = #definition.parameters;
     if parameterLen ~= 0 then
         local s = '';
@@ -274,9 +282,10 @@ function API.createSignature(definition)
                 s = s .. ', ' .. sParameter;
             end
         end
-        return string.format('%s(%s)', definition.name, s);
+        return string.format('%s(%s)', name, s);
     end
-    return definition.name .. '()';
+
+    return name .. '()';
 end
 
 function API.getDeclaredMethodNames(struct, array)
@@ -345,22 +354,22 @@ function API.combineAllMethods(def, name, comb)
             for i = 1, interfaceLen do
                 local interface = def.interfaces[i];
                 if interface.methods[name] then
-                    local mCluster = interface.methods[name];
+                    local imCluster = interface.methods[name];
 
-                    for mSignature, md in pairs(mCluster) do
+                    for imSignature, imd in pairs(imCluster) do
                         -- Here we ignore re-applied interface methods since they're already applied.
-                        if not combCluster[mSignature] then
+                        if not combCluster[name] and not imd.default then
                             debugf(LVM.debug.method, '%s IGNORING re-applied interface method in hierarchy: %s',
                                 def.printHeader,
-                                LVM.print.printMethod(md)
+                                LVM.print.printMethod(imd)
                             );
                         else
-                            debugf(LVM.debug.method, '%s applying interface method in hierarchy: %s',
+                            debugf(LVM.debug.method, '%s Applying interface method in hierarchy: %s',
                                 def.printHeader,
-                                LVM.print.printMethod(md)
+                                LVM.print.printMethod(imd)
                             );
-                            combCluster[mSignature] = md;
                         end
+                        combCluster[imSignature] = imd;
                     end
                 end
             end
@@ -400,22 +409,27 @@ function API.compileMethods(self)
     local methodNames = API.getMethodNames(self);
     for i = 1, #methodNames do
         local mName = methodNames[i];
-        API.combineAllMethods(self, mName, self.methods);
+        -- Ignore constructors.
+        if mName ~= 'new' then
+            API.combineAllMethods(self, mName, self.methods);
+        end
     end
 
     local count = 0;
 
     -- Make sure that all methods exposed are not abstract in non-abstract classes.
-    if not self['abstract'] then
+    if self.__type__ ~= 'InterfaceStructDefinition' and not self['abstract'] then
         for _, methodCluster in pairs(self.methods) do
+            -- Ignore constructors.
             for _, method in pairs(methodCluster) do
+                -- Ignore constructors.
                 if method.abstract then
                     local errMsg = string.format('%s Abstract method not implemented: %s',
                         self.printHeader, LVM.print.printMethod(method)
                     );
                     print(errMsg);
                     error(errMsg, 3);
-                elseif (method.interface and not method.default) then
+                elseif method.interface and not method.default then
                     local errMsg = string.format('%s Interface method not implemented: %s',
                         self.printHeader, LVM.print.printMethod(method)
                     );
@@ -600,24 +614,6 @@ function API.createMiddleConstructor(classDef)
     end
 end
 
-function API.createSignature(definition)
-    local parameterLen = #definition.parameters;
-    if parameterLen ~= 0 then
-        local s = '';
-        for i = 1, parameterLen do
-            local parameter = definition.parameters[i];
-            local sParameter = table.concat(parameter.types, '|');
-            if s == '' then
-                s = sParameter;
-            else
-                s = s .. ', ' .. sParameter;
-            end
-        end
-        return string.format('new(%s)', s);
-    end
-    return 'new()';
-end
-
 --- @param self Constructable
 --- @param path string
 --- @param line integer
@@ -667,7 +663,6 @@ function API.isVararg(arg)
 end
 
 function API.compile(defParams)
-
     if not defParams then return {} end
 
     -- Convert any simplified type declarations.

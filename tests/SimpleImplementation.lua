@@ -10,6 +10,18 @@ local SimpleImplementation = newClass({
     }
 });
 
+SimpleImplementation:addConstructor({scope = 'public'});
+
+-- public void aMethod();
+SimpleImplementation:addMethod({
+        scope = 'public',
+        name = 'aMethod',
+    },
+    function()
+        print('Hello form aMethod()!');
+    end
+);
+
 SimpleImplementation:finalize();
 
 --- @cast SimpleImplementation SimpleImplementationDefinition

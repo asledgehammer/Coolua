@@ -164,103 +164,9 @@ function IAPI.addMethod(self, methodDefinition, func)
         methodCluster = {};
         self.declaredMethods[md.name] = methodCluster;
     end
-    table.insert(methodCluster, md);
+    methodCluster[md.signature] = md;
 
     return md;
-end
-
---- @param self InterfaceStructDefinition
-function IAPI.compileMethods(self)
-    debugf(LVM.debug.method, '%s Compiling method(s)..', self.printHeader);
-
-    local methodNames = LVM.executable.getMethodNames(self);
-    for i = 1, #methodNames do
-        IAPI.compileMethod(self, methodNames[i]);
-    end
-
-    local keysCount = 0;
-    for _, _ in pairs(self.methods) do
-        keysCount = keysCount + 1;
-    end
-
-    debugf(LVM.debug.method, '%s Compiled %i method(s).', self.printHeader, keysCount);
-end
-
---- @param self InterfaceStructDefinition
---- @param name string
-function IAPI.compileMethod(self, name)
-    local debugName = self.name .. '.' .. name .. '(...)';
-
-    if not self.super then
-        debugf(LVM.debug.method, '%s Compiling original method(s): %s', self.printHeader, debugName);
-        self.methods[name] = LVMUtils.copyArray(self.declaredMethods[name]);
-        return;
-    end
-
-    debugf(LVM.debug.method, '%s Compiling compound method(s): %s', self.printHeader, debugName);
-
-    local decMethods = self.declaredMethods[name];
-
-    -- The current class doesn't have any definitions at all.
-    if not decMethods then
-        debugf(LVM.debug.method, '%s \tUsing super-class array: %s', self.printHeader, debugName);
-
-        -- Copy the super-class array.
-        self.methods[name] = LVMUtils.copyArray(self.super.methods[name]);
-        return;
-    end
-
-    -- In this case, all methods with this name are original.
-    if not self.super.methods[name] then
-        debugf(LVM.debug.method, '%s \tUsing class declaration array: %s', self.printHeader, debugName);
-        self.methods[name] = LVMUtils.copyArray(decMethods);
-        return;
-    end
-
-    --- @type table<string, MethodDefinition[]>
-    local methods = LVMUtils.copyArray(self.super.methods[name]);
-
-    if decMethods then
-        for i = 1, #decMethods do
-            local decMethod = decMethods[i];
-
-            local isOverride = false;
-
-            -- Go through each super-class method.
-            for j = 1, #methods do
-                local method = methods[j];
-
-                if LVM.executable.areCompatible(decMethod.parameters, method.parameters) then
-                    debugf(LVM.debug.method, '%s \t\t@override detected: %s', self.printHeader, debugName);
-
-                    -- Cannot override final methods.
-                    if method.final then
-                        errorf(2, '%s Class method cannot override super-method because it is final: %s',
-                            self.printHeader, LVM.print.printMethod(method)
-                        );
-                    end
-
-                    -- Overrided methods must maintain static / non-static with exact signatures.
-                    -- if method.static ~= decMethod.static then
-                    -- TODO: Implement.
-                    -- end
-
-                    isOverride = true;
-                    decMethod.super = method;
-                    decMethod.override = true;
-                    methods[j] = decMethod;
-                    break;
-                end
-            end
-
-            --- No overrided method. Add it instead.
-            if not isOverride then
-                debugf(LVM.debug.method, '%s \t\tAdding class method: %s', self.printHeader, debugName);
-                table.insert(methods, decMethod);
-            end
-        end
-    end
-    self.methods[name] = methods;
 end
 
 --- Attempts to resolve a MethodDefinition in the ClassStructDefinition. If the method isn't defined in the class,
@@ -407,21 +313,21 @@ end
 ---
 --- @return InterfaceStructDefinition interfaceDef
 function IAPI.finalize(self)
-    local errHeader = string.format('Class(%s):finalize():', self.path);
+    local errHeader = string.format('Interface(%s):finalize():', self.path);
 
     if self.lock then
-        errorf(2, '%s Cannot finalize. (Class is already finalized!)', errHeader);
+        errorf(2, '%s Cannot finalize. (Interface is already finalized!)', errHeader);
     elseif self.super and (self.super.__type__ == 'ClassStructDefinition' and not self.super.lock) then
-        errorf(2, '%s Cannot finalize. (Super-Class %s is not finalized!)', errHeader, self.path);
+        errorf(2, '%s Cannot finalize. (Super-Interface %s is not finalized!)', errHeader, self.path);
     end
 
     -- TODO: Audit everything.
 
-    IAPI.compileMethods(self);
+    LVM.executable.compileMethods(self);
 
     -- Change add methods.
-    self.addMethod = function() errorf(2, '%s Cannot add methods. (Class is final!)', errHeader) end
-    self.addField = function() errorf(2, '%s Cannot add fields. (Class is final!)', errHeader) end
+    self.addMethod = function() errorf(2, '%s Cannot add methods. (Interface is final!)', errHeader) end
+    self.addField = function() errorf(2, '%s Cannot add fields. (Interface is final!)', errHeader) end
 
     -- Set default value(s) for static fields.
     for name, fd in pairs(self.declaredFields) do
@@ -448,7 +354,7 @@ function IAPI.finalize(self)
                     -- RULE: Cannot reduce scope of overrided super-method.
                 elseif not LVM.scope.canAccessScope(md.scope, md.super.scope) then
                     local sMethod = LVM.print.printMethod(md);
-                    errorf(2, '%s Method cannot reduce scope of super-class: %s (super-scope = %s, class-scope = %s)',
+                    errorf(2, '%s Method cannot reduce scope of super-class: %s (super-scope = %s, scope = %s)',
                         errHeader,
                         sMethod, md.super.scope, md.scope
                     );
@@ -457,7 +363,7 @@ function IAPI.finalize(self)
                 elseif md.static ~= md.super.static then
                     local sMethod = LVM.print.printMethod(md);
                     errorf(2,
-                        '%s All method(s) with identical signatures must either be static or not: %s (super.static = %s, class.static = %s)',
+                        '%s All method(s) with identical signatures must either be static or not: %s (super.static = %s, static = %s)',
                         errHeader,
                         sMethod, tostring(md.super.static), tostring(md.static)
                     );
@@ -497,7 +403,7 @@ function IAPI.finalize(self)
         -- Inner class invocation.
         if self.children[field] then
             if LVM.isOutside() then
-                errorf(2, 'Cannot set inner class explicitly. Use the API.');
+                errorf(2, 'Cannot set inner struct explicitly. Use the API.');
             end
 
             -- print('setting inner-class: ', field, tostring(value));
@@ -672,12 +578,19 @@ function API.newInterface(definition, enclosingStruct)
 
     -- * Methodable API * --
     id.addMethod = IAPI.addMethod;
-    id.compileMethods = IAPI.compileMethods;
     id.compileMethod = IAPI.compileMethod;
-    id.getDeclaredMethods = IAPI.getDeclaredMethods;
-    id.getMethod = IAPI.getMethod;
-    id.getDeclaredMethod = IAPI.getDeclaredMethod;
-    id.getMethodFromLine = IAPI.getMethodFromLine;
+
+    function id:getDeclaredMethods(name)
+        return self.declaredMethods[name];
+    end
+
+    function id:getMethod(name, args)
+        return LVM.executable.resolveMethod(self, name, self.methods[name], args);
+    end
+
+    function id:getDeclaredMethod(name, args)
+        return LVM.executable.resolveMethod(self, name, self.declaredMethods[name], args);
+    end
 
     -- * Hierarchical API * --
     id.isSuperInterface = IAPI.isSuperInterface;

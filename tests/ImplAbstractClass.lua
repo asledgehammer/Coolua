@@ -17,7 +17,7 @@ ImplAbstractClass:addMethod({
     parameters = {},
     returns = 'void'
 }, function()
-    print('Running from implemented class!');
+    print('Running from implemented abstract class!');
 end);
 
 ImplAbstractClass:finalize();

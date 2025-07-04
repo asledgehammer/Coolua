@@ -21,7 +21,7 @@ SimpleInterface:addMethod({
         scope = 'public',
         name = 'bMethod',
     },
-    function(self)
+    function()
         print('Hello from bMethod()!');
     end
 );

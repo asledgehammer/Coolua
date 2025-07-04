@@ -135,7 +135,7 @@ function API.resolveMethodDeep(methods, args) end
 --- @return table<string, table<string, MethodDefinition>>
 function API.combineAllMethods(self, name, comb) end
 
---- @param self ClassStructDefinition
+--- @param self ClassStructDefinition|InterfaceStructDefinition
 function API.compileMethods(self) end
 
 --- @param self StructDefinition
