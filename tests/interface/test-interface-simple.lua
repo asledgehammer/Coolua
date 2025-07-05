@@ -1,3 +1,7 @@
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
 local SimpleInterface = require 'tests/SimpleInterface';
 local SimpleImplementation = require 'tests/SimpleImplementation';
 

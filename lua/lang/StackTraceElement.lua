@@ -1,3 +1,7 @@
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
 local LVMUtils = require 'LVMUtils';
 local LVM = require 'LVM';
 local newClass = LVM.class.newClass;

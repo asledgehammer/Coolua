@@ -1,3 +1,7 @@
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
 local Dimension = require 'tests/Dimension';
 
 local dim1 = Dimension.new(5, 5);

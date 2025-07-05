@@ -1,3 +1,7 @@
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
 local DebugUtils = require 'DebugUtils';
 
 --- @type LVM

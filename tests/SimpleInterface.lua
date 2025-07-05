@@ -1,3 +1,7 @@
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
 local LuaClass = require 'LuaClass';
 local newInterface = LuaClass.newInterface;
 

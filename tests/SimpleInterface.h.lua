@@ -1,5 +1,9 @@
 --- @meta
 
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
 --- @class SimpleInterfaceDefinition: InterfaceStructDefinition
 local SimpleInterfaceDefinition = {};
 function SimpleInterfaceDefinition.aStaticMethod() end

@@ -1,4 +1,6 @@
--- TODO: Create class object that wraps ClassStructDefinition.
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
 
 local LVM = require 'LVM';
 local newClass = LVM.class.newClass;
