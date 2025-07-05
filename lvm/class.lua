@@ -13,7 +13,6 @@ local errorf = LVMUtils.errorf;
 local isArray = LVMUtils.isArray;
 local isValidName = LVMUtils.isValidName;
 local firstCharToUpper = LVMUtils.firstCharToUpper;
-local readonly = LVMUtils.readonly;
 
 --- @type LVM
 local LVM;

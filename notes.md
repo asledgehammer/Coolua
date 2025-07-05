@@ -1,11 +1,6 @@
 # To Remember:
 - Implement generics type-casting.
-- FIXME: Store file path and line range for functions to not limit class definitions to one file path for visibility scopes.
-
-#################################
-NEXT: Make constructors signature-based.
-AFTER: Make enums work.
-#################################
+- NOTE: Check Store file path and line range for functions to not limit class definitions to one file path for visibility scopes.
 
 # GENERAL:
 - TODO: Implement Package object.
@@ -18,12 +13,9 @@ AFTER: Make enums work.
 - TODO: Implement.
 
 # INTERFACE:
-- TODO: Implement.
-- TODO: Implement static methods.
 
 # CLASS:
-- TODO: Implement visibility-scope.
-- TODO: Implement abstract constructor invocation check. (Must come from sub-class)
+- TODO: Implement visibility-scope at class-level.
 - TODO: Implement addSubInterface()
 - TODO: Implement addSubEnum()
 - TODO: Implement generics.
@@ -37,8 +29,5 @@ AFTER: Make enums work.
 - TODO: Make sure param definitions do not have anything other than a vararg if present.
 - TODO: Make sure last param definition is vararg.
 
-- TODO: Check method signatures _exactly_ for overrides.
-
 # CONSTRUCTORS:
 - Enforce super calls check for classes extending classes with non-empty constructors.
-  - If a super-method exists without parameters, invoke it if anything is called. Use middle-methods to monitor in-constructor calls.
