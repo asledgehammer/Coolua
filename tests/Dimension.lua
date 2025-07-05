@@ -33,7 +33,7 @@ Dimension:addConstructor({
 
     --- @param self Dimension
     super = function(self)
-        print('Dimension(width, height) super');
+        -- print('Dimension(width, height) super');
         self:super();
     end,
 
@@ -41,7 +41,7 @@ Dimension:addConstructor({
     --- @param width number
     --- @param height number
     body = function(self, width, height)
-        print('Dimension(width, height) body');
+        -- print('Dimension(width, height) body');
         self.width = width;
         self.height = height;
     end

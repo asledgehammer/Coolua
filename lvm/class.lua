@@ -208,7 +208,6 @@ function API.newClass(definition, outer)
         for i = 1, #fields do
             local fd = fields[i];
             if not fd.static then
-                -- TODO: Make unique.
                 o[fd.name] = fd.value;
             end
         end

@@ -29,6 +29,7 @@ function API.createSuperTable(cd)
     local super = {
         __type__ = 'SuperTable',
         __flag__ = false,
+        __call_count__ = 0
     };
 
     local mt = getmetatable(super) or {};
@@ -209,6 +210,7 @@ function API.createSuperTable(cd)
             debugf(LVM.debug.super, '[SUPER] :: %s Entering super context via call', cd.printHeader);
         end
 
+
         local args = { ... };
         table.remove(args, 1);
 
@@ -220,6 +222,11 @@ function API.createSuperTable(cd)
 
         if who then
             if who.__type__ == 'ConstructorDefinition' then
+                -- Let upstream calls know super was invoked.
+                LVM.stepIn();
+                super.__call_count__ = super.__call_count__ + 1;
+                LVM.stepOut();
+
                 return __callConstructor(o, args);
             elseif who.__type__ == 'MethodDefinition' then
                 return __callMethod(o, who.name, args);

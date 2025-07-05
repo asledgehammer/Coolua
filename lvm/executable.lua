@@ -618,18 +618,34 @@ function API.createMiddleConstructor(classDef)
                 local retValue;
 
                 LVM.stepIn();
-                cons.__super_flag__ = false;
+                local currentSuperCount = o.super.__call_count__;
                 local lastWho = o.super.__who__;
                 o.super.__who__ = cons;
                 LVM.stepOut();
 
                 retValue = cons.super(o, unpack(args));
 
+                -- Make sure that super was invoked once.
+                if o.super.__call_count__ == currentSuperCount + 1 then
+                    o.super.__call_count__ = currentSuperCount;
+                elseif o.super.__call_count__ > currentSuperCount + 1 then
+                    o.super.__call_count__ = currentSuperCount;
+                    errorf(2, '%s The super-block of the constructor called self:super() more than once.',
+                        classDef.printHeader
+                    );
+                else
+                    o.super.__call_count__ = currentSuperCount;
+                    errorf(2, '%s The super-block of the constructor did not call self:super().',
+                        classDef.printHeader
+                    );
+                end
+
                 -- Reset super-invoke flags.
                 LVM.stepIn();
                 cons.__super_flag__ = false;
                 o.super.__who__ = lastWho;
                 LVM.stepOut();
+
 
                 -- Make sure that constructors don't return anything.
                 if retValue ~= nil then

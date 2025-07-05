@@ -61,7 +61,7 @@ Rectangle:addConstructor {
     --- @param width number
     --- @param height number
     super = function(self, x, y, width, height)
-        print('Rectangle(x, y, width, height) super');
+        self:super(width, height);
         self:super(width, height);
     end,
 
@@ -71,7 +71,6 @@ Rectangle:addConstructor {
     --- @param width number
     --- @param height number
     body = function(self, x, y, width, height)
-        print('Rectangle(x, y, width, height) body');
         self.x = x;
         self.y = y;
     end
