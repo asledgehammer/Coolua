@@ -62,7 +62,6 @@ Rectangle:addConstructor {
     --- @param height number
     super = function(self, x, y, width, height)
         self:super(width, height);
-        self:super(width, height);
     end,
 
     --- @param self Rectangle
