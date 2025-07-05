@@ -25,15 +25,23 @@ Dimension:addField({
 
 Dimension:addConstructor({
     scope = 'public',
+
     parameters = {
         { type = 'number', name = 'width' },
         { type = 'number', name = 'height' },
     },
 
     --- @param self Dimension
+    super = function(self)
+        print('Dimension(width, height) super');
+        self:super();
+    end,
+
+    --- @param self Dimension
     --- @param width number
     --- @param height number
     body = function(self, width, height)
+        print('Dimension(width, height) body');
         self.width = width;
         self.height = height;
     end

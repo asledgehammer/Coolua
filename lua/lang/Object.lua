@@ -22,6 +22,16 @@ LVM.flags.ignorePushPopContext = false;
 
 Object:addConstructor({
     scope = 'public',
+
+    --- @param self Class
+    super = function(self)
+        print('Invoke Object super');
+        self:super();
+    end,
+
+    body = function()
+
+    end
 });
 
 Object:addMethod({
@@ -68,7 +78,7 @@ Object:addMethod({
     ---
     --- @return string
     body = function(self)
-        return 'LuaClass: ' .. self.__type__;
+        return 'LuaClass: ' .. tostring(self.__type__);
     end
 });
 

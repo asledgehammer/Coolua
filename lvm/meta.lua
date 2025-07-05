@@ -37,13 +37,8 @@ function API.createInstanceMetatable(cd, o)
 
     mt.__index = function(_, field)
         -- Super is to be treated differently / internally.
-        if field == '__super__' then
-            if not LVM.flags.canGetSuper then
-                errorf(2, '%s Cannot get __super__. (Internal field)');
-            end
+        if field == 'super' then
             return fields[field];
-        elseif field == 'super' then
-            return rawget(o, '__super__');
         elseif field == '__class__' then
             return fields[field];
         end
@@ -100,13 +95,13 @@ function API.createInstanceMetatable(cd, o)
         -- TODO: Type-checking.
 
         if field == 'super' then
-            if not LVM.flags.canSetSuper then
+            if LVM.isOutside() then
                 errorf(2, '%s Cannot set super(). (Reserved method)', cd.printHeader);
             end
             fields.super = value;
             return;
         elseif field == '__super__' then
-            if not LVM.flags.canSetSuper then
+            if LVM.isOutside() then
                 errorf(2, '%s Cannot set __super__. (Internal field)', cd.printHeader);
             end
             fields.__super__ = value;
@@ -128,8 +123,6 @@ function API.createInstanceMetatable(cd, o)
         end
 
         local level, relPath = LVM.scope.getRelativePath();
-
-        -- printf('# USING LEVEL %i: %s', level, relPath);
 
         LVM.stack.pushContext({
             class = cd,

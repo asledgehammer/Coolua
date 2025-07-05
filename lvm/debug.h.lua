@@ -14,4 +14,5 @@
 --- @field pkg boolean
 --- @field interface boolean
 --- @field constructor boolean
+--- @field super boolean
 local API = {};

@@ -50,6 +50,14 @@ Package:addConstructor({
     parameters = {
         { name = 'path', type = 'string' }
     },
+    
+    --- @param self Package
+    super = function(self)
+        self:super();
+    end,
+
+    --- @param self Package
+    --- @param path string
     body = function(self, path)
         local split = path:split('.');
         local name = table.remove(split, #split);

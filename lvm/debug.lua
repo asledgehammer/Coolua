@@ -18,6 +18,7 @@ local API = {
     pkg = false,
     interface = false,
     constructor = false,
+    super = false,
 
     -- Method(s)
     --- @param lvm LVM

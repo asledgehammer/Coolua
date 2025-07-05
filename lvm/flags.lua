@@ -12,9 +12,7 @@ local API = {
     -- Field(s)
     allowPackageStructModifications = false,
     bypassFieldSet = false,
-    canGetSuper = false,
     canSetAudit = false,
-    canSetSuper = false,
     ignorePushPopContext = false,
     internal = 0,
 

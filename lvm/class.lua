@@ -185,7 +185,7 @@ function API.newClass(definition, outer)
         end
 
         local o = {
-            __type__ = cd.type,
+            __type__ = 'ClassInstance',
             __class__ = __class__,
         };
 
@@ -194,10 +194,6 @@ function API.newClass(definition, outer)
             --- @diagnostic disable-next-line
             o[name] = func;
         end
-
-        LVM.flags.canSetSuper = true;
-        o.__super__ = LVM.super.createSuperTable(cd, o);
-        LVM.flags.canSetSuper = false;
 
         o.getClass = function(self)
             if not self.__class__ then
@@ -215,7 +211,6 @@ function API.newClass(definition, outer)
             if not fd.static then
                 -- TODO: Make unique.
                 o[fd.name] = fd.value;
-                -- print(string.format('Field: o[%s] = %s', fd.name, tostring(fd.value)));
             end
         end
 
@@ -223,7 +218,6 @@ function API.newClass(definition, outer)
         for name, func in pairs(middleMethods) do
             --- @diagnostic disable-next-line
             o[name] = func;
-            -- print(string.format('Method: o[%s] = %s', name, tostring(func)));
         end
 
         LVM.meta.createInstanceMetatable(cd, o);
@@ -395,22 +389,22 @@ function API.newClass(definition, outer)
         --             return ins[args.name];
         --         end
         --     };
-        -- 
+        --
         --     if tGet == 'boolean' then
-        -- 
+        --
         --     elseif tGet == 'table' then
         --         --- @type FieldGetDefinition
         --         local getDef = args.get;
-        -- 
+        --
         --         if mGetDef.scope then
         --             mGetDef.scope = getDef.scope;
         --         end
-        -- 
+        --
         --         if mGetDef.body then
         --             mGetDef.body = getDef.body;
         --         end
         --     end
-        -- 
+        --
         --     cd:addMethod(mGetDef);
         -- end
 
@@ -461,13 +455,16 @@ function API.newClass(definition, outer)
     -- MARK: - Constructor
 
     --- @param constructorDefinition ConstructorDefinitionParameter
-    --- @param func function?
     ---
     --- @return ConstructorDefinition
     function cd:addConstructor(constructorDefinition)
         -- Some constructors are empty. Allow this to be optional.
         local body = constructorDefinition.body;
         if not body then body = function() end end
+
+        -- If the super-call is not there, then write
+        local _super = constructorDefinition.super;
+        if not _super then _super = LVM.executable.defaultSuperFunc end
 
         -- Friendly check for implementation.
         if not self or type(constructorDefinition) == 'function' then
@@ -499,7 +496,12 @@ function API.newClass(definition, outer)
             class = cd,
             scope = constructorDefinition.scope or 'package',
             parameters = parameters,
-            body = body
+
+            -- * Function properties * --
+            body = body,
+            bodyInfo = LVM.executable.getExecutableInfo(body),
+            super = _super,
+            superInfo = LVM.executable.getExecutableInfo(_super),
         };
 
         args.signature = LVM.executable.createSignature(args);
@@ -793,21 +795,22 @@ function API.newClass(definition, outer)
             end
         end
 
-        --- @type table<ParameterDefinition[], function>
-        self.__constructors = {};
+        self.__supertable__ = LVM.super.createSuperTable(cd);
+
+        -- - @type table<ParameterDefinition[], function>
+        -- self.__constructors = {};
 
         -- Set all definitions as read-only.
-        local constructorsLen = #self.declaredConstructors;
-        if constructorsLen ~= 0 then
-            for i = 1, constructorsLen do
-                --- @type ConstructorDefinition
-                local constructor = self.declaredConstructors[i];
-                self.__constructors[constructor.parameters] = constructor.func;
-
-                -- Set read-only.
-                self.declaredConstructors[i] = readonly(constructor);
-            end
-        end
+        -- local constructorsLen = #self.declaredConstructors;
+        -- if constructorsLen ~= 0 then
+        --     for i = 1, constructorsLen do
+        --         --- @type ConstructorDefinition
+        --         local constructor = self.declaredConstructors[i];
+        --         self.__constructors[constructor.parameters] = constructor.func;
+        --         -- Set read-only.
+        --         self.declaredConstructors[i] = readonly(constructor);
+        --     end
+        -- end
 
         self.__middleMethods = {};
 

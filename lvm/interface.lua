@@ -398,7 +398,6 @@ function IAPI.finalize(self)
                 errorf(2, 'Cannot set inner struct explicitly. Use the API.');
             end
 
-            -- print('setting inner-class: ', field, tostring(value));
             __properties[field] = value;
 
             return;

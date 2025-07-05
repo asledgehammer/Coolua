@@ -65,11 +65,11 @@ local Rectangle = class {
             { name = 'height', type = 'number' }
         },
 
-        --- @param super SuperTable
+        --- @param self Rectangle
         --- @param width number
         --- @param height number
-        super = function(super, _, _, width, height)
-            super(width, height);
+        super = function(self, _, _, width, height)
+            self:super(width, height);
         end,
 
         --- @param self Rectangle
@@ -78,7 +78,6 @@ local Rectangle = class {
         --- @param width number
         --- @param height number
         body = function(self, x, y, width, height)
-            self:super(width, height);
             self.x = x;
             self.y = y;
         end

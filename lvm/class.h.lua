@@ -52,6 +52,7 @@
 
 --- @class (exact) ClassStructDefinition: HierarchicalStructDefinition, Genericable, Constructable, Fieldable, Staticable, Abstractable, Auditable
 --- @field __type__ 'ClassStructDefinition'
+--- @field __supertable__ SuperTable
 --- @field printHeader string
 --- @field type string
 --- @field lock boolean
@@ -108,7 +109,7 @@ function ClassStructDefinition:getDeclaredConstructor(args) end
 --- @return MethodDefinition
 function ClassStructDefinition:addMethod(definition) end
 
---- @param definition ClassMethodDefinitionParameter
+--- @param definition ClassAbstractMethodDefinitionParameter
 ---
 --- @return MethodDefinition
 function ClassStructDefinition:addAbstractMethod(definition) end

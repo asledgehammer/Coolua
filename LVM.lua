@@ -118,6 +118,7 @@ LVM = {
     end
 };
 
+LVMUtils.setLVM(LVM);
 LVM.debug.setLVM(LVM);
 LVM.enum.setLVM(LVM);
 LVM.constants.setLVM(LVM);
@@ -150,7 +151,6 @@ function LVM.forName(path)
 
     if not class then
         local def = LVM.DEFINITIONS[path];
-        -- printf('LVM.DEFINITIONS[%s] = %s', path, tostring(def));
         if def and (
                 def.__type__ == 'ClassStructDefinition' or
                 def.__type__ == 'InterfaceStructDefinition' or

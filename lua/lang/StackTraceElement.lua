@@ -50,7 +50,12 @@ StackTraceElement:addConstructor({
         { name = 'element', type = 'any' }
     },
 
-    --- @param self any
+    --- @param self StackTraceElement
+    super = function(self)
+        self:super();
+    end,
+
+    --- @param self StackTraceElement
     --- @param path string
     --- @param line number
     --- @param class any
@@ -117,8 +122,8 @@ StackTraceElement:addMethod({
             end
         end
         return string.format('%s:%s:',
-            path,
-            line
+            tostring(path),
+            tostring(line)
         );
     end
 })

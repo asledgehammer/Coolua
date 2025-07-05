@@ -13,7 +13,8 @@ local paramsToString = LVMUtils.paramsToString;
 --- @type LVM
 local LVM;
 
-local API = {
+local API;
+API = {
 
     __type__ = 'LVMModule',
 
@@ -21,6 +22,7 @@ local API = {
     setLVM = function(lvm)
         LVM = lvm;
         LVM.moduleCount = LVM.moduleCount + 1;
+        API.defaultSuperFuncInfo = API.getExecutableInfo(API.defaultSuperFunc);
     end
 };
 
@@ -181,6 +183,7 @@ function API.resolveMethodDeep(methods, args)
 end
 
 function API.createMiddleMethod(cd, name, methods)
+    --- @param o ClassInstance
     return function(o, ...)
         local args = { ... };
         local md = API.resolveMethod(cd, name, methods, args);
@@ -220,15 +223,16 @@ function API.createMiddleMethod(cd, name, methods)
             return;
         end
 
+        local lastWho;
         local lastSuper;
         if o then
             --- Apply super.
-            LVM.flags.canGetSuper = true;
-            LVM.flags.canSetSuper = true;
+            LVM.stepIn();
             lastSuper = o.super;
-            o.super = o.__super__;
-            LVM.flags.canGetSuper = false;
-            LVM.flags.canSetSuper = false;
+            o.super = cd.__supertable__;
+            lastWho = o.super.__who__;
+            o.super.__who__ = md;
+            LVM.stepOut();
         end
 
         local retVal = nil;
@@ -243,9 +247,10 @@ function API.createMiddleMethod(cd, name, methods)
 
         if o then
             --- Revert super.
-            LVM.flags.canSetSuper = true;
+            LVM.stepIn();
+            o.super.__who__ = lastWho;
             o.super = lastSuper;
-            LVM.flags.canSetSuper = false;
+            LVM.stepOut();
         end
 
         -- Audit void type methods.
@@ -551,23 +556,31 @@ end
 
 function API.createMiddleConstructor(classDef)
     return function(o, ...)
+        if o.__type__ == 'SuperTable' then
+            error('ClassInstance was not passed and instead the SuperTable.', 2);
+        end
+
         local args = { ... } or {};
         local cons = classDef:getDeclaredConstructor(args);
 
         if not cons then
-            errorf(2, '%s No constructor signature exists: %s', classDef.printHeader, LVM.print.argsToString(args));
+            local errMsg = string.format('%s No constructor signature exists: %s',
+                classDef.printHeader, LVM.print.argsToString(args)
+            );
+            print(errMsg);
+            error(errMsg, 2);
             return;
         end
+
+        local level, relPath = LVM.scope.getRelativePath();
 
         LVM.stack.pushContext({
             class = classDef,
             element = cons,
             context = 'constructor',
-            line = DebugUtils.getCurrentLine(3),
-            path = DebugUtils.getPath(3)
+            line = DebugUtils.getCurrentLine(level),
+            path = DebugUtils.getPath(level)
         });
-
-        local level, relPath = LVM.scope.getRelativePath();
 
         local callInfo = DebugUtils.getCallInfo(3, LVM.ROOT_PATH, true);
         callInfo.path = relPath;
@@ -587,14 +600,55 @@ function API.createMiddleConstructor(classDef)
         end
 
         --- Apply super.
-        LVM.flags.canGetSuper = true;
-        LVM.flags.canSetSuper = true;
+        LVM.stepIn();
         local lastSuper = o.super;
-        o.super = o.__super__;
-        LVM.flags.canGetSuper = false;
-        LVM.flags.canSetSuper = false;
+        o.super = classDef.__supertable__;
+        LVM.stepOut();
 
-        local result, errMsg = xpcall(function()
+        local result, errMsg;
+
+        -- This will always fail if ran. (No super context at root)
+        --
+        -- DEV NOTE: I explicitly check the path instead of `if not cd.super then .. end` to prevent deep errors
+        --           where the possibility of a nil-super class is not pointing to lua.lang.Object in which they
+        --           SHOULD. - Jab
+        --
+        if classDef.path ~= 'lua.lang.Object' then
+            result, errMsg = xpcall(function()
+                local retValue;
+
+                LVM.stepIn();
+                cons.__super_flag__ = false;
+                local lastWho = o.super.__who__;
+                o.super.__who__ = cons;
+                LVM.stepOut();
+
+                retValue = cons.super(o, unpack(args));
+
+                -- Reset super-invoke flags.
+                LVM.stepIn();
+                cons.__super_flag__ = false;
+                o.super.__who__ = lastWho;
+                LVM.stepOut();
+
+                -- Make sure that constructors don't return anything.
+                if retValue ~= nil then
+                    errorf(2, '%s Constructor super function returned non-nil value: {type = %s, value = %s}',
+                        classDef.printHeader,
+                        LVM.type.getType(retValue), tostring(retValue)
+                    );
+                    return;
+                end
+            end, debug.traceback);
+
+            -- If the constructor super function fails.
+            if not result then
+                LVM.stack.popContext();
+                error(errMsg, 2);
+            end
+        end
+
+        result, errMsg = xpcall(function()
             local retValue = cons.body(o, unpack(args));
 
             -- Make sure that constructors don't return anything.
@@ -613,9 +667,9 @@ function API.createMiddleConstructor(classDef)
         end, debug.traceback);
 
         --- Revert super.
-        LVM.flags.canSetSuper = true;
+        LVM.stepIn();
         o.super = lastSuper;
-        LVM.flags.canSetSuper = false;
+        LVM.stepOut();
 
         LVM.stack.popContext();
         if not result then error(errMsg) end
@@ -629,7 +683,9 @@ end
 --- @return ConstructorDefinition|nil method
 function API.getConstructorFromLine(self, path, line)
     for _, consDef in pairs(self.declaredConstructors) do
-        if path == consDef.path and line >= consDef.lineRange.start and line <= consDef.lineRange.stop then
+        if path == consDef.bodyInfo.path and
+            (line >= consDef.bodyInfo.start and line <= consDef.bodyInfo.stop) or
+            (line >= consDef.superInfo.start and line <= consDef.superInfo.stop) then
             return consDef;
         end
     end
@@ -702,6 +758,11 @@ function API.compile(defParams)
     end
 
     return defParams;
+end
+
+--- @param self Object
+function API.defaultSuperFunc(self)
+    self:super();
 end
 
 return API;

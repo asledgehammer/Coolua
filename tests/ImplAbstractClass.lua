@@ -14,10 +14,12 @@ ImplAbstractClass:addConstructor({ scope = 'public' });
 ImplAbstractClass:addMethod({
     scope = 'public',
     name = 'aMethod',
-    returns = 'void'
-}, function()
-    print('Running from implemented abstract class!');
-end);
+    returns = 'void',
+
+    body = function()
+        print('Running from implemented abstract class!');
+    end
+});
 
 ImplAbstractClass:finalize();
 

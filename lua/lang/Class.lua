@@ -70,6 +70,12 @@ Class:addConstructor({
             }
         }
     },
+
+    --- @param self Class
+    super = function(self)
+        self:super();
+    end,
+
     --- @param self Class
     --- @param definition ClassStructDefinition
     body = function(self, definition)

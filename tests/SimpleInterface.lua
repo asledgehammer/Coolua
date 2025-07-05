@@ -31,7 +31,7 @@ SimpleInterface:addStaticMethod({
     name = 'aStaticMethod',
 
     body = function()
-        print('Hello from a static method!');
+        print('Hello from a static interface method!');
     end
 });
 

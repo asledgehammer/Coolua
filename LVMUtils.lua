@@ -2,14 +2,31 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local API = {};
+--- @type LVM
+local LVM;
+
+local API = {
+    --- @param lvm LVM
+    setLVM = function(lvm)
+        LVM = lvm;
+    end
+};
 
 local meta;
 function API.readonly(table)
     meta = getmetatable(table) or {};
+
+    local __newindex = function(_, field, value)
+        if LVM.isOutside() then
+            error('Attempt to modify read-only object.', 2);
+        end
+
+        table[field] = value;
+    end
+
     return setmetatable({}, {
         __index     = table,
-        __newindex  = function() error('Attempt to modify read-only object.', 2) end,
+        __newindex  = __newindex,
         __metatable = false,
         __add       = meta.__add,
         __sub       = meta.__sub,
@@ -73,7 +90,7 @@ end
 
 --- @param self string
 --- @param str string
---- 
+---
 --- @return boolean
 function string.startsWith(self, str)
     return string.find(self, str, 1, true) == 1;
@@ -408,9 +425,9 @@ function API.createClassMetatable(o)
 end
 
 --- Converts the first character to upper. (Used for get-set shorthand)
---- 
+---
 --- @param str string
---- 
+---
 --- @return string firstCharUpperString
 function API.firstCharToUpper(str)
     return string.upper(string.sub(str, 1, 1)) .. string.sub(str, 2);

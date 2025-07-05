@@ -48,9 +48,11 @@
 
 --- @class (exact) ConstructorDefinition: ExecutableDefinition
 --- @field __type__ 'ConstructorDefinition'
+--- @field __super_flag__ boolean Used internally to track calls to super while invoked.
 --- @field class ClassStructDefinition
 --- @field parameters ParameterDefinition[]
---- @field super fun(super: SuperTable, ...) This function is called prior to the body function.
+--- @field super fun(o: any, ...) This function is called prior to the body function.
+--- @field superInfo FunctionInfo The super function's information. (line-range and path)
 --- @field body fun(o: any, ...) TODO: Rename as `body`.
 
 --- @class (exact) ConstructorDefinitionParameter
@@ -74,6 +76,7 @@
 -- MARK: - Module
 
 --- @class LVMExecutableModule: LVMModule
+--- @field defaultSuperFuncInfo FunctionInfo
 local API = {};
 
 --- @param classDef StructDefinition
@@ -194,3 +197,8 @@ function API.isVararg(arg) end
 ---
 --- @return ParameterDefinition
 function API.compile(defParams) end
+
+--- Used to fill-in for missing super function blocks for constructors.
+---
+--- @param super SuperTable
+function API.defaultSuperFunc(super) end

@@ -2,6 +2,8 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+local LVM = require 'LVM';
+
 local LuaClass = require 'LuaClass';
 local newClass = LuaClass.newClass;
 
@@ -39,7 +41,6 @@ Rectangle:addConstructor {
 
     --- @param o Rectangle
     body = function(o)
-        o:super();
         o.x = 0;
         o.y = 0;
     end
@@ -56,11 +57,12 @@ Rectangle:addConstructor {
         { name = 'height', type = 'number' }
     },
 
-    --- @param super SuperTable
+    --- @param self Rectangle
     --- @param width number
     --- @param height number
-    super = function(super, _, _, width, height)
-        super(width, height);
+    super = function(self, x, y, width, height)
+        print('Rectangle(x, y, width, height) super');
+        self:super(width, height);
     end,
 
     --- @param self Rectangle
@@ -69,7 +71,7 @@ Rectangle:addConstructor {
     --- @param width number
     --- @param height number
     body = function(self, x, y, width, height)
-        self:super(width, height);
+        print('Rectangle(x, y, width, height) body');
         self.x = x;
         self.y = y;
     end
@@ -84,7 +86,7 @@ Rectangle:addMethod {
 
     --- @param self Rectangle
     body = function(self)
-        return self:getX() .. ', ' .. self:getY() .. ', ' .. self:super();
+        return self:getX() .. ', ' .. self:getY() .. ', ' .. tostring(self:super());
     end
 };
 

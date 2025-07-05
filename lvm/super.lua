@@ -6,6 +6,7 @@ local DebugUtils = require 'DebugUtils';
 
 local LVMUtils = require 'LVMUtils';
 local errorf = LVMUtils.errorf;
+local debugf = LVMUtils.debugf;
 local paramsToString = LVMUtils.paramsToString;
 local argsToString = LVMUtils.arrayToString;
 
@@ -24,8 +25,12 @@ local API = {
     end
 };
 
-function API.createSuperTable(cd, o)
-    local super = {};
+function API.createSuperTable(cd)
+    local super = {
+        __type__ = 'SuperTable',
+        __flag__ = false,
+    };
+
     local mt = getmetatable(super) or {};
 
     -- Assign all middle-functions for the super-class here.
@@ -35,17 +40,25 @@ function API.createSuperTable(cd, o)
         return string.format('SuperTable(%s)', cd.path);
     end
 
-    mt.__index = function(_, key)
-        if not properties.__middleMethods[key] then
-            errorf(2, '%s No super-method exists: %s', cd.printHeader, tostring(key));
+    mt.__index = function(tbl, field)
+        if LVM.isInside() then
+            return rawget(tbl, field);
+        else
+            if not properties.__middleMethods[field] then
+                errorf(2, '%s No super-method exists: %s', cd.printHeader, tostring(field));
+            end
         end
-        return properties.__middleMethods[key];
+        -- return properties.__middleMethods[field];
     end;
 
     -- Make SuperTables readonly.
 
-    function mt.__newindex()
-        errorf(2, '%s Cannot modify SuperTable. (readonly)', cd.printHeader);
+    function mt.__newindex(tbl, field, value)
+        if LVM.isInside() then
+            rawset(tbl, field, value);
+        else
+            errorf(2, '%s Cannot modify SuperTable. (readonly)', cd.printHeader);
+        end
     end
 
     local superClass = cd.super;
@@ -62,21 +75,23 @@ function API.createSuperTable(cd, o)
 
     -- Copy middle-constructor.
     properties.super = super;
-    properties.__middleConstructor = cd.__middleConstructor;
+    properties.__middleConstructor = superClass.__middleConstructor;
 
     -- Copy middle-methods.
     properties.__middleMethods = superClass.__middleMethods;
-    -- local ssd = superClass;
-    -- while ssd do
-    --     for k, v in pairs(cd.super.__middleMethods) do
-    --         properties.__middleMethods[k] = v;
-    --     end
-    --     ssd = ssd.super;
-    -- end
 
     -- Assign / discover the inferred method in the super-class.
 
     local function __callConstructor(o, args)
+        if cd.path ~= 'lua.lang.StackTraceElement' then
+            debugf(LVM.debug.super, '[SUPER] :: %s Entering super constructor context', cd.printHeader);
+        end
+
+        if cd.path == 'lua.lang.Object' then
+            debugf(LVM.debug.super, 'IGNORING object super call in chain.');
+            return;
+        end
+
         local constructorDefinition = superClass:getConstructor(args);
         if not constructorDefinition then
             errorf(2, '%s Unknown super-constructor: %s', cd.printHeader, argsToString(args));
@@ -110,27 +125,25 @@ function API.createSuperTable(cd, o)
             return;
         end
 
-        local result, errMsg = xpcall(function()
-            local retValue = constructorDefinition.body(o, unpack(args));
+        LVM.stepIn();
+        if super.__who__ then
+            super.__who__.__super_flag__ = true;
+        else
+            error('super.__who__ is nil!', 2);
+        end
+        LVM.stepOut();
 
-            -- Make sure that constructors don't return anything.
-            if retValue ~= nil then
-                errorf(2, '%s Constructor returned non-nil value: {type = %s, value = %s}',
-                    cd.printHeader,
-                    LVM.type.getType(retValue), tostring(retValue)
-                );
-                return;
-            end
-
-            -- Make sure that final fields are initialized post-constructor.
-            LVM.audit.auditFinalFields(cd, o);
-        end, debug.traceback);
-
-        LVM.stack.popContext();
-        if not result then error(errMsg) end
+        --- ClassInstance is below the Object layer.
+        if cd.path ~= 'lua.lang.Object' then
+            return superClass.__middleConstructor(o, unpack(args));
+        end
     end
 
-    local function __callMethod(name, args)
+    local function __callMethod(o, name, args)
+        if cd.path ~= 'lua.lang.StackTraceElement' then
+            debugf(LVM.debug.super, '[SUPER] :: %s Entering super method context', cd.printHeader);
+        end
+
         --- @type MethodDefinition|nil
         local md = superClass:getMethod(name, args);
 
@@ -183,26 +196,37 @@ function API.createSuperTable(cd, o)
         return retVal;
     end
 
-    function mt.__call(_, ...)
+    function mt.__call(o, ...)
+        local args = { ... };
+
+        -- Not sure what's causing this situation. If the first arg is the supertable,
+        --   remove it.
+        if o.__type__ == 'SuperTable' then
+            o = table.remove(args, 1);
+        end
+
+        if cd.path ~= 'lua.lang.StackTraceElement' then
+            debugf(LVM.debug.super, '[SUPER] :: %s Entering super context via call', cd.printHeader);
+        end
+
         local args = { ... };
         table.remove(args, 1);
 
-        local ste = LVM.stack.getContext();
+        -- TODO: Write `__who__` for methods.
 
-        -- Make sure that super can only be called in the context of the class.
-        if not ste then
-            errorf(2, '%s No super context.', cd.printHeader);
-            return;
+        LVM.stepIn();
+        local who = super.__who__;
+        LVM.stepOut();
+
+        if who then
+            if who.__type__ == 'ConstructorDefinition' then
+                return __callConstructor(o, args);
+            elseif who.__type__ == 'MethodDefinition' then
+                return __callMethod(o, who.name, args);
+            end
         end
 
-        local context = ste:getContext();
-
-        if context == 'constructor' then
-            __callConstructor(o, args);
-        elseif context == 'method' then
-            local element = ste:getElement();
-            return __callMethod(element.name, args);
-        end
+        errorf(2, '%s No who context for super.', cd.name);
     end
 
     setmetatable(super, mt);
