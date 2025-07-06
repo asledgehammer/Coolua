@@ -8,6 +8,8 @@
 local ObjectDefinition = {};
 
 --- Empty constructor
+--- 
+--- @return Object
 function ObjectDefinition.new() end
 
 --- @class Object: ClassInstance
