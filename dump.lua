@@ -2,7 +2,19 @@ local LVMUtils = require 'LVMUtils';
 
 local dump = {};
 
-function dump.array(a, level, maxLevel)
+local function isDiscovered(discovered, e)
+    for i = 1, #discovered do
+        if discovered[i] == e then
+            return true;
+        end
+    end
+    return false;
+end
+
+function dump.array(a, level, maxLevel, discovered)
+    discovered = discovered or {};
+    table.insert(discovered, a);
+
     level = level or 0;
     maxLevel = maxLevel or 10;
 
@@ -29,7 +41,10 @@ function dump.array(a, level, maxLevel)
     return string.format('%s[\n%s\n' .. indent0 .. ']', tag, s);
 end
 
-function dump.table(t, level, maxLevel)
+function dump.table(t, level, maxLevel, discovered)
+    discovered = discovered or {};
+    table.insert(discovered, t);
+
     level = level or 0;
     maxLevel = maxLevel or 10;
 
@@ -58,9 +73,9 @@ function dump.table(t, level, maxLevel)
         if key ~= '__type__' then
             local sKey = key;
             if type(key) == 'number' then
-                sKey = '['..key..']'
+                sKey = '[' .. key .. ']'
             end
-            local e = string.format('%s = %s', tostring(sKey), dump.any(value, level + 1, maxLevel));
+            local e = string.format('%s = %s', tostring(sKey), dump.any(value, level + 1, maxLevel, discovered));
             if s == '' then
                 s = indent1 .. e;
             else
@@ -96,7 +111,17 @@ function dump.class(c)
     return 'Class <' .. c.path .. '>';
 end
 
-function dump.any(e, level, maxLevel)
+function dump.discovered()
+    return '<cyclic>';
+end
+
+function dump.any(e, level, maxLevel, discovered)
+    discovered = discovered or {};
+
+    if isDiscovered(discovered, e) then
+        return dump.discovered();
+    end
+
     level = level or 0;
     maxLevel = maxLevel or 10;
 
@@ -109,9 +134,9 @@ function dump.any(e, level, maxLevel)
         if e.__type__ and e.__type__ == 'ClassStructDefinition' then
             return dump.class(e);
         elseif LVMUtils.isArray(e) then
-            return dump.array(e, level, maxLevel);
+            return dump.array(e, level, maxLevel, discovered);
         else
-            return dump.table(e, level, maxLevel);
+            return dump.table(e, level, maxLevel, discovered);
         end
     elseif t == 'string' then
         return dump.string(e);
