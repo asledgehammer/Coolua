@@ -60,7 +60,7 @@ function dump.table(t, level, maxLevel)
             if type(key) == 'number' then
                 sKey = '['..key..']'
             end
-            local e = string.format('%s = %s', sKey, dump.any(value, level + 1, maxLevel));
+            local e = string.format('%s = %s', tostring(sKey), dump.any(value, level + 1, maxLevel));
             if s == '' then
                 s = indent1 .. e;
             else
