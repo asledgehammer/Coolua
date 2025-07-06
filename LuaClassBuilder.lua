@@ -20,6 +20,36 @@ local void = 'void';
 --- @field types string[]
 --- @field value any
 
+--- @param struct table
+local function compileFlags(struct, appliedStruct)
+    local flags = struct.flags;
+
+    for i = 1, #flags do
+        local flag = flags[i];
+
+        -- If scope, apply as such. Check if defined already.
+        if flag == 'public' or flag == 'protected' or flag == 'private' then
+            if appliedStruct.scope then
+                errorf(2, 'Scope is already provided and cannot be redefined: %s (Given: %s)',
+                    appliedStruct.scope, flag
+                );
+            end
+            appliedStruct.scope = flag;
+        elseif flag == 'static' then
+            errorf(2, 'Static flags cannot be assigned. They must be defined in a "static {}" block.');
+        else
+            appliedStruct[flags[i]] = true;
+        end
+    end
+
+    -- (Default scope)
+    if not appliedStruct.scope then
+        appliedStruct.scope = 'package';
+    end
+
+    appliedStruct.flags = nil;
+end
+
 local function merge(...)
     local result = {};
     for _, t in ipairs({ ... }) do
@@ -88,11 +118,6 @@ local mt_property = {
             __tostring = mt_tostring
         });
     end,
-    __tostring = mt_tostring
-};
-
-local mt_method_preset = {
-    __call = mt_property_body,
     __tostring = mt_tostring
 };
 
@@ -182,19 +207,55 @@ local mt_class_body = function(self, ...)
     end
 
     --- @type ClassStructDefinitionParameter
-    local apiArgs = { name = self.name };
+    local clsArgs = {
+        name = self.name,
+        extends = self.extends,
+    };
 
     -- Build class flags.
-    for i = 1, #self.flags do
-        apiArgs[self.flags[i]] = true;
+    compileFlags(self, clsArgs);
+
+    local cls = LVM.class.newClass(clsArgs);
+
+    -- Build fields.
+    for name, field in pairs(self.fields) do
+        compileFlags(field, field);
+        print(name, dump.any(field));
+        cls:addField(field);
     end
 
-    local cls = LVM.class.newClass(apiArgs);
+    -- Build constructors.
+    local constructorLen = #self.constructors;
+    if constructorLen ~= 0 then
+        for i = 1, constructorLen do
+            local consArgs = self.constructors[i];
+            compileFlags(consArgs, consArgs);
+            cls:addConstructor(consArgs);
+        end
+    end
+
+    -- Build methods.
+    for name, method in pairs(self.methods) do
+        compileFlags(method, method);
+        local md;
+        if method.abstract then
+            cls:addAbstractMethod(method);
+        else
+            cls:addMethod(method);
+        end
+    end
+
+    -- Build static field(s).
+    for name, field in pairs(self.static.fields) do
+        cls:addStaticField(field);
+    end
+
+    -- Build static method(s).
+    for name, method in pairs(self.static.methods) do
+        cls:addStaticMethod(method);
+    end
 
     -- TODO: Add Static Blocks.
-    -- TODO: Add Fields.
-    -- TODO: Add Methods;
-    -- TODO: Add Constructors.
     -- TODO: Add inner classes.
     -- TODO: Add inner interfaces.
     -- TODO: Add inner enums.
@@ -349,13 +410,7 @@ end
 
 -- MARK: - Method
 
-local mt_method_body = function(self, args)
-    -- for k, v in pairs(args) do
-    --     if type(k) ~= 'number' then
-    --         print(k, v);
-    --     end
-    -- end
-
+local function processMethodArgs(self, args)
     for i = 1, #args do
         local arg = args[i];
         local targ = type(arg);
@@ -398,7 +453,10 @@ local mt_method_body = function(self, args)
     if not self.returns then
         self.returns = { void };
     end
+end
 
+local mt_method_body = function(self, args)
+    processMethodArgs(self, args);
     return self;
 end;
 
@@ -417,7 +475,7 @@ local mt_method = {
 };
 
 local mt_method_preset = {
-    __call = mt_property_body,
+    __call = mt_method_body,
     __tostring = mt_tostring
 };
 
@@ -450,15 +508,14 @@ end
 
 local function createMethodTemplate(name, flags, properties)
     return function(t)
-        local body = properties;
-        body.body = getPresetMethodBody(name, t);
-
-        return setmetatable({
+        local t2 = {
             __type__ = 'MethodTable',
             name = name,
             flags = flags,
-            body = body,
-        }, mt_method_preset);
+            body = getPresetMethodBody(name, t)
+        };
+        processMethodArgs(t2, properties);
+        return setmetatable(t2, mt_method_preset);
     end
 end
 
@@ -519,7 +576,7 @@ local mt_constructor = {
                 end
                 -- Apply parameters.
                 if arg.__type__ == 'ParametersTable' then
-                    self.value = arg;
+                    self.parameters = arg;
                 else
                     errorf(2, 'Unknown Table entry for constructor. {type = %s, value = %s}',
                         arg.__type__, dump.any(arg)
@@ -532,6 +589,7 @@ local mt_constructor = {
                 );
             end
         end
+
         return setmetatable(self, {
             -- __call = mt_property_body,
             __tostring = mt_tostring
@@ -542,9 +600,10 @@ local mt_constructor = {
 
 --- @return table
 local function constructor(...)
+    local flags = { ... };
     return setmetatable({
         __type__ = 'ConstructorTable',
-        flags = { ... },
+        flags = flags,
     }, mt_constructor);
 end
 

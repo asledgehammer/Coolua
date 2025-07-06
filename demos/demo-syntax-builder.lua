@@ -27,7 +27,7 @@ local final = builder.final;
 local abstract = builder.abstract;
 -- ------------------------------------ --
 
-local Dimension = class 'Dimension' (public) {
+local Dimension, scaffolding = class 'Dimension' (public) {
 
     field 'width' (private) {
         properties {
@@ -164,4 +164,7 @@ local Rectangle = class 'Rectangle' (public) {
 
 -- print(dump.any(Rectangle.static.methods));
 
-print(Dimension);
+print(dump.any(scaffolding));
+
+-- print(Dimension);
+-- print(Rectangle);
