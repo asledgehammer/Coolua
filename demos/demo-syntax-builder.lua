@@ -53,7 +53,7 @@ local Dimension = class 'Dimension' (public) {
 
     constructor(public) {
 
-        parameters = {
+        parameters {
             { name = 'width',  type = 'number' },
             { name = 'height', type = 'number' }
         },
@@ -153,15 +153,15 @@ local Rectangle = class 'Rectangle' (public) {
 
     static {
         method 'sayHello' (public, final) {
-            properties {
-                returns 'void',
-            },
+            returns 'void',
 
-            body = function()
+            function()
                 print('Hello, World!');
             end
         }
     },
 };
 
-print(dump.any(Dimension.fields));
+-- print(dump.any(Rectangle.static.methods));
+
+print(Dimension);

@@ -12,6 +12,8 @@ local protected = 'protected';
 local private = 'private';
 local abstract = 'abstract';
 local final = 'final';
+local default = 'default';
+local void = 'void';
 
 --- @class FieldProperties
 --- @field type string
@@ -96,10 +98,38 @@ local mt_method_preset = {
 
 -- MARK: - Static
 
-local function static(t)
+--- @param body table
+local function static(body)
+    for i = 1, #body do
+        local entry = body[i];
+        if type(entry) == 'table' then
+            if not entry.__type__ then
+                errorf(2, 'Entry #%i is not a struct. {value = %s}',
+                    i, dump.any(entry)
+                );
+            end
+            -- Set all valid bodies as static.
+            if entry.__type__ == 'FieldTable' then
+                table.insert(entry.flags, 'static');
+            elseif entry.__type__ == 'MethodTable' then
+                table.insert(entry.flags, 'static');
+            elseif entry.__type__ == 'ClassTable' then
+                table.insert(entry.flags, 'static');
+            elseif entry.__type__ == 'InterfaceTable' then
+                table.insert(entry.flags, 'static');
+            elseif entry.__type__ == 'EnumTable' then
+                table.insert(entry.flags, 'static');
+            else
+                errorf(2, 'Entry #%i is an unknown struct. {type = %s, value = %s}',
+                    i, entry.__type__, dump.any(entry)
+                )
+            end
+        end
+    end
+
     return {
         __type__ = 'StaticTable',
-        body = t
+        body = body
     };
 end
 
@@ -144,7 +174,34 @@ local mt_class_body = function(self, ...)
             end
         end
     end
-    return self;
+
+    -- Build the class arguments. --
+
+    if not self.name then
+        errorf(2, 'Class doesn\'t have a name!');
+    end
+
+    --- @type ClassStructDefinitionParameter
+    local apiArgs = { name = self.name };
+
+    -- Build class flags.
+    for i = 1, #self.flags do
+        apiArgs[self.flags[i]] = true;
+    end
+
+    local cls = LVM.class.newClass(apiArgs);
+
+    -- TODO: Add Static Blocks.
+    -- TODO: Add Fields.
+    -- TODO: Add Methods;
+    -- TODO: Add Constructors.
+    -- TODO: Add inner classes.
+    -- TODO: Add inner interfaces.
+    -- TODO: Add inner enums.
+
+    cls:finalize();
+
+    return cls, self;
 end;
 
 local mt_class = {
@@ -292,6 +349,78 @@ end
 
 -- MARK: - Method
 
+local mt_method_body = function(self, args)
+    -- for k, v in pairs(args) do
+    --     if type(k) ~= 'number' then
+    --         print(k, v);
+    --     end
+    -- end
+
+    for i = 1, #args do
+        local arg = args[i];
+        local targ = type(arg);
+
+        if targ == 'table' then
+            if not arg.__type__ then
+                errorf(2, 'Property #%i in method is not a struct. {value = %s}',
+                    i, dump.any(arg)
+                );
+            end
+
+            if arg.__type__ == 'ReturnsTable' then
+                self.returns = arg.value;
+            elseif arg.__type__ == 'PropertiesTable' then
+                -- TODO: Implement method properties. - Jab
+                error('Properties block in methods is not supported.', 2);
+            elseif arg.__type__ == 'ParametersTable' then
+                self.parameters = arg.value;
+            else
+                errorf(2, 'Property #%i is an unknown struct: %s {type = %s, value = %s}',
+                    i, arg.__type__, dump.any(arg)
+                );
+            end
+        elseif targ == 'function' then
+            if self.body then
+                error('Cannot define method body more than once.', 2);
+            end
+            self.body = arg;
+        end
+
+        -- for _, v2 in pairs(arg) do
+        --     table.insert(self.body, v2);
+        -- end
+    end
+
+    if not self.parameters then
+        self.parameters = {};
+    end
+
+    if not self.returns then
+        self.returns = { void };
+    end
+
+    return self;
+end;
+
+local mt_method = {
+    __call = function(self, ...)
+        local args = { ... };
+        for i = 1, #args do
+            table.insert(self.flags, args[i]);
+        end
+        return setmetatable(self, {
+            __call = mt_method_body,
+            __tostring = mt_tostring
+        });
+    end,
+    __tostring = mt_tostring
+};
+
+local mt_method_preset = {
+    __call = mt_property_body,
+    __tostring = mt_tostring
+};
+
 --- @param name string
 ---
 --- @return table
@@ -300,8 +429,7 @@ local function method(name)
         __type__ = 'MethodTable',
         name = name,
         flags = {},
-        body = {},
-    }, mt_property);
+    }, mt_method);
 end
 
 --- @return function
@@ -349,10 +477,60 @@ local toString = createMethodTemplate('toString', { public }, {
 -- MARK: - constructor
 
 local mt_constructor = {
-    __call = function(self, ...)
-        local args = { ... };
+    __call = function(self, args)
+        for k, v in pairs(args) do
+            if k == 'body' then
+                local tv = type(v);
+                if tv ~= 'function' then
+                    errorf(2, 'Property "body" of constructor is not a function. {type = %s, value = %s}',
+                        type(v),
+                        dump.any(v)
+                    );
+                end
+                self.body = v;
+            elseif k == 'super' then
+                local tv = type(v);
+                if tv ~= 'function' then
+                    errorf(2, 'Property "super" of constructor is not a function. {type = %s, value = %s}',
+                        type(v),
+                        dump.any(v)
+                    );
+                end
+                self.super = v;
+            elseif type(k) == 'string' then
+                errorf(2, 'Unknown property of constructor: %s {type = %s, value = %s}',
+                    k,
+                    type(v),
+                    dump.any(v)
+                );
+            end
+        end
+
         for i = 1, #args do
-            table.insert(self.body, args[i]);
+            local arg = args[i];
+            local targ = type(arg);
+
+            --Enforce strict struct arguments.
+            if targ == 'table' then
+                if not arg.__type__ then
+                    errorf(2, 'Table entry for constructor is not a struct. {type = %s, value = %s}',
+                        targ, dump.any(arg)
+                    );
+                end
+                -- Apply parameters.
+                if arg.__type__ == 'ParametersTable' then
+                    self.value = arg;
+                else
+                    errorf(2, 'Unknown Table entry for constructor. {type = %s, value = %s}',
+                        arg.__type__, dump.any(arg)
+                    );
+                end
+            else
+                errorf(2, 'Table entry #%i for constructor is unknown. {type = %s, value = %s}',
+                    i,
+                    targ, dump.any(arg)
+                );
+            end
         end
         return setmetatable(self, {
             -- __call = mt_property_body,
@@ -367,15 +545,82 @@ local function constructor(...)
     return setmetatable({
         __type__ = 'ConstructorTable',
         flags = { ... },
-        body = {},
     }, mt_constructor);
 end
 
 -- MARK: - Parameters
 
---- @param sOrT string|table
-local function parameters(sOrT)
+--- @param ... string[]|{name: string?, type: (string|table)?, types: (string|table)[]?}[]
+local function parameters(...)
+    local args = { ... };
+    local argsLen = #args;
 
+    local t = {
+        __type__ = 'ParametersTable',
+        value = {}
+    };
+
+    if argsLen == 0 then
+        return t;
+    end
+
+    for i = 1, argsLen do
+        local paramDef = args[i];
+        local tParamDef = type(paramDef);
+        if tParamDef == 'string' then
+            if paramDef == '' then
+                errorf(2, 'First parameter string is empty.');
+            end
+            -- One-arg array type.
+            table.insert(t.value, { types = { paramDef } });
+        elseif tParamDef == 'table' then
+            if not isArray(paramDef) then
+                errorf(2, 'Parameters is not an array.');
+            end
+
+            for j = 1, #paramDef do
+                local subParam = paramDef[j];
+                local tSubParam = type(subParam);
+
+                if tSubParam == 'string' then
+                    if subParam == '' then
+                        errorf(2, 'First parameter string is empty.');
+                    end
+                    -- One-arg array type.
+                    table.insert(t.value, { types = { subParam } });
+                elseif tParamDef == 'table' then
+                    if isArray(subParam) then
+                        print(dump.any(subParam));
+                        errorf(2, 'Parameter #%i cannot be an array.', j);
+                    end
+
+                    local name = subParam.name or string.format('param_%i', j);
+                    local type = subParam.type;
+                    local types = subParam.types;
+
+                    if types and type then
+                        errorf(2, 'Parameter #%i cannot define both "type" and "types".', j);
+                    elseif not type and types then
+                        errorf(2, 'Parameter #%i has no defined types.', j);
+                    elseif type then
+                        types = { type };
+                    elseif types then
+                        if not isArray(types) then
+                            errorf(2, "Parameter #%i is not an array.", j);
+                        end
+                    end
+
+                    table.insert(t.value, { name = name, types = types });
+                end
+            end
+
+            -- Process array here.
+        else
+            errorf(2, 'Parameters is not a proper definition.');
+        end
+    end
+
+    return t;
 end
 
 -- MARK: - Returns
@@ -384,7 +629,7 @@ end
 local function returns(e)
     return {
         __type__ = 'ReturnsTable',
-        types = processTypes(e)
+        value = processTypes(e)
     };
 end
 
@@ -441,4 +686,5 @@ return {
     public = public,
     final = final,
     abstract = abstract,
+    default = default
 };
