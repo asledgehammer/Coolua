@@ -162,9 +162,5 @@ local Rectangle = class 'Rectangle' (public) {
     },
 };
 
--- print(dump.any(Rectangle.static.methods));
-
-print(dump.any(scaffolding));
-
--- print(Dimension);
--- print(Rectangle);
+-- print(type(Dimension));
+print(dump.table(Rectangle));

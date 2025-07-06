@@ -220,7 +220,6 @@ local mt_class_body = function(self, ...)
     -- Build fields.
     for name, field in pairs(self.fields) do
         compileFlags(field, field);
-        print(name, dump.any(field));
         cls:addField(field);
     end
 
@@ -255,7 +254,6 @@ local mt_class_body = function(self, ...)
         cls:addStaticMethod(method);
     end
 
-    -- TODO: Add Static Blocks.
     -- TODO: Add inner classes.
     -- TODO: Add inner interfaces.
     -- TODO: Add inner enums.
@@ -311,9 +309,32 @@ local mt_field_body = function(self, ...)
             if tv2 == 'table' then
                 if v2.__type__ then
                     if v2.__type__ == 'GetterTable' then
-                        self.get = v2;
+                        self.get = {};
+                        if v2.flags then
+                            compileFlags(v2, self.get);
+                        end
+                        self.get.body = v2.body;
                     elseif v2.__type__ == 'SetterTable' then
-                        self.set = v2;
+                        self.set = {};
+                        if v2.flags then
+                            compileFlags(v2, self.set);
+                        end
+                        self.set.body = v2.body;
+                    elseif v2.__type__ == 'PropertiesTable' then
+                        -- TODO: Undo lazy-passthrough of types without audit. -Jab, 7/6/2025
+                        if v2.value.type then
+                            self.type = v2.value.type;
+                        elseif v2.value.types then
+                            self.types = v2.value.types;
+                        end
+                        -- TODO: Undo lazy-passthrough of values without audit. -Jab, 7/6/2025
+                        if v2.value.value then
+                            self.value = v2.value.value;
+                        end
+                    else
+                        errorf(2, 'Unknown struct in field: %s {value = %s}',
+                            v2.__type__, dump.any(v2)
+                        );
                     end
                 else
                     if isArray(v2) then
@@ -631,7 +652,8 @@ local function parameters(...)
                 errorf(2, 'First parameter string is empty.');
             end
             -- One-arg array type.
-            table.insert(t.value, { types = { paramDef } });
+            local name = 'param_1';
+            table.insert(t.value, { name = name, types = { paramDef } });
         elseif tParamDef == 'table' then
             if not isArray(paramDef) then
                 errorf(2, 'Parameters is not an array.');
@@ -646,7 +668,8 @@ local function parameters(...)
                         errorf(2, 'First parameter string is empty.');
                     end
                     -- One-arg array type.
-                    table.insert(t.value, { types = { subParam } });
+                    local name = string.format('param_%i', j);
+                    table.insert(t.value, { name = name, types = { subParam } });
                 elseif tParamDef == 'table' then
                     if isArray(subParam) then
                         print(dump.any(subParam));
@@ -717,8 +740,8 @@ end
 ---
 --- @return T t
 local function properties(t)
-    local t2 = { __type__ = 'PropertiesTable' };
-    return merge(t, t2);
+    local t2 = { __type__ = 'PropertiesTable', value = t };
+    return t2;
 end
 
 return {
