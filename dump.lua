@@ -43,7 +43,18 @@ function dump.table(t, level, maxLevel)
         tag = '<' .. t.__type__ .. '> ';
     end
 
-    for key, value in pairs(t) do
+    -- Sort keys.
+    local keys = {};
+    for key, _ in pairs(t) do
+        table.insert(keys, key);
+    end
+    table.sort(keys, function(a, b)
+        return a < b;
+    end);
+
+    for i = 1, #keys do
+        local key = keys[i];
+        local value = t[key];
         if key ~= '__type__' then
             local e = string.format('%s = %s', key, dump.any(value, level + 1, maxLevel));
             if s == '' then
