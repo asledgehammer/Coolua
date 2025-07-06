@@ -6,13 +6,10 @@ local DebugUtils = require 'DebugUtils';
 
 local LVMUtils = require 'LVMUtils';
 -- local anyToString = LVMUtils.anyToString;
-local arrayContainsDuplicates = LVMUtils.arrayContainsDuplicates;
-local arrayToString = LVMUtils.arrayToString;
 local debugf = LVMUtils.debugf;
 local errorf = LVMUtils.errorf;
 local isArray = LVMUtils.isArray;
 local isValidName = LVMUtils.isValidName;
-local firstCharToUpper = LVMUtils.firstCharToUpper;
 
 --- @type LVM
 local LVM;
@@ -29,120 +26,6 @@ local API = {
 };
 
 --- @cast API LVMClassModule
-
-local function validateField(cd, args)
-    local errHeader = string.format('Class(%s):addField():', cd.name);
-
-    -- Validate name.
-    if not args.name then
-        errorf(2, '%s string property "name" is not provided.', errHeader);
-    elseif type(args.name) ~= 'string' then
-        errorf(2, '%s property "name" is not a valid string. {type=%s, value=%s}',
-            errHeader, type(args.name), tostring(args.name)
-        );
-    elseif args.name == '' then
-        errorf(2, '%s property "name" is an empty string.', errHeader);
-    elseif not isValidName(args.name) then
-        errorf(2,
-            '%s property "name" is invalid. (value = %s) (Should only contain A-Z, a-z, 0-9, _, or $ characters)',
-            errHeader, args.name
-        );
-    elseif cd.declaredFields[args.name] then
-        errorf(2, '%s field already exists: %s', errHeader, args.name);
-    end
-
-    -- Validate types:
-    if not args.types and not args.type then
-        errorf(2, '%s array property "types" or simplified string property "type" are not provided.', errHeader);
-    elseif args.types then
-        if type(args.types) ~= 'table' or not isArray(args.types) then
-            errorf(2, 'types is not an array. {type=%s, value=%s}',
-                errHeader, type(args.types), tostring(args.types)
-            );
-        elseif #args.types == 0 then
-            errorf(2, '%s types is empty. (min=1)', errHeader);
-        elseif arrayContainsDuplicates(args.types) then
-            errorf(2, '%s types contains duplicate types.', errHeader);
-        end
-
-        for i = 1, #args.types do
-            local tType = type(args.types[i]);
-            if tType == 'table' then
-                if not args.type['__type__'] then
-                    errorf(2, '%s types[%i] is a table without a "string __type__" property.', errHeader, i);
-                elseif type(args.type['__type__']) ~= 'string' then
-                    errorf(2, '%s types[%i].__type__ is not a string.');
-                end
-                args.types[i] = type['__type__'];
-            elseif tType == 'string' then
-                if args.types[i] == '' then
-                    errorf(2, '%s types[%i] is an empty string.', errHeader, i);
-                end
-            else
-                errorf(2, '%s: types[%i] is not a string or { __type__: string }. {type=%s, value=%s}',
-                    errHeader, i, type(args.type), tostring(args.type)
-                );
-            end
-        end
-    else
-        local tType = type(args.type);
-        if tType == 'table' then
-            if not args.type['__type__'] then
-                errorf(2, '%s property "type" is a table without a "string __type__" property.', errHeader);
-            elseif type(args.type['__type__']) ~= 'string' then
-                errorf(2, '%s type.__type__ is not a string.');
-            end
-            args.type = args.type['__type__'];
-        elseif tType == 'string' then
-            if args.type == '' then
-                errorf(2, '%s property "type" is an empty string.', errHeader);
-            end
-        else
-            errorf(2, '%s: property "type" is not a string. {type=%s, value=%s}',
-                errHeader, type(args.type), tostring(args.type)
-            );
-        end
-
-        -- Set the types array and remove the simplified form.
-        args.types = { args.type };
-        args.type = nil;
-    end
-
-    -- Validate value:
-    if args.value ~= LVM.constants.UNINITIALIZED_VALUE then
-        if not LVM.type.isAssignableFromType(args.value, args.types) then
-            errorf(2,
-                '%s property "value" is not assignable from "types". {types = %s, value = {type = %s, value = %s}}',
-                errHeader, arrayToString(args.types), type(args.value), tostring(args.value)
-            );
-        end
-        args.assignedOnce = true;
-    else
-        args.assignedOnce = false;
-    end
-
-    -- Validate scope:
-    if args.scope ~= 'private' and args.scope ~= 'protected' and args.scope ~= 'package' and args.scope ~= 'public' then
-        errorf(2,
-            '%s The property "scope" given invalid: %s (Can only be: "private", "protected", "package", or "public")',
-            errHeader, args.scope
-        );
-    end
-
-    -- Validate final:
-    if type(args.final) ~= 'boolean' then
-        errorf(2, '%s property "final" is not a boolean. {type = %s, value = %s}',
-            errHeader, LVM.type.getType(args.final), tostring(args.final)
-        );
-    end
-
-    -- Validate static:
-    if type(args.static) ~= 'boolean' then
-        errorf(2, '%s property "static" is not a boolean. {type = %s, value = %s}',
-            errHeader, LVM.type.getType(args.static), tostring(args.static)
-        );
-    end
-end
 
 --- Defined for all classes so that __eq actually fires.
 --- Reference: http://lua-users.org/wiki/MetatableEvents
@@ -368,7 +251,7 @@ function API.newClass(definition, outer)
             assignedOnce = false,
         };
 
-        validateField(self, args);
+        LVM.audit.auditField(self, args);
 
         self.declaredFields[args.name] = args;
 
@@ -393,7 +276,7 @@ function API.newClass(definition, outer)
             assignedOnce = false,
         };
 
-        validateField(self, args);
+        LVM.audit.auditField(self, args);
 
         self.declaredFields[args.name] = args;
 

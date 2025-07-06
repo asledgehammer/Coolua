@@ -6,6 +6,8 @@ local LVMUtils = require 'LVMUtils';
 local isArray = LVMUtils.isArray;
 local isValidName = LVMUtils.isValidName;
 local errorf = LVMUtils.errorf;
+local arrayContainsDuplicates = LVMUtils.arrayContainsDuplicates;
+local arrayToString = LVMUtils.anyToString;
 
 --- @type LVM
 local LVM = nil;
@@ -44,6 +46,120 @@ function API.auditGenericType(def)
         errorf(2, 'Property "types" is not an array. {type = %s, value = %s}',
             LVM.type.getType(def),
             tostring(def)
+        );
+    end
+end
+
+function API.auditField(cd, fd)
+local errHeader = string.format('Class(%s):addField():', cd.name);
+
+    -- Validate name.
+    if not fd.name then
+        errorf(2, '%s string property "name" is not provided.', errHeader);
+    elseif type(fd.name) ~= 'string' then
+        errorf(2, '%s property "name" is not a valid string. {type=%s, value=%s}',
+            errHeader, type(fd.name), tostring(fd.name)
+        );
+    elseif fd.name == '' then
+        errorf(2, '%s property "name" is an empty string.', errHeader);
+    elseif not isValidName(fd.name) then
+        errorf(2,
+            '%s property "name" is invalid. (value = %s) (Should only contain A-Z, a-z, 0-9, _, or $ characters)',
+            errHeader, fd.name
+        );
+    elseif cd.declaredFields[fd.name] then
+        errorf(2, '%s field already exists: %s', errHeader, fd.name);
+    end
+
+    -- Validate types:
+    if not fd.types and not fd.type then
+        errorf(2, '%s array property "types" or simplified string property "type" are not provided.', errHeader);
+    elseif fd.types then
+        if type(fd.types) ~= 'table' or not isArray(fd.types) then
+            errorf(2, 'types is not an array. {type=%s, value=%s}',
+                errHeader, type(fd.types), tostring(fd.types)
+            );
+        elseif #fd.types == 0 then
+            errorf(2, '%s types is empty. (min=1)', errHeader);
+        elseif arrayContainsDuplicates(fd.types) then
+            errorf(2, '%s types contains duplicate types.', errHeader);
+        end
+
+        for i = 1, #fd.types do
+            local tType = type(fd.types[i]);
+            if tType == 'table' then
+                if not fd.type['__type__'] then
+                    errorf(2, '%s types[%i] is a table without a "string __type__" property.', errHeader, i);
+                elseif type(fd.type['__type__']) ~= 'string' then
+                    errorf(2, '%s types[%i].__type__ is not a string.');
+                end
+                fd.types[i] = type['__type__'];
+            elseif tType == 'string' then
+                if fd.types[i] == '' then
+                    errorf(2, '%s types[%i] is an empty string.', errHeader, i);
+                end
+            else
+                errorf(2, '%s: types[%i] is not a string or { __type__: string }. {type=%s, value=%s}',
+                    errHeader, i, type(fd.type), tostring(fd.type)
+                );
+            end
+        end
+    else
+        local tType = type(fd.type);
+        if tType == 'table' then
+            if not fd.type['__type__'] then
+                errorf(2, '%s property "type" is a table without a "string __type__" property.', errHeader);
+            elseif type(fd.type['__type__']) ~= 'string' then
+                errorf(2, '%s type.__type__ is not a string.');
+            end
+            fd.type = fd.type['__type__'];
+        elseif tType == 'string' then
+            if fd.type == '' then
+                errorf(2, '%s property "type" is an empty string.', errHeader);
+            end
+        else
+            errorf(2, '%s: property "type" is not a string. {type=%s, value=%s}',
+                errHeader, type(fd.type), tostring(fd.type)
+            );
+        end
+
+        -- Set the types array and remove the simplified form.
+        fd.types = { fd.type };
+        fd.type = nil;
+    end
+
+    -- Validate value:
+    if fd.value ~= LVM.constants.UNINITIALIZED_VALUE then
+        if not LVM.type.isAssignableFromType(fd.value, fd.types) then
+            errorf(2,
+                '%s property "value" is not assignable from "types". {types = %s, value = {type = %s, value = %s}}',
+                errHeader, arrayToString(fd.types), type(fd.value), tostring(fd.value)
+            );
+        end
+        fd.assignedOnce = true;
+    else
+        fd.assignedOnce = false;
+    end
+
+    -- Validate scope:
+    if fd.scope ~= 'private' and fd.scope ~= 'protected' and fd.scope ~= 'package' and fd.scope ~= 'public' then
+        errorf(2,
+            '%s The property "scope" given invalid: %s (Can only be: "private", "protected", "package", or "public")',
+            errHeader, fd.scope
+        );
+    end
+
+    -- Validate final:
+    if type(fd.final) ~= 'boolean' then
+        errorf(2, '%s property "final" is not a boolean. {type = %s, value = %s}',
+            errHeader, LVM.type.getType(fd.final), tostring(fd.final)
+        );
+    end
+
+    -- Validate static:
+    if type(fd.static) ~= 'boolean' then
+        errorf(2, '%s property "static" is not a boolean. {type = %s, value = %s}',
+            errHeader, LVM.type.getType(fd.static), tostring(fd.static)
         );
     end
 end

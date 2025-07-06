@@ -39,6 +39,10 @@ function API.auditMethodReturnsProperty(returns, errHeader) end
 --- @param genDef GenericTypeDefinition
 function API.auditGenericType(genDef) end
 
+--- @param cd ClassStructDefinition
+--- @param fd FieldDefinition
+function API.auditField(cd, fd) end
+
 --- Checks final fields in a class for uninitialization. This is for post-constructor analysis and audits.
 ---
 --- @param classDef ClassStructDefinition
