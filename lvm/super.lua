@@ -42,10 +42,13 @@ function API.createSuperTable(cd)
     end
 
     mt.__index = function(tbl, field)
+        if cd.path == 'lua.lang.Object' then
+            return nil;
+        end
         if LVM.isInside() then
             return rawget(tbl, field);
         else
-            if not properties.__middleMethods[field] then
+            if not properties.__middleMethods or not properties.__middleMethods[field] then
                 errorf(2, '%s No super-method exists: %s', cd.printHeader, tostring(field));
             end
         end
