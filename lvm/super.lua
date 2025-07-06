@@ -42,9 +42,11 @@ function API.createSuperTable(cd)
     end
 
     mt.__index = function(tbl, field)
-        if cd.path == 'lua.lang.Object' then
+        -- Ignore Object in super and numeric fields to inspect for array-like checks.
+        if cd.path == 'lua.lang.Object' or type(field) == 'number' then
             return nil;
         end
+        
         if LVM.isInside() then
             return rawget(tbl, field);
         else
