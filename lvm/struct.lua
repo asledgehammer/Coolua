@@ -25,7 +25,7 @@ function API.calcPathNamePackage(definition, enclosingDefinition)
     local name;
     local pkg;
 
-if enclosingDefinition then
+    if enclosingDefinition then
         path = enclosingDefinition.path .. '$' .. enclosingDefinition.name;
         pkg = definition.pkg or enclosingDefinition.pkg;
         if not definition.name then
@@ -35,6 +35,7 @@ if enclosingDefinition then
     else
         -- Generate the path to use.
         _, path = LVM.scope.getRelativePath();
+
         -- path = DebugUtils.getPath(4, LVM.ROOT_PATH, true);
         local split = path:split('.');
         name = table.remove(split, #split);

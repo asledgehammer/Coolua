@@ -4,6 +4,19 @@
 
 local DebugUtils = {};
 
+--- @param str string
+---
+--- @return string strWithoutAtSymbol
+local function removeAt(str)
+    if str:startsWith('@') then
+        str = str:sub(2);
+    end
+    -- if str:startsWith('.') then
+    --     str = str:sub(2);
+    -- end
+    return str;
+end
+
 if _G['ZombRandFloat'] then -- Project Zomboid Kahlua Environment.
 
 else                        -- Native Lua Environment.
@@ -29,7 +42,7 @@ else                        -- Native Lua Environment.
 
             rootPath = rootPath .. '.';
         end
-        
+
         path = string.gsub(path, '...:.', '');
 
         path = string.gsub(path, '\\', '/');
@@ -54,8 +67,8 @@ else                        -- Native Lua Environment.
     --- @return string path
     function DebugUtils.getPath(levelOrFunc, rootPath, isClassPath)
         local dS = debug.getinfo(levelOrFunc, 'S');
-        if isClassPath then return modifyPath(dS.short_src, rootPath) end
-        return dS.short_src;
+        if isClassPath then return modifyPath(removeAt(dS.source), rootPath) end
+        return removeAt(dS.source);
     end
 
     --- @param levelOrFunc function|integer
@@ -97,7 +110,7 @@ else                        -- Native Lua Environment.
     --- @param func function
     --- @param rootPath string?
     --- @param isClassPath boolean? (Default: false) If true, the path is transformed to `StructDefinition.path` syntax.
-    --- 
+    ---
     --- @return FunctionInfo
     function DebugUtils.getFuncInfo(func, rootPath, isClassPath)
         local path = DebugUtils.getPath(func, rootPath, isClassPath);

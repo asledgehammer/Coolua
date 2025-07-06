@@ -118,10 +118,17 @@ function API.getRelativePath()
         relPath == 'LVM' or
         relPath == 'LVMUtils' or
         relPath == 'LuaClass' or
+        relPath == 'LuaClassBuilder' or
         relPath:startsWith('lvm.')
     do
         level = level + 1;
         relPath = DebugUtils.getPath(level, LVM.ROOT_PATH, true);
+    end
+
+    local testDot = string.find(relPath, '.', 1, true);
+    
+    if testDot == 1 then
+        relPath = relPath:sub(2);
     end
 
     return level, relPath;
