@@ -70,6 +70,11 @@ function ClassStructDefinition:new(...) end
 --- @return FieldDefinition
 function ClassStructDefinition:addField(definition) end
 
+--- @param definition StaticFieldDefinitionParameter
+---
+--- @return FieldDefinition
+function ClassStructDefinition:addStaticField(definition) end
+
 --- Attempts to resolve a FieldDefinition in the ClassStructDefinition. If the field isn't declared for the class level, the
 --- super-class(es) are checked.
 ---

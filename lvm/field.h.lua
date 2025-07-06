@@ -25,7 +25,16 @@
 --- @field types string[]?
 --- @field type string?
 --- @field scope ClassScope?
---- @field static boolean?
+--- @field final boolean?
+--- @field value any?
+--- @field get FieldGetDefinition?
+--- @field set FieldSetDefinition?
+
+--- @class (exact) StaticFieldDefinitionParameter
+--- @field name string
+--- @field types string[]?
+--- @field type string?
+--- @field scope ClassScope?
 --- @field final boolean?
 --- @field value any?
 --- @field get FieldGetDefinition?
