@@ -49,14 +49,18 @@ function dump.table(t, level, maxLevel)
         table.insert(keys, key);
     end
     table.sort(keys, function(a, b)
-        return a < b;
+        return tostring(a) < tostring(b);
     end);
 
     for i = 1, #keys do
         local key = keys[i];
         local value = t[key];
         if key ~= '__type__' then
-            local e = string.format('%s = %s', key, dump.any(value, level + 1, maxLevel));
+            local sKey = key;
+            if type(key) == 'number' then
+                sKey = '['..key..']'
+            end
+            local e = string.format('%s = %s', sKey, dump.any(value, level + 1, maxLevel));
             if s == '' then
                 s = indent1 .. e;
             else
