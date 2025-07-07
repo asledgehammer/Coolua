@@ -10,15 +10,15 @@ local API = {
     __type__ = 'LVMModule',
 
     -- Field(s)
-    internal = false,
-    method = false,
-    methodCache = false,
-    scope = false,
-    compile = false,
-    pkg = false,
-    interface = false,
-    constructor = false,
-    super = false,
+    internal = true,
+    method = true,
+    methodCache = true,
+    scope = true,
+    compile = true,
+    pkg = true,
+    interface = true,
+    constructor = true,
+    super = true,
     builder = true,
 
     -- Method(s)

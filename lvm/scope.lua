@@ -86,7 +86,7 @@ function API.getScopeForCall(struct, callInfo)
         -- end
     end
 
-    debugf(LVM.debug.scope, 'getScopeCall(%s, %s) = %s',
+    debugf(LVM.debug.scope, '[SCOPE] :: getScopeCall(%s, %s) = %s',
         struct.path, anyToString(callInfo), value
     );
 

@@ -394,7 +394,7 @@ function API.newClass(definition, outer)
         end
 
         if LVM.debug.constructor then
-            debugf(LVM.debug.constructor, '[METHOD] :: %s Adding class constructor: %s.%s', self.printHeader, self.name,
+            debugf(LVM.debug.constructor, '[CONSTRUCTOR] :: %s Adding class constructor: %s.%s', self.printHeader, self.name,
                 args.signature);
         end
 
@@ -470,7 +470,7 @@ function API.newClass(definition, outer)
         if LVM.debug.method then
             local callSyntax = ':';
             if md.static then callSyntax = '.' end
-            debugf(LVM.debug.method, '%s Adding static method: %s%s%s',
+            debugf(LVM.debug.method, '[METHOD] :: %s Adding static method: %s%s%s',
                 self.printHeader,
                 self.name, callSyntax, md.signature
             );
@@ -531,7 +531,7 @@ function API.newClass(definition, outer)
         if LVM.debug.method then
             local callSyntax = ':';
             if md.static then callSyntax = '.' end
-            debugf(LVM.debug.method, '%s Adding abstract method: %s%s%s',
+            debugf(LVM.debug.method, '[METHOD] :: %s Adding abstract method: %s%s%s',
                 self.printHeader,
                 self.name, callSyntax, md.signature
             );
@@ -823,6 +823,7 @@ function API.newClass(definition, outer)
             if fd.final then
                 local ste = LVM.stack.getContext();
                 if not ste then
+                    LVM.stack.popContext();
                     errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
                     return;
                 end
@@ -830,20 +831,29 @@ function API.newClass(definition, outer)
                 local context = ste:getContext();
                 local class = ste:getCallingClass();
                 if class ~= cd then
+                    LVM.stack.popContext();
                     errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
+                    return;
                 elseif context ~= 'constructor' then
+                    LVM.stack.popContext();
                     errorf(2, '%s Attempt to assign final field %s outside of constructor scope.', cd.printHeader, field);
+                    return;
                 elseif fd.assignedOnce then
+                    LVM.stack.popContext();
                     errorf(2, '%s Attempt to assign final field %s. (Already defined)', cd.printHeader, field);
+                    return;
                 end
             end
 
             -- Set the value.
             __properties[field] = value;
 
+            LVM.stack.popContext();
+            
             -- Apply forward the value metrics.
             fd.assignedOnce = true;
             fd.value = value;
+
         end
 
         setmetatable(cd, mt);

@@ -78,9 +78,9 @@ function API.createInstanceMetatable(cd, o)
             return;
         end
 
-        LVM.stack.popContext();
-
         -- TODO: Implement generic type-cast checks.
+
+        LVM.stack.popContext();
 
         -- Get the value.
         if fd.static then
@@ -162,6 +162,7 @@ function API.createInstanceMetatable(cd, o)
         local ste = LVM.stack.getContext();
 
         if not ste then
+            LVM.stack.popContext();
             error('Context is nil.', 2);
             return;
         end
@@ -171,16 +172,23 @@ function API.createInstanceMetatable(cd, o)
 
         if fd.final then
             if not ste then
+                LVM.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
                 return;
             end
 
             if ste:getCallingClass() ~= cd then
+                LVM.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
+                return;
             elseif context ~= 'constructor' then
+                LVM.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s outside of constructor scope.', cd.printHeader, field);
+                return;
             elseif fd.assignedOnce then
+                LVM.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s. (Already defined)', cd.printHeader, field);
+                return;
             end
         end
 
@@ -192,6 +200,8 @@ function API.createInstanceMetatable(cd, o)
         else
             fields[fd.class.path .. '@' .. field] = value;
         end
+
+        LVM.stack.popContext();
 
         -- Apply forward the value metrics.
         fd.assignedOnce = true;

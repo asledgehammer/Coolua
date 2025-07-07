@@ -71,7 +71,7 @@ function API.resolveMethod(struct, name, methods, args)
     -- md = struct.methodCache[callSignature];
     -- if md then return md end
 
-    debugf(LVM.debug.methodCache, '%s No cache found for method %s call signature: %s',
+    debugf(LVM.debug.methodCache, '[METHOD_CACHE] :: %s No cache found for method %s call signature: %s',
         struct.printHeader,
         name,
         callSignature
@@ -80,7 +80,7 @@ function API.resolveMethod(struct, name, methods, args)
     -- Attempt to resolve the method using exact method signature checks.
     local md = methods[callSignature];
     if md then
-        debugf(LVM.debug.methodCache, '%s Caching exact method %s call signature: %s',
+        debugf(LVM.debug.methodCache, '[METHOD_CACHE] :: %s Caching exact method %s call signature: %s',
             struct.printHeader,
             LVM.print.printMethod(md),
             callSignature
@@ -98,7 +98,7 @@ function API.resolveMethod(struct, name, methods, args)
     end
 
     if md then
-        debugf(LVM.debug.methodCache, '%s Caching method %s call signature: %s',
+        debugf(LVM.debug.methodCache, '[METHOD_CACHE] :: %s Caching method %s call signature: %s',
             struct.printHeader,
             LVM.print.printMethod(md),
             callSignature
@@ -219,7 +219,7 @@ function API.createMiddleMethod(cd, name, methods)
             );
             LVM.stack.popContext();
             print(errMsg);
-            error('', 2);
+            error(errMsg, 2);
             return;
         end
 
@@ -372,12 +372,12 @@ function API.combineAllMethods(def, name, comb)
                     for imSignature, imd in pairs(imCluster) do
                         -- Here we ignore re-applied interface methods since they're already applied.
                         if not combCluster[name] and not imd.default then
-                            debugf(LVM.debug.method, '%s IGNORING re-applied interface method in hierarchy: %s',
+                            debugf(LVM.debug.method, '[METHOD] :: %s IGNORING re-applied interface method in hierarchy: %s',
                                 def.printHeader,
                                 LVM.print.printMethod(imd)
                             );
                         else
-                            debugf(LVM.debug.method, '%s Applying interface method in hierarchy: %s',
+                            debugf(LVM.debug.method, '[METHOD] :: %s Applying interface method in hierarchy: %s',
                                 def.printHeader,
                                 LVM.print.printMethod(imd)
                             );
@@ -637,11 +637,13 @@ function API.createMiddleConstructor(classDef)
                     o.super.__call_count__ = currentSuperCount;
                 elseif o.super.__call_count__ > currentSuperCount + 1 then
                     o.super.__call_count__ = currentSuperCount;
+                    LVM.stack.popContext();
                     errorf(2, '%s The super-block of the constructor called self:super() more than once.',
                         classDef.printHeader
                     );
                 else
                     o.super.__call_count__ = currentSuperCount;
+                    LVM.stack.popContext();
                     errorf(2, '%s The super-block of the constructor did not call self:super().',
                         classDef.printHeader
                     );
@@ -653,9 +655,9 @@ function API.createMiddleConstructor(classDef)
                 o.super.__who__ = lastWho;
                 LVM.stepOut();
 
-
                 -- Make sure that constructors don't return anything.
                 if retValue ~= nil then
+                    LVM.stack.popContext();
                     errorf(2, '%s Constructor super function returned non-nil value: {type = %s, value = %s}',
                         classDef.printHeader,
                         LVM.type.getType(retValue), tostring(retValue)

@@ -46,7 +46,7 @@ function API.createSuperTable(cd)
         if cd.path == 'lua.lang.Object' or type(field) == 'number' then
             return nil;
         end
-        
+
         if LVM.isInside() then
             return rawget(tbl, field);
         else
@@ -94,7 +94,7 @@ function API.createSuperTable(cd)
         end
 
         if cd.path == 'lua.lang.Object' then
-            debugf(LVM.debug.super, 'IGNORING object super call in chain.');
+            debugf(LVM.debug.super, '[SUPER] :: IGNORING object super call in chain.');
             return;
         end
 
@@ -135,9 +135,12 @@ function API.createSuperTable(cd)
         if super.__who__ then
             super.__who__.__super_flag__ = true;
         else
+            LVM.stack.popContext();
             error('super.__who__ is nil!', 2);
         end
         LVM.stepOut();
+
+        LVM.stack.popContext();
 
         --- ClassInstance is below the Object layer.
         if cd.path ~= 'lua.lang.Object' then
@@ -197,6 +200,7 @@ function API.createSuperTable(cd)
         end, debug.traceback);
 
         LVM.stack.popContext();
+        
         if not result then error(errMsg) end
 
         return retVal;

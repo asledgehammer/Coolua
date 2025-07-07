@@ -206,6 +206,7 @@ local mt_class_body = function(self, ...)
     local clsArgs = {
         name = self.name,
         extends = self.extends,
+        implements = self.implements
     };
 
     -- Build class flags.
@@ -296,6 +297,157 @@ local function class(name)
 
         constructors = {},
     }, mt_class);
+end
+
+-- MARK: - Interface
+
+--- @return InterfaceStructDefinition, table
+local mt_interface_body = function(self, ...)
+    local args = { ... };
+    for i = 1, #args do
+        local entry = args[i];
+
+        for _, arg in pairs(entry) do
+            if arg.__type__ == 'ExtendsTable' then
+                if self.extends then
+                    error('Cannot redefine interface extensions.', 2);
+                end
+                self.extends = arg.value;
+            elseif arg.__type__ == 'MethodTable' then
+                self.methods[arg.name] = arg;
+            elseif arg.__type__ == 'StaticTable' then
+                for j = 1, #arg.body do
+                    local staticArg = arg.body[j];
+
+                    if staticArg.__type__ == 'StaticTable' then
+                        error('Cannot nest static blocks.', 2);
+                    elseif staticArg.__type__ == 'FieldTable' then
+                        self.static.fields[staticArg.name] = staticArg;
+                    elseif staticArg.__type__ == 'MethodTable' then
+                        self.static.methods[staticArg.name] = staticArg;
+                    end
+                end
+            else
+                error('Unknown type: ' .. tostring(arg.__type__), 2);
+            end
+        end
+    end
+
+    -- Build the interface arguments. --
+
+    if not self.name then
+        errorf(2, 'Interface doesn\'t have a name!');
+    end
+
+    --- @type InterfaceStructDefinitionParameter
+    local intArgs = {
+        name = self.name,
+        extends = self.extends,
+    };
+
+    -- Build class flags.
+    compileFlags(self, intArgs);
+
+    local interface = LVM.interface.newInterface(intArgs);
+
+    -- Build fields.
+    for name, field in pairs(self.fields) do
+        compileFlags(field, field);
+        interface:addField(field);
+    end
+
+    -- Build methods.
+    for name, method in pairs(self.methods) do
+        compileFlags(method, method);
+
+        -- Check flags.
+        if method.static then
+            error('Invalid flag for interface method: "static". (Define this in a static block)');
+        elseif method.abstract then
+            error('Invalid flag for interface method: abstract.', 2);
+        elseif method.default then
+            error(
+            "Invalid flag for interface method: default. (For default interface method behavior, don't define a body)");
+        end
+
+        -- Set default flag based off of absense of body function.
+        if not method.body then
+            method.default = true;
+        end
+
+        interface:addMethod(method);
+    end
+
+    -- Build static field(s).
+    for name, field in pairs(self.static.fields) do
+        -- Check flags.
+        if field.static then
+            error('Invalid flag for interface method: "static". (It\'s in a static block so this isn\'t needed.)');
+        end
+
+        interface:addStaticField(field);
+    end
+
+    -- Build static method(s).
+    for name, method in pairs(self.static.methods) do
+
+        if not method.body then
+             error('body function missing for static interface method. (Static methods must have a body.)', 2);
+        end
+
+        -- Check flags.
+        if method.static then
+            error('Invalid flag for static interface method: "static". (It\'s in a static block so this isn\'t needed.)');
+        elseif method.abstract then
+            error('Invalid flag for static interface method: abstract. (Static methods cannot be abstract.)', 2);
+        elseif method.default then
+            error('Invalid flag for static interface method: default. (Static methods must have a body.)', 2);
+        end
+
+        interface:addStaticMethod(method);
+    end
+
+    -- TODO: Add inner classes.
+    -- TODO: Add inner interfaces.
+    -- TODO: Add inner enums.
+
+    interface:finalize();
+
+    debugf(LVM.debug.builder, '[BUILDER] :: Built interface: %s', tostring(interface));
+
+    return interface, self;
+end;
+
+local mt_interface = {
+    __call = function(self, ...)
+        local args = { ... };
+        for i = 1, #args do
+            table.insert(self.flags, args[i]);
+        end
+        return setmetatable(self, {
+            __call = mt_interface_body,
+            __tostring = mt_tostring
+        });
+    end,
+    __tostring = mt_tostring
+};
+
+--- @param name string
+---
+--- @return InterfaceStructDefinition
+local function interface(name)
+    return setmetatable({
+        __type__ = 'InterfaceTable',
+        name = name,
+        flags = {},
+
+        methods = {},
+
+        static = {
+            fields = {},
+            methods = {},
+        },
+    }, mt_interface);
 end
 
 -- MARK: - Field
@@ -746,6 +898,7 @@ end
 
 return {
     class = class,
+    interface = interface,
     extends = extends,
     implements = implements,
     static = static,

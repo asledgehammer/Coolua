@@ -169,8 +169,8 @@ function LVM.forName(path)
     return class;
 end
 
-debugf(LVM.debug.internal, 'LVM: Loaded %i Modules.', LVM.moduleCount);
-debugf(LVM.debug.internal, 'LVM: ROOT_PATH = ' .. ROOT_PATH);
+debugf(LVM.debug.internal, '[LVM] :: Loaded %i Modules.', LVM.moduleCount);
+debugf(LVM.debug.internal, '[LVM] :: ROOT_PATH = ' .. ROOT_PATH);
 
 debugf(LVM.debug.internal, '\n### LVM READY ###\n');
 

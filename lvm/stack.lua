@@ -52,7 +52,7 @@ function API.pushContext(context)
     -- Muting context.
     if LVM.isInside() or LVM.flags.ignorePushPopContext then return end
 
-    debugf(LVM.debug.scope, 'line %i ContextStack[%i] pushContext(%s)', DebugUtils.getCurrentLine(3), #stack + 1,
+    debugf(LVM.debug.scope, '[SCOPE] :: line %i ContextStack[%i] pushContext(%s)', DebugUtils.getCurrentLine(3), #stack + 1,
         tostring(context));
 
     -- Prevent infinite loop.
@@ -74,7 +74,7 @@ function API.popContext()
     -- Muting context.
     if LVM.isInside() or LVM.flags.ignorePushPopContext then return end
 
-    debugf(LVM.debug.scope, 'line %i ContextStack[%i] popContext()', DebugUtils.getCurrentLine(3), #stack - 1);
+    debugf(LVM.debug.scope, '[SCOPE] :: line %i ContextStack[%i] popContext()', DebugUtils.getCurrentLine(3), #stack - 1);
     local stackLen = #stack;
     if stackLen == 0 then
         error('The ContextStack is empty.', 2);

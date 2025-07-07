@@ -455,6 +455,7 @@ function IAPI.finalize(self)
         if fd.final then
             local ste = LVM.stack.getContext();
             if not ste then
+                LVM.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s outside of Class scope.', self.printHeader, field);
                 return;
             end
@@ -462,16 +463,24 @@ function IAPI.finalize(self)
             local context = ste:getContext();
             local class = ste:getCallingClass();
             if class ~= self then
+                LVM.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s outside of Class scope.', self.printHeader, field);
+                return;
             elseif context ~= 'constructor' then
+                LVM.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s outside of constructor scope.', self.printHeader, field);
+                return;
             elseif fd.assignedOnce then
+                LVM.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s. (Already defined)', self.printHeader, field);
+                return;
             end
         end
 
         -- Set the value.
         __properties[field] = value;
+
+        LVM.stack.popContext();
 
         -- Apply forward the value metrics.
         fd.assignedOnce = true;
