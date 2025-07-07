@@ -15,4 +15,5 @@
 --- @field interface boolean
 --- @field constructor boolean
 --- @field super boolean
+--- @field builder boolean
 local API = {};

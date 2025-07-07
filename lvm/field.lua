@@ -73,7 +73,7 @@ function API.compileFieldAutoMethods(self)
 
             mGetDef.body = fGet;
 
-            debugf(LVM.debug.method, '%s Creating auto-method: %s:%s()',
+            debugf(LVM.debug.method, '[METHOD] :: %s Creating auto-method: %s:%s()',
                 self.printHeader,
                 self.name, mGetDef.name
             );
@@ -114,12 +114,17 @@ function API.compileFieldAutoMethods(self)
 
             mSetDef.body = fSet;
 
-            debugf(LVM.debug.method, '%s Creating auto-method: %s:%s',
+            debugf(LVM.debug.method, '[METHOD] :: %s Creating auto-method: %s(...)',
                 self.printHeader,
-                self.name, mSetDef.signature
+                mSetDef.name
             );
 
-            self:addMethod(mSetDef);
+            local md = self:addMethod(mSetDef);
+
+            debugf(LVM.debug.method, '[METHOD] :: %s Created auto-method: %s',
+                self.printHeader,
+                md.signature
+            );
         end
     end
 end

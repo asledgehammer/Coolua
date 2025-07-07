@@ -163,4 +163,4 @@ local Rectangle = class 'Rectangle' (public) {
 };
 
 -- print(type(Dimension));
-print(dump.table(Rectangle));
+print(Rectangle);

@@ -3,107 +3,93 @@
 ---]]
 
 local LuaClass = require 'LuaClass';
-local newClass = LuaClass.newClass;
 
-local Dimension = newClass({
-    scope = 'public',
-});
+-- Builder API ------------------------ --
+local builder = LuaClass.builder;
+local class = builder.class;
+local field = builder.field;
+local constructor = builder.constructor;
+local equals = builder.equals;
+local toString = builder.toString;
+local properties = builder.properties;
+local parameters = builder.parameters;
+local get = builder.get;
+local set = builder.set;
+local private = builder.private;
+local public = builder.public;
+-- ------------------------------------ --
 
-Dimension:addField({
-    scope = 'private',
-    type = 'number',
-    name = 'width',
-    value = 0
-});
+--- @type DimensionDefinition
+local Dimension = class 'Dimension' (public) {
 
-Dimension:addField({
-    scope = 'private',
-    type = 'number',
-    name = 'height',
-    value = 0
-});
-
-Dimension:addConstructor({
-    scope = 'public',
-
-    parameters = {
-        { type = 'number', name = 'width' },
-        { type = 'number', name = 'height' },
+    field 'width' (private) {
+        properties {
+            type = 'number',
+            value = 0
+        },
+        get(public) {
+            function(self)
+                return self.width;
+            end
+        },
+        set(public)
     },
 
-    --- @param self Dimension
-    super = function(self)
-        -- print('Dimension(width, height) super');
-        self:super();
-    end,
-
-    --- @param self Dimension
-    --- @param width number
-    --- @param height number
-    body = function(self, width, height)
-        -- print('Dimension(width, height) body');
-        self.width = width;
-        self.height = height;
-    end
-});
-
-Dimension:addMethod({
-    scope = 'public',
-    name = 'getWidth',
-    returns = 'number',
-
-    --- @param self Dimension
-    ---
-    --- @return number width
-    body = function(self)
-        return self.width;
-    end
-});
-
-Dimension:addMethod({
-    scope = 'public',
-    name = 'getHeight',
-    returns = 'number',
-
-    --- @param self Dimension
-    ---
-    --- @return number height
-    body = function(self)
-        return self.height;
-    end
-});
-
-Dimension:addMethod({
-    scope = 'public',
-    name = 'toString',
-    returns = 'string',
-
-    --- @param self Dimension
-    body = function(self)
-        return tostring(self:getWidth()) .. ', ' .. tostring(self:getHeight());
-    end
-});
-
-Dimension:addMethod({
-    scope = 'public',
-    name = 'equals',
-    parameters = {
-        { name = 'other', type = 'any' }
+    field 'height' (private) {
+        properties {
+            type = 'number',
+            value = 0
+        },
+        get(public),
+        set(public),
     },
-    returns = 'boolean',
 
-    --- @param self Dimension
-    --- @param other any
-    body = function(self, other)
-        if not other.__type__ or self.__type__ ~= other.__type__ then
-            return false;
+    constructor(public) {
+
+        parameters {
+            { name = 'width',  type = 'number' },
+            { name = 'height', type = 'number' }
+        },
+
+        --- @param self Dimension
+        --- @param width number
+        --- @param height number
+        super = function(self, width, height)
+            self:super();
+        end,
+
+        --- @param self Dimension
+        --- @param width number
+        --- @param height number
+        body = function(self, width, height)
+            self.width = width;
+            self.height = height;
         end
-        --- @cast other Dimension
-        return self:getWidth() == other:getWidth() and self:getHeight() == other:getHeight();
-    end
-});
 
-Dimension:finalize();
+    },
 
---- @cast Dimension DimensionDefinition
+    equals {
+        --- @param self Dimension
+        --- @param other Object
+        --- 
+        --- @return boolean equalsOther
+        function(self, other)
+            if not other or not self:instanceOf(other:getClass()) then
+                return false;
+            end
+            --- @cast other Dimension
+            return self:getWidth() == other:getWidth() and self:getHeight() == other:getHeight();
+        end
+    },
+
+    toString {
+        --- @param self Dimension
+        function(self)
+            return string.format('Dimension(width = %.4f, height = %.4f)',
+                self:getWidth(), self:getHeight()
+            );
+        end
+    }
+};
+
 return Dimension;

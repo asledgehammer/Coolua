@@ -9,9 +9,8 @@ local Math = newClass({ scope = 'public' });
 
 --- @cast Math MathDefinition
 
-Math:addField({
+Math:addStaticField({
     scope = 'public',
-    static = true,
     final = true,
     name = 'PI',
     type = 'number',

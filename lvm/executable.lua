@@ -394,12 +394,19 @@ function API.combineAllMethods(def, name, comb)
     if decCluster then
         -- Go through each declaration and try to find a super-class one.
         for decSig, decMethod in pairs(decCluster) do
+            -- if LVM.debug.method then
+            --     print('check sigs: ', decSig);
+            --     print('sigs available: ');
+            --     for key, _ in pairs(combCluster) do
+            --         print('\t' .. key);
+            --     end
+            -- end
             -- If signatures match, an override is detected.
             if combCluster[decSig] then
                 decMethod.override = true;
                 decMethod.super = combCluster[decSig];
 
-                debugf(LVM.debug.method, '%s OVERRIDING class method %s in hierarchy: %s',
+                debugf(LVM.debug.method, '[METHOD] :: %s OVERRIDING class method %s in hierarchy: %s',
                     def.printHeader,
                     LVM.print.printMethod(combCluster[decSig]),
                     LVM.print.printMethod(decMethod)
@@ -415,7 +422,7 @@ end
 
 --- @param self StructDefinition
 function API.compileMethods(self)
-    debugf(LVM.debug.method, '%s Compiling method(s)..', self.printHeader);
+    debugf(LVM.debug.method, '[METHOD] :: %s Compiling method(s)..', self.printHeader);
 
     self.methods = {};
 
@@ -454,7 +461,7 @@ function API.compileMethods(self)
         end
     end
 
-    debugf(LVM.debug.method, '%s Compiled %i method(s).', self.printHeader, count);
+    debugf(LVM.debug.method, '[METHOD] :: %s Compiled %i method(s).', self.printHeader, count);
 end
 
 --- @param self StructDefinition

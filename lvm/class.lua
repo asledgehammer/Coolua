@@ -2,6 +2,8 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+local dump = require 'dump';
+
 local DebugUtils = require 'DebugUtils';
 
 local LVMUtils = require 'LVMUtils';
@@ -392,7 +394,7 @@ function API.newClass(definition, outer)
         end
 
         if LVM.debug.constructor then
-            debugf(LVM.debug.constructor, '%s Adding class constructor: %s.%s', self.printHeader, self.name,
+            debugf(LVM.debug.constructor, '[METHOD] :: %s Adding class constructor: %s.%s', self.printHeader, self.name,
                 args.signature);
         end
 
@@ -590,7 +592,7 @@ function API.newClass(definition, outer)
         if LVM.debug.method then
             local callSyntax = ':';
             if md.static then callSyntax = '.' end
-            debugf(LVM.debug.method, '%s Adding instance method: %s%s%s',
+            debugf(LVM.debug.method, '[METHOD] :: %s Adding instance method: %s%s%s',
                 self.printHeader,
                 self.name, callSyntax, md.signature
             );

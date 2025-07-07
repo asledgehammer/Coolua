@@ -1,11 +1,14 @@
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
 local dump = require 'dump';
 
 local LVM = require 'LVM';
 local LVMUtils = require 'LVMUtils';
 local errorf = LVMUtils.errorf;
+local debugf = LVMUtils.debugf;
 local isArray = LVMUtils.isArray;
-
-local Object = require 'lua/lang/Object';
 
 local public = 'public';
 local protected = 'protected';
@@ -48,16 +51,6 @@ local function compileFlags(struct, appliedStruct)
     end
 
     appliedStruct.flags = nil;
-end
-
-local function merge(...)
-    local result = {};
-    for _, t in ipairs({ ... }) do
-        for k, v in pairs(t) do
-            result[k] = v;
-        end
-    end
-    return result;
 end
 
 --- @param e ClassStructDefinition|Class|table|string
@@ -160,6 +153,9 @@ end
 
 -- MARK: - Class
 
+--- @generic T: ClassDefinition
+---
+--- @return T, table
 local mt_class_body = function(self, ...)
     local args = { ... };
     for i = 1, #args do
@@ -260,10 +256,13 @@ local mt_class_body = function(self, ...)
 
     cls:finalize();
 
+    debugf(LVM.debug.builder, '[BUILDER] :: Built class: %s', tostring(cls));
+
     return cls, self;
 end;
 
 local mt_class = {
+    --- @generic T: ClassDefinition
     __call = function(self, ...)
         local args = { ... };
         for i = 1, #args do
@@ -277,9 +276,10 @@ local mt_class = {
     __tostring = mt_tostring
 };
 
+--- @generic T: ClassDefinition
 --- @param name string
 ---
---- @return table
+--- @return T
 local function class(name)
     return setmetatable({
         __type__ = 'ClassTable',
@@ -429,6 +429,93 @@ local function set(...)
     }, mt_getset);
 end
 
+-- MARK: - Parameters
+
+--- @param ... string[]|{name: string?, type: (string|table)?, types: (string|table)[]?}[]
+local function parameters(...)
+    local args = { ... };
+    local argsLen = #args;
+
+    local t = {
+        __type__ = 'ParametersTable',
+        value = {}
+    };
+
+    if argsLen == 0 then
+        return t;
+    end
+
+    for i = 1, argsLen do
+        local paramDef = args[i];
+        local tParamDef = type(paramDef);
+        if tParamDef == 'string' then
+            if paramDef == '' then
+                errorf(2, 'First parameter string is empty.');
+            end
+            -- One-arg array type.
+            local name = 'param_1';
+            table.insert(t.value, { name = name, types = { paramDef } });
+        elseif tParamDef == 'table' then
+            if not isArray(paramDef) then
+                errorf(2, 'Parameters is not an array.');
+            end
+
+            for j = 1, #paramDef do
+                local subParam = paramDef[j];
+                local tSubParam = type(subParam);
+
+                if tSubParam == 'string' then
+                    if subParam == '' then
+                        errorf(2, 'First parameter string is empty.');
+                    end
+                    -- One-arg array type.
+                    local name = string.format('param_%i', j);
+                    table.insert(t.value, { name = name, types = { subParam } });
+                elseif tParamDef == 'table' then
+                    if isArray(subParam) then
+                        print(dump.any(subParam));
+                        errorf(2, 'Parameter #%i cannot be an array.', j);
+                    end
+
+                    local name = subParam.name or string.format('param_%i', j);
+                    local type = subParam.type;
+                    local types = subParam.types;
+
+                    if types and type then
+                        errorf(2, 'Parameter #%i cannot define both "type" and "types".', j);
+                    elseif not type and types then
+                        errorf(2, 'Parameter #%i has no defined types.', j);
+                    elseif type then
+                        types = { type };
+                    elseif types then
+                        if not isArray(types) then
+                            errorf(2, "Parameter #%i is not an array.", j);
+                        end
+                    end
+
+                    table.insert(t.value, { name = name, types = types });
+                end
+            end
+
+            -- Process array here.
+        else
+            errorf(2, 'Parameters is not a proper definition.');
+        end
+    end
+
+    return t;
+end
+
+-- MARK: - Returns
+
+--- @param e ClassStructDefinition|Class|table|string
+local function returns(e)
+    return {
+        __type__ = 'ReturnsTable',
+        value = processTypes(e)
+    };
+end
+
 -- MARK: - Method
 
 local function processMethodArgs(self, args)
@@ -541,15 +628,15 @@ local function createMethodTemplate(name, flags, properties)
 end
 
 local equals = createMethodTemplate('equals', { public }, {
-    parameters = {
-        { name = 'any', type = Object }
+    parameters {
+        { name = 'other', type = 'any' }
     },
-    returns = { 'boolean' },
+    returns = 'boolean',
 });
 
 local toString = createMethodTemplate('toString', { public }, {
     parameters = {},
-    returns = { 'string' },
+    returns = 'string',
 });
 
 -- MARK: - constructor
@@ -626,93 +713,6 @@ local function constructor(...)
         __type__ = 'ConstructorTable',
         flags = flags,
     }, mt_constructor);
-end
-
--- MARK: - Parameters
-
---- @param ... string[]|{name: string?, type: (string|table)?, types: (string|table)[]?}[]
-local function parameters(...)
-    local args = { ... };
-    local argsLen = #args;
-
-    local t = {
-        __type__ = 'ParametersTable',
-        value = {}
-    };
-
-    if argsLen == 0 then
-        return t;
-    end
-
-    for i = 1, argsLen do
-        local paramDef = args[i];
-        local tParamDef = type(paramDef);
-        if tParamDef == 'string' then
-            if paramDef == '' then
-                errorf(2, 'First parameter string is empty.');
-            end
-            -- One-arg array type.
-            local name = 'param_1';
-            table.insert(t.value, { name = name, types = { paramDef } });
-        elseif tParamDef == 'table' then
-            if not isArray(paramDef) then
-                errorf(2, 'Parameters is not an array.');
-            end
-
-            for j = 1, #paramDef do
-                local subParam = paramDef[j];
-                local tSubParam = type(subParam);
-
-                if tSubParam == 'string' then
-                    if subParam == '' then
-                        errorf(2, 'First parameter string is empty.');
-                    end
-                    -- One-arg array type.
-                    local name = string.format('param_%i', j);
-                    table.insert(t.value, { name = name, types = { subParam } });
-                elseif tParamDef == 'table' then
-                    if isArray(subParam) then
-                        print(dump.any(subParam));
-                        errorf(2, 'Parameter #%i cannot be an array.', j);
-                    end
-
-                    local name = subParam.name or string.format('param_%i', j);
-                    local type = subParam.type;
-                    local types = subParam.types;
-
-                    if types and type then
-                        errorf(2, 'Parameter #%i cannot define both "type" and "types".', j);
-                    elseif not type and types then
-                        errorf(2, 'Parameter #%i has no defined types.', j);
-                    elseif type then
-                        types = { type };
-                    elseif types then
-                        if not isArray(types) then
-                            errorf(2, "Parameter #%i is not an array.", j);
-                        end
-                    end
-
-                    table.insert(t.value, { name = name, types = types });
-                end
-            end
-
-            -- Process array here.
-        else
-            errorf(2, 'Parameters is not a proper definition.');
-        end
-    end
-
-    return t;
-end
-
--- MARK: - Returns
-
---- @param e ClassStructDefinition|Class|table|string
-local function returns(e)
-    return {
-        __type__ = 'ReturnsTable',
-        value = processTypes(e)
-    };
 end
 
 -- MARK: - Extends

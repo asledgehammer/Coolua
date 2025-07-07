@@ -102,6 +102,27 @@ Class:addMethod({
 
 Class:addMethod({
     scope = 'public',
+    name = 'isAssignableFromType',
+    parameters = {
+        { name = 'other', type = 'lua.lang.Class' }
+    },
+    returns = 'boolean',
+
+    --- @param self Class
+    --- @param other Class|ClassStructDefinition
+    body = function(self, other)
+        if not other then
+            return false;
+        elseif other.__type__ == 'ClassStructDefinition' then
+            return self:getDefinition():isAssignableFromType(other);
+        else
+            return self:getDefinition():isAssignableFromType(other:getDefinition());
+        end
+    end
+});
+
+Class:addMethod({
+    scope = 'public',
     final = true,
     name = 'isInterface',
     returns = 'boolean',

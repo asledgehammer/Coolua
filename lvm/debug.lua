@@ -10,7 +10,7 @@ local API = {
     __type__ = 'LVMModule',
 
     -- Field(s)
-    internal = true,
+    internal = false,
     method = false,
     methodCache = false,
     scope = false,
@@ -19,6 +19,7 @@ local API = {
     interface = false,
     constructor = false,
     super = false,
+    builder = true,
 
     -- Method(s)
     --- @param lvm LVM

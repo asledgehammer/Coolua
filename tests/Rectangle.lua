@@ -2,93 +2,93 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local LVM = require 'LVM';
-
 local LuaClass = require 'LuaClass';
-local newClass = LuaClass.newClass;
 
 local Dimension = require 'tests/Dimension';
 
-local Rectangle = newClass({
-    scope = 'public',
-    extends = Dimension
-});
+-- Builder API ------------------------ --
+local builder = LuaClass.builder;
+local class = builder.class;
+local extends = builder.extends;
+local static = builder.static;
+local field = builder.field;
+local constructor = builder.constructor;
+local method = builder.method;
+local toString = builder.toString;
+local properties = builder.properties;
+local parameters = builder.parameters;
+local returns = builder.returns;
+local get = builder.get;
+local set = builder.set;
+local private = builder.private;
+local public = builder.public;
+local final = builder.final;
+-- ------------------------------------ --
 
-Rectangle:addField {
+--- @type RectangleDefinition
+local Rectangle = class 'Rectangle' (public) {
+    extends(Dimension),
 
-    scope = 'private',
-    type = 'number',
-    name = 'x',
-    value = 0,
-
-    get = { scope = 'public' },
-    set = { scope = 'public' }
-};
-
-Rectangle:addField {
-
-    scope = 'private',
-    type = 'number',
-    name = 'y',
-    value = 0,
-
-    get = { scope = 'public' },
-    set = { scope = 'public' }
-};
-
-Rectangle:addConstructor {
-    scope = 'public',
-
-    --- @param o Rectangle
-    body = function(o)
-        o.x = 0;
-        o.y = 0;
-    end
-};
-
-Rectangle:addConstructor {
-
-    scope = 'public',
-
-    parameters = {
-        { name = 'x',      type = 'number' },
-        { name = 'y',      type = 'number' },
-        { name = 'width',  type = 'number' },
-        { name = 'height', type = 'number' }
+    field 'x' (private) {
+        properties {
+            type = 'number',
+            value = 0
+        },
+        get(public),
+        set(public)
     },
 
-    --- @param self Rectangle
-    --- @param width number
-    --- @param height number
-    super = function(self, x, y, width, height)
-        self:super(width, height);
-    end,
+    field 'y' (private) {
+        properties {
+            type = 'number',
+            value = 0
+        },
+        get(public),
+        set(public)
+    },
 
-    --- @param self Rectangle
-    --- @param x number
-    --- @param y number
-    --- @param width number
-    --- @param height number
-    body = function(self, x, y, width, height)
-        self.x = x;
-        self.y = y;
-    end
+    constructor(public) {
 
+        parameters { 'number', 'number', 'number', 'number' },
+
+        --- @param self Rectangle
+        --- @param width number
+        --- @param height number
+        super = function(self, x, y, width, height)
+            self:super(width, height);
+        end,
+
+        --- @param self Rectangle
+        --- @param x number
+        --- @param y number
+        --- @param width number
+        --- @param height number
+        body = function(self, x, y, width, height)
+            self.x = x;
+            self.y = y;
+        end
+
+    },
+
+    toString {
+        --- @param self Rectangle
+        function(self)
+            return string.format(
+                'Rectangle(x = %.4f, y = %.4f, width = %.4f, height = %.4f)',
+                self:getX(), self:getY(), self:getWidth(), self:getHeight()
+            );
+        end
+    },
+
+    static {
+        method 'sayHello' (public, final) {
+            returns 'void',
+
+            function()
+                print('Hello, World!');
+            end
+        }
+    },
 };
 
-Rectangle:addMethod {
-
-    scope = 'public',
-    name = 'toString',
-    returns = 'string',
-
-    --- @param self Rectangle
-    body = function(self)
-        return self:getX() .. ', ' .. self:getY() .. ', ' .. tostring(self:super());
-    end
-};
-
-Rectangle:finalize();
-
---- @cast Rectangle RectangleDefinition
 return Rectangle;
