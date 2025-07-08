@@ -10,9 +10,6 @@ local dump = require 'dump'.any;
 
 local DebugUtils = require 'DebugUtils';
 
-local LVMUtils = require 'LVMUtils';
-local argsToString = LVMUtils.arrayToString;
-
 --- @type LVM
 local LVM;
 
@@ -103,7 +100,7 @@ function API.createSuperTable(cd)
 
         local constructorDefinition = superClass:getConstructor(args);
         if not constructorDefinition then
-            errorf(2, '%s Unknown super-constructor: %s', cd.printHeader, argsToString(args));
+            errorf(2, '%s Unknown super-constructor: %s', cd.printHeader, dump(args));
             return;
         end
 
@@ -160,7 +157,7 @@ function API.createSuperTable(cd)
         local md = superClass:getMethod(name, args);
 
         if not md then
-            errorf(2, '%s Unknown super-method: %s %s', cd.printHeader, name, argsToString(args));
+            errorf(2, '%s Unknown super-method: %s %s', cd.printHeader, name, dump(args));
             return;
         end
 

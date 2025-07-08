@@ -10,11 +10,10 @@ local PrintPlus = require 'PrintPlus';
 local errorf = PrintPlus.errorf;
 local debugf = PrintPlus.debugf;
 
-local LVMUtils = require 'LVMUtils';
-local arrayContains = LVMUtils.arrayContains;
-
 --- @type LVM
 local LVM;
+
+local arrayContains = require 'LVMUtils'.arrayContains;
 
 local API;
 API = {

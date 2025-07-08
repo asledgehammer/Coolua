@@ -6,8 +6,6 @@ local PrintPlus = require 'PrintPlus';
 local errorf = PrintPlus.errorf;
 local debugf = PrintPlus.debugf;
 
-local LVMUtils = require 'LVMUtils';
-
 --- Converts the first character to upper. (Used for get-set shorthand)
 ---
 --- @param str string

@@ -2,11 +2,10 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local LVMUtils = require 'LVMUtils';
-local isArray = LVMUtils.isArray;
-
 --- @type LVM
 local LVM;
+
+local isArray = require 'LVMUtils'.isArray;
 
 --- @type LVMTypeModule
 local API = {

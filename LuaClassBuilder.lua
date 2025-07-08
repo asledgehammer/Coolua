@@ -2,16 +2,18 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+require 'LuaPlus';
+
 local PrintPlus = require 'PrintPlus';
 local errorf = PrintPlus.errorf;
 local debugf = PrintPlus.debugf;
 
-local dump = require 'dump';
+local dump = require 'dump'.any;
 
 local LVM = require 'LVM';
 
-local LVMUtils = require 'LVMUtils';
-local isArray = LVMUtils.isArray;
+
+local isArray = require 'LVMUtils'.isArray;
 
 local public = 'public';
 local protected = 'protected';
@@ -126,7 +128,7 @@ local function static(body)
         if type(entry) == 'table' then
             if not entry.__type__ then
                 errorf(2, 'Entry #%i is not a struct. {value = %s}',
-                    i, dump.any(entry)
+                    i, dump(entry)
                 );
             end
             -- Set all valid bodies as static.
@@ -142,7 +144,7 @@ local function static(body)
                 table.insert(entry.flags, 'static');
             else
                 errorf(2, 'Entry #%i is an unknown struct. {type = %s, value = %s}',
-                    i, entry.__type__, dump.any(entry)
+                    i, entry.__type__, dump(entry)
                 )
             end
         end
@@ -370,7 +372,7 @@ local mt_interface_body = function(self, ...)
             error('Invalid flag for interface method: abstract.', 2);
         elseif method.default then
             error(
-            "Invalid flag for interface method: default. (For default interface method behavior, don't define a body)");
+                "Invalid flag for interface method: default. (For default interface method behavior, don't define a body)");
         end
 
         -- Set default flag based off of absense of body function.
@@ -393,9 +395,8 @@ local mt_interface_body = function(self, ...)
 
     -- Build static method(s).
     for name, method in pairs(self.static.methods) do
-
         if not method.body then
-             error('body function missing for static interface method. (Static methods must have a body.)', 2);
+            error('body function missing for static interface method. (Static methods must have a body.)', 2);
         end
 
         -- Check flags.
@@ -488,7 +489,7 @@ local mt_field_body = function(self, ...)
                         end
                     else
                         errorf(2, 'Unknown struct in field: %s {value = %s}',
-                            v2.__type__, dump.any(v2)
+                            v2.__type__, dump(v2)
                         );
                     end
                 else
@@ -611,7 +612,7 @@ local function parameters(...)
             local name = 'param_1';
             table.insert(t.value, { name = name, types = { paramDef } });
         elseif tParamDef == 'table' then
-            if not isArray(paramDef) then
+            if type(paramDef) ~= 'table' or not isArray(paramDef) then
                 errorf(2, 'Parameters is not an array.');
             end
 
@@ -628,7 +629,6 @@ local function parameters(...)
                     table.insert(t.value, { name = name, types = { subParam } });
                 elseif tParamDef == 'table' then
                     if isArray(subParam) then
-                        print(dump.any(subParam));
                         errorf(2, 'Parameter #%i cannot be an array.', j);
                     end
 
@@ -681,7 +681,7 @@ local function processMethodArgs(self, args)
         if targ == 'table' then
             if not arg.__type__ then
                 errorf(2, 'Property #%i in method is not a struct. {value = %s}',
-                    i, dump.any(arg)
+                    i, dump(arg)
                 );
             end
 
@@ -694,7 +694,7 @@ local function processMethodArgs(self, args)
                 self.parameters = arg.value;
             else
                 errorf(2, 'Property #%i is an unknown struct: %s {type = %s, value = %s}',
-                    i, arg.__type__, dump.any(arg)
+                    i, arg.__type__, dump(arg)
                 );
             end
         elseif targ == 'function' then
@@ -804,7 +804,7 @@ local mt_constructor = {
                 if tv ~= 'function' then
                     errorf(2, 'Property "body" of constructor is not a function. {type = %s, value = %s}',
                         type(v),
-                        dump.any(v)
+                        dump(v)
                     );
                 end
                 self.body = v;
@@ -813,7 +813,7 @@ local mt_constructor = {
                 if tv ~= 'function' then
                     errorf(2, 'Property "super" of constructor is not a function. {type = %s, value = %s}',
                         type(v),
-                        dump.any(v)
+                        dump(v)
                     );
                 end
                 self.super = v;
@@ -821,7 +821,7 @@ local mt_constructor = {
                 errorf(2, 'Unknown property of constructor: %s {type = %s, value = %s}',
                     k,
                     type(v),
-                    dump.any(v)
+                    dump(v)
                 );
             end
         end
@@ -834,7 +834,7 @@ local mt_constructor = {
             if targ == 'table' then
                 if not arg.__type__ then
                     errorf(2, 'Table entry for constructor is not a struct. {type = %s, value = %s}',
-                        targ, dump.any(arg)
+                        targ, dump(arg)
                     );
                 end
                 -- Apply parameters.
@@ -842,13 +842,13 @@ local mt_constructor = {
                     self.parameters = arg;
                 else
                     errorf(2, 'Unknown Table entry for constructor. {type = %s, value = %s}',
-                        arg.__type__, dump.any(arg)
+                        arg.__type__, dump(arg)
                     );
                 end
             else
                 errorf(2, 'Table entry #%i for constructor is unknown. {type = %s, value = %s}',
                     i,
-                    targ, dump.any(arg)
+                    targ, dump(arg)
                 );
             end
         end

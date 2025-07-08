@@ -8,8 +8,7 @@ local debugf = PrintPlus.debugf;
 
 local DebugUtils = require 'DebugUtils';
 
-local LVMUtils = require 'LVMUtils';
-local isArray = LVMUtils.isArray;
+local isArray = require 'LVMUtils'.isArray;
 
 --- @type LVM
 local LVM;

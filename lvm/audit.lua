@@ -8,9 +8,9 @@ local errorf = PrintPlus.errorf;
 local dump = require 'dump'.any;
 
 local LVMUtils = require 'LVMUtils';
+local arrayContainsDuplicates = LVMUtils.arrayContainsDuplicates;
 local isArray = LVMUtils.isArray;
 local isValidName = LVMUtils.isValidName;
-local arrayContainsDuplicates = LVMUtils.arrayContainsDuplicates;
 
 --- @type LVM
 local LVM = nil;
@@ -207,7 +207,7 @@ end
 
 function API.auditParameters(parameters, errHeader)
     if parameters then
-        if type(parameters) ~= 'table' or not isArray(parameters) then
+        if not parameters or type(parameters) ~= 'table' or not isArray(parameters) then
             errorf(2, '%s property "parameters" is not a ParameterDefinition[]. {type=%s, value=%s}',
                 errHeader, LVM.type.getType(parameters), tostring(parameters)
             );

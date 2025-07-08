@@ -5,8 +5,7 @@
 local PrintPlus = require 'PrintPlus';
 local errorf = PrintPlus.errorf;
 
-local LVMUtils = require 'LVMUtils';
-local isArray = LVMUtils.isArray;
+local isArray = require 'LVMUtils'.isArray;
 
 --- @type LVM
 local LVM;
