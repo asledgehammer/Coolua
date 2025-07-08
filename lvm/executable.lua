@@ -2,13 +2,14 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+local dump = require 'dump'.any;
+
 local DebugUtils = require 'DebugUtils';
 
 local LVMUtils = require 'LVMUtils';
 local arrayContains = LVMUtils.arrayContains;
 local errorf = LVMUtils.errorf;
 local debugf = LVMUtils.debugf;
-local paramsToString = LVMUtils.paramsToString;
 
 --- @type LVM
 local LVM;
@@ -596,7 +597,7 @@ function API.createMiddleConstructor(classDef)
         if LVM.isOutside() and not LVM.scope.canAccessScope(cons.scope, scopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The constructor %s.new(%s) is set as "%s" access level. (Access Level from call: "%s")\n%s',
-                cons.class.name, paramsToString(cons.parameters),
+                cons.class.name, dump(cons.parameters),
                 cons.scope, scopeAllowed,
                 LVM.stack.printStackTrace()
             );

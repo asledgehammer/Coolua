@@ -2,7 +2,8 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local LVMUtils = require 'LVMUtils';
+local dump = require 'dump'.any;
+
 local LVM = require 'LVM';
 local newClass = LVM.class.newClass;
 
@@ -98,14 +99,14 @@ StackTraceElement:addMethod({
                     element.class.name,
                     callSyntax,
                     element.name,
-                    LVMUtils.paramsToString(element.parameters)
+                    dump(element.parameters)
                 );
             elseif element.__type__ == 'ConstructorDefinition' then
                 return string.format('%s:%s: calling %s.new(%s)',
                     path,
                     line,
                     element.class.name,
-                    LVMUtils.paramsToString(element.parameters)
+                    dump(element.parameters)
                 );
             elseif element.__type__ == 'FieldDefinition' then
                 if context == 'field-get' then

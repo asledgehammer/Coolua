@@ -2,16 +2,12 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+local dump = require 'dump'.any;
+
 local LVMUtils = require 'LVMUtils';
--- local anyToString = LVMUtils.anyToString;
-local arrayContainsDuplicates = LVMUtils.arrayContainsDuplicates;
-local arrayToString = LVMUtils.arrayToString;
 local debugf = LVMUtils.debugf;
 local errorf = LVMUtils.errorf;
-local isArray = LVMUtils.isArray;
-local isValidName = LVMUtils.isValidName;
 local firstCharToUpper = LVMUtils.firstCharToUpper;
-local readonly = LVMUtils.readonly;
 
 --- @type LVM
 local LVM;

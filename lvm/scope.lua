@@ -2,10 +2,10 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local DebugUtils = require 'DebugUtils';
+local dump = require 'dump'.any;
 
+local DebugUtils = require 'DebugUtils';
 local LVMUtils = require 'LVMUtils';
-local anyToString = LVMUtils.anyToString;
 local debugf = LVMUtils.debugf;
 
 --- @type LVM
@@ -87,7 +87,7 @@ function API.getScopeForCall(struct, callInfo)
     end
 
     debugf(LVM.debug.scope, '[SCOPE] :: getScopeCall(%s, %s) = %s',
-        struct.path, anyToString(callInfo), value
+        struct.path, dump(callInfo), value
     );
 
     -- Nothing matches. Only public access.

@@ -5,7 +5,6 @@
 local LVMUtils = require 'LVMUtils';
 local errorf = LVMUtils.errorf;
 local isArray = LVMUtils.isArray;
-local paramsToString = LVMUtils.paramsToString;
 
 --- @type LVM
 local LVM;

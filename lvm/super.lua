@@ -2,12 +2,13 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+local dump = require 'dump'.any;
+
 local DebugUtils = require 'DebugUtils';
 
 local LVMUtils = require 'LVMUtils';
 local errorf = LVMUtils.errorf;
 local debugf = LVMUtils.debugf;
-local paramsToString = LVMUtils.paramsToString;
 local argsToString = LVMUtils.arrayToString;
 
 --- @type LVM
@@ -121,7 +122,7 @@ function API.createSuperTable(cd)
         if not LVM.scope.canAccessScope(constructorDefinition.scope, scopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The constructor %s.new(%s) is set as "%s" access level. (Access Level from call: "%s")\n%s',
-                constructorDefinition.class.name, paramsToString(constructorDefinition.parameters),
+                constructorDefinition.class.name, dump(constructorDefinition.parameters),
                 constructorDefinition.scope, scopeAllowed,
                 LVM.stack.printStackTrace()
             );
@@ -200,7 +201,7 @@ function API.createSuperTable(cd)
         end, debug.traceback);
 
         LVM.stack.popContext();
-        
+
         if not result then error(errMsg) end
 
         return retVal;

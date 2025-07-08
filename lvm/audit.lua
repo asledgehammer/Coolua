@@ -2,12 +2,13 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+local dump = require 'dump'.any;
+
 local LVMUtils = require 'LVMUtils';
 local isArray = LVMUtils.isArray;
 local isValidName = LVMUtils.isValidName;
 local errorf = LVMUtils.errorf;
 local arrayContainsDuplicates = LVMUtils.arrayContainsDuplicates;
-local arrayToString = LVMUtils.anyToString;
 
 --- @type LVM
 local LVM = nil;
@@ -133,7 +134,7 @@ local errHeader = string.format('Class(%s):addField():', cd.name);
         if not LVM.type.isAssignableFromType(fd.value, fd.types) then
             errorf(2,
                 '%s property "value" is not assignable from "types". {types = %s, value = {type = %s, value = %s}}',
-                errHeader, arrayToString(fd.types), type(fd.value), tostring(fd.value)
+                errHeader, dump(fd.types), type(fd.value), tostring(fd.value)
             );
         end
         fd.assignedOnce = true;
