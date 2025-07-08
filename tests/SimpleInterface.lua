@@ -19,7 +19,7 @@ local public = builder.public;
 local SimpleInterface, scaffolding = interface 'SimpleInterface' (public) {
 
     -- void aMethod();
-    method 'aMethod' {},
+    method 'aMethod',
 
     -- default void bMethod() {
     --   System.out.println("Hello from bMethod!");
