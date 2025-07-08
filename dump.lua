@@ -1,95 +1,63 @@
 local LVMUtils = require 'LVMUtils';
 
-local dump = {};
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
 
-local function isDiscovered(discovered, e)
-    for i = 1, #discovered do
-        if discovered[i] == e then
+-- Properties that can be modified for global default configuration of dumps.
+local DEFAULT_INDENT_STEP = string.rep(' ', 4);
+local NEW_LINE = '\n';
+local DEFAULT_MAX_LEVEL = 12;
+local DEFAULT_LABEL = false;
+local DEFAULT_LABEL_FIELD = '__type__';
+local DEFAULT_PRETTY = false;
+
+--- The default configuration for all dumps.
+local DEFAULT_CONFIGURATION = {
+    pretty = DEFAULT_PRETTY,
+    level = 0,
+    maxLevel = DEFAULT_MAX_LEVEL,
+    label = DEFAULT_LABEL,
+    labelField = DEFAULT_LABEL_FIELD
+};
+
+--- @param data DumpMetadata|nil
+--- @param e any
+local function isDiscovered(data, e)
+    if not data or not e then return false end
+    for i = 1, #data.discovered do
+        if data.discovered[i] == e then
             return true;
         end
     end
     return false;
 end
 
-function dump.array(a, level, maxLevel, discovered)
-    discovered = discovered or {};
-    table.insert(discovered, a);
+--- @param cfg table?
+---
+--- @return DumpConfiguration
+local function adaptConfiguration(cfg)
+    if not cfg then return DEFAULT_CONFIGURATION end
 
-    level = level or 0;
-    maxLevel = maxLevel or 10;
+    -- Polyfill missing settings.
+    if not cfg.level then cfg.level = 0 end
+    if not cfg.maxLevel then cfg.maxLevel = DEFAULT_MAX_LEVEL end
+    if not cfg.label then cfg.label = DEFAULT_LABEL end
+    if not cfg.labelField then cfg.labelField = DEFAULT_LABEL_FIELD end
+    if not cfg.pretty then cfg.pretty = DEFAULT_PRETTY end
 
-    local indent0 = string.rep('    ', level);
-    local indent1 = string.rep('    ', level + 1);
-
-    local len = #a;
-
-    local tag = string.format('<Array[%i]> ', len);
-
-    if len == 0 then return string.format('%s[]', tag) end
-
-    local s = '';
-    for i = 1, #a do
-        local v = a[i];
-        local e = string.format('[%i] = %s', i, dump.any(v, level + 1, maxLevel));
-        if s == '' then
-            s = indent1 .. e;
-        else
-            s = s .. ',\n' .. indent1 .. e;
-        end
-    end
-
-    return string.format('%s[\n%s\n' .. indent0 .. ']', tag, s);
+    return cfg;
 end
 
-function dump.table(t, level, maxLevel, discovered)
-    discovered = discovered or {};
-    table.insert(discovered, t);
-
-    level = level or 0;
-    maxLevel = maxLevel or 10;
-
-    local indent0 = string.rep('    ', level);
-    local indent1 = string.rep('    ', level + 1);
-
-    local tag = '';
-    local s = '';
-
-    if t.__type__ then
-        tag = '<' .. t.__type__ .. '> ';
-    end
-
-    -- Sort keys.
-    local keys = {};
-    for key, _ in pairs(t) do
-        table.insert(keys, key);
-    end
-    table.sort(keys, function(a, b)
-        return tostring(a) < tostring(b);
-    end);
-
-    for i = 1, #keys do
-        local key = keys[i];
-        local value = t[key];
-        if key ~= '__type__' then
-            local sKey = key;
-            if type(key) == 'number' then
-                sKey = '[' .. key .. ']'
-            end
-            local e = string.format('%s = %s', tostring(sKey), dump.any(value, level + 1, maxLevel, discovered));
-            if s == '' then
-                s = indent1 .. e;
-            else
-                s = s .. ',\n' .. indent1 .. e;
-            end
-        end
-    end
-
-    if s == '' then
-        return tag .. '{}';
-    end
-
-    return string.format('%s{\n%s\n' .. indent0 .. '}', tag, s);
+--- @param data DumpConfiguration
+---
+--- @return DumpMetadata
+local function createMetadata(data)
+    return { level = data.level, discovered = {} };
 end
+
+--- @type dump
+local dump = {};
 
 function dump.string(s)
     return '"' .. tostring(s) .. '"';
@@ -115,17 +83,106 @@ function dump.discovered()
     return '<cyclic>';
 end
 
-function dump.any(e, level, maxLevel, discovered)
-    discovered = discovered or {};
+function dump.array(a, cfg, metadata)
+    cfg = adaptConfiguration(cfg);
+    metadata = metadata or createMetadata(cfg);
+    table.insert(metadata.discovered, a);
 
-    if isDiscovered(discovered, e) then
+    local newline = ' ';
+    local indent0, indent1 = '', '';
+    if cfg.pretty then
+        newline = NEW_LINE;
+        indent0 = string.rep(DEFAULT_INDENT_STEP, cfg.level);
+        indent1 = string.rep(DEFAULT_INDENT_STEP, cfg.level + 1);
+    end
+    local len = #a;
+
+    local label = '';
+    if cfg.label then
+        label = string.format('<Array[%i]> ', len);
+    end
+
+    if len == 0 then return string.format('%s[]', label) end
+
+    local s = '';
+    for i = 1, #a do
+        local v = a[i];
+        metadata.level = metadata.level + 1;
+        local e = string.format('[%i] = %s', i, dump.any(v, cfg, metadata));
+        metadata.level = metadata.level - 1;
+        if s == '' then
+            s = indent1 .. e;
+        else
+            s = s .. ',' .. newline .. indent1 .. e;
+        end
+    end
+
+    return string.format('%s[' .. newline .. '%s' .. newline .. indent0 .. ']', label, s);
+end
+
+function dump.table(t, cfg, metadata)
+    cfg = adaptConfiguration(cfg);
+    metadata = metadata or createMetadata(cfg);
+
+    local newline = ' ';
+    local indent0, indent1 = '', '';
+    if cfg.pretty then
+        newline = NEW_LINE;
+        indent0 = string.rep(DEFAULT_INDENT_STEP, cfg.level);
+        indent1 = string.rep(DEFAULT_INDENT_STEP, cfg.level + 1);
+    end
+
+    local label = '';
+    local s = '';
+
+    if cfg.label and t[cfg.labelField] then
+        label = '<' .. tostring(t[cfg.labelField]) .. '> ';
+    end
+
+    -- Sort keys.
+    local keys = {};
+    for key, _ in pairs(t) do
+        table.insert(keys, key);
+    end
+    table.sort(keys, function(a, b)
+        return tostring(a) < tostring(b);
+    end);
+
+    for i = 1, #keys do
+        local key = keys[i];
+        local value = t[key];
+        if key ~= '__type__' then
+            local sKey = key;
+            if type(key) == 'number' then
+                sKey = '[' .. key .. ']'
+            end
+            metadata.level = metadata.level + 1;
+            local e = string.format('%s = %s', tostring(sKey), dump.any(value, cfg, metadata));
+            metadata.level = metadata.level - 1;
+            if s == '' then
+                s = indent1 .. e;
+            else
+                s = s .. ',' .. newline .. indent1 .. e;
+            end
+        end
+    end
+
+    if s == '' then
+        return label .. '{}';
+    end
+
+    return string.format('%s{' .. newline .. '%s' .. newline .. indent0 .. '}', label, s);
+end
+
+function dump.any(e, cfg, metadata)
+    if isDiscovered(metadata, e) then
         return dump.discovered();
     end
 
-    level = level or 0;
-    maxLevel = maxLevel or 10;
+    cfg = adaptConfiguration(cfg);
+    metadata = metadata or createMetadata(cfg);
 
-    if maxLevel <= level then
+    if cfg.maxLevel <= cfg.level then
         return '<...>';
     end
 
@@ -134,9 +191,9 @@ function dump.any(e, level, maxLevel, discovered)
         if e.__type__ and e.__type__ == 'ClassStructDefinition' then
             return dump.class(e);
         elseif LVMUtils.isArray(e) then
-            return dump.array(e, level, maxLevel, discovered);
+            return dump.array(e, cfg, metadata);
         else
-            return dump.table(e, level, maxLevel, discovered);
+            return dump.table(e, cfg, metadata);
         end
     elseif t == 'string' then
         return dump.string(e);
@@ -148,5 +205,11 @@ function dump.any(e, level, maxLevel, discovered)
         return dump.object(e);
     end
 end
+
+setmetatable(dump, {
+    __call = function(self, ...)
+        return self.any(...);
+    end
+});
 
 return dump;
