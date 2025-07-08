@@ -97,6 +97,10 @@ end
 function dump.array(a, cfg, metadata)
     cfg = adaptConfiguration(cfg);
     metadata = metadata or createMetadata(cfg);
+    
+    if isDiscovered(metadata, a) then
+       return dump.discovered();
+    end
     table.insert(metadata.discovered, a);
 
     local newline = ' ';
@@ -134,6 +138,11 @@ end
 function dump.table(t, cfg, metadata)
     cfg = adaptConfiguration(cfg);
     metadata = metadata or createMetadata(cfg);
+
+    if isDiscovered(metadata, t) then
+       return dump.discovered();
+    end
+    table.insert(metadata.discovered, t);
 
     local newline = ' ';
     local indent0, indent1 = '', '';
