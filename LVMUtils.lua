@@ -88,36 +88,6 @@ function table.join(array, delimiter)
     return s;
 end
 
---- A common printf implementation in modern compiled languages. Takes 2nd -> Nth arguments as `string.format(...)`
---- arguments.
----
---- @param message string The message to format and print.
---- @param ... any The `string.format(...)` arguments to inject.
-function API.printf(message, ...)
-    print(string.format(message, ...));
-end
-
---- A common errorf implementation in modern compiled languages. Takes 2nd -> Nth arguments as `string.format(...)`
---- arguments.
----
---- @param level number
---- @param message string The message to format and print.
---- @param ... any The `string.format(...)` arguments to inject.
-function API.errorf(level, message, ...)
-    level = level or 1;
-    error(string.format(message, ...), level);
-end
-
---- A common debugf implementation in modern compiled languages. Takes 2nd -> Nth arguments as `string.format(...)`
---- arguments.
----
---- @param flag boolean If true, the message prints. If false, it doesn't.
---- @param message string The message to format and print.
---- @param ... any The `string.format(...)` arguments to inject.
-function API.debugf(flag, message, ...)
-    if flag then API.printf(message, ...) end
-end
-
 function API.copyArray(array)
     if not API.isArray(array) then
         error(string.format('Object is not array. %s', API.typeValueString(array)), 2);
