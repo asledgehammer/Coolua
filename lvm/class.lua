@@ -2,16 +2,12 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local dump = require 'dump';
-
 local DebugUtils = require 'DebugUtils';
 
 local LVMUtils = require 'LVMUtils';
--- local anyToString = LVMUtils.anyToString;
 local debugf = LVMUtils.debugf;
 local errorf = LVMUtils.errorf;
 local isArray = LVMUtils.isArray;
-local isValidName = LVMUtils.isValidName;
 
 --- @type LVM
 local LVM;
@@ -849,7 +845,7 @@ function API.newClass(definition, outer)
             __properties[field] = value;
 
             LVM.stack.popContext();
-            
+
             -- Apply forward the value metrics.
             fd.assignedOnce = true;
             fd.value = value;
