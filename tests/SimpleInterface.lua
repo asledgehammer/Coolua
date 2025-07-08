@@ -3,46 +3,46 @@
 ---]]
 
 local LuaClass = require 'LuaClass';
-local newInterface = LuaClass.newInterface;
+local dump = require 'dump'.any;
+
+-- Builder API ------------------------ --
+local builder = LuaClass.builder;
+local interface = builder.interface;
+local static = builder.static;
+local method = builder.method;
+local public = builder.public;
+-- ------------------------------------ --
 
 -- public interface SimpleInterface {
-local SimpleInterface = newInterface({
-    scope = 'public',
-    package = 'tests',
-    name = 'SimpleInterface',
-});
+--- @type SimpleInterfaceDefinition
+local SimpleInterface, scaffolding = interface 'SimpleInterface' (public) {
 
--- public void aMethod();
-SimpleInterface:addMethod({ name = 'aMethod' });
+    -- void aMethod();
+    method 'aMethod' (),
 
--- public default void bMethod() {
---   System.out.println("Hello from bMethod!");
--- }
-SimpleInterface:addMethod({
-    scope = 'public',
-    name = 'bMethod',
+    -- default void bMethod() {
+    --   System.out.println("Hello from bMethod!");
+    -- }
+    method 'bMethod' () {
+        --- @param self SimpleInterface
+        function(self)
+            print('Hello from bMethod!');
+        end
+    },
 
-    body = function()
-        print('Hello from bMethod!');
-    end
-});
-
--- public static void aStaticMethod() {
---   System.out.println('Hello from a static method!');
--- }
-SimpleInterface:addStaticMethod({
-    scope = 'public',
-    name = 'aStaticMethod',
-
-    body = function()
-        print('Hello from a static interface method!');
-    end
-});
-
+    static {
+        -- public static void aStaticMethod() {
+        --   System.out.println("Hello from a static interface method!");
+        -- }
+        method 'aStaticMethod' (public) {
+            function()
+                print('Hello from a static interface method!');
+            end
+        }
+    }
+};
 -- }
 
-SimpleInterface:finalize();
-
---- @cast SimpleInterface SimpleInterfaceDefinition
+print(dump(SimpleInterface, { pretty = true, label = true }));
 
 return SimpleInterface;
