@@ -132,15 +132,15 @@ local function static(body)
             end
             -- Set all valid bodies as static.
             if entry.__type__ == 'FieldTable' then
-                table.insert(entry.flags, 'static');
+                -- table.insert(entry.flags, 'static');
             elseif entry.__type__ == 'MethodTable' then
-                table.insert(entry.flags, 'static');
+                -- table.insert(entry.flags, 'static');
             elseif entry.__type__ == 'ClassTable' then
-                table.insert(entry.flags, 'static');
+                -- table.insert(entry.flags, 'static');
             elseif entry.__type__ == 'InterfaceTable' then
-                table.insert(entry.flags, 'static');
+                -- table.insert(entry.flags, 'static');
             elseif entry.__type__ == 'EnumTable' then
-                table.insert(entry.flags, 'static');
+                -- table.insert(entry.flags, 'static');
             else
                 errorf(2, 'Entry #%i is an unknown struct. {type = %s, value = %s}',
                     i, entry.__type__, dump(entry)
@@ -247,11 +247,15 @@ local mt_class_body = function(self, ...)
 
     -- Build static field(s).
     for name, field in pairs(self.static.fields) do
+        compileFlags(field, field);
+        field.static = true;
         cls:addStaticField(field);
     end
 
     -- Build static method(s).
     for name, method in pairs(self.static.methods) do
+        compileFlags(method, method);
+        method.static = true;
         cls:addStaticMethod(method);
     end
 
@@ -354,12 +358,6 @@ local mt_interface_body = function(self, ...)
 
     local interface = LVM.interface.newInterface(intArgs);
 
-    -- Build fields.
-    for name, field in pairs(self.fields) do
-        compileFlags(field, field);
-        interface:addField(field);
-    end
-
     -- Build methods.
     for name, method in pairs(self.methods) do
         compileFlags(method, method);
@@ -384,10 +382,27 @@ local mt_interface_body = function(self, ...)
 
     -- Build static field(s).
     for name, field in pairs(self.static.fields) do
+        compileFlags(field, field);
+
         -- Check flags.
         if field.static then
-            error('Invalid flag for interface method: "static". (It\'s in a static block so this isn\'t needed.)');
+            errorf(2, 'Invalid flag "static" for interface field: %s. (It\'s in a static block so this isn\'t needed)',
+                name
+            );
+        elseif field.final then
+            errorf(2, 'Invalid flag "final" for interface field: %s. (All interface fields are constants)', name);
+        elseif field.scope == 'public' then
+            errorf(2, 'Invalid flag "public" for interface field: %s. (All interface fields are public)', name);
         end
+
+        -- All interface fields requires a value.
+        if not field.value then
+            errorf(2, 'No default value for interface field: %s.', name);
+        end
+
+        field.scope = 'public';
+        field.static = true;
+        field.final = true;
 
         interface:addStaticField(field);
     end
@@ -395,17 +410,30 @@ local mt_interface_body = function(self, ...)
     -- Build static method(s).
     for name, method in pairs(self.static.methods) do
         if not method.body then
-            error('body function missing for static interface method. (Static methods must have a body.)', 2);
+            errorf(2, 'body function missing for static interface method. (Static methods must have a body.)', 2);
         end
+
+        compileFlags(method, method);
 
         -- Check flags.
         if method.static then
-            error('Invalid flag for static interface method: "static". (It\'s in a static block so this isn\'t needed.)');
+            errorf(2,
+                'Invalid flag "static" for interface method: %s. (It\'s in a static block so this isn\'t needed.)',
+                name
+            );
         elseif method.abstract then
-            error('Invalid flag for static interface method: abstract. (Static methods cannot be abstract.)', 2);
+            errorf(2, 'Invalid flag "abstract" for interface method: %s (Interface methods cannot be abstract.)',
+                name
+            );
         elseif method.default then
-            error('Invalid flag for static interface method: default. (Static methods must have a body.)', 2);
+            errorf(2,
+                'Invalid flag "default" for static interface method: %s (Static interface methods must have a body.)',
+                name
+            );
         end
+
+        method.static = true;
+        method.final = true;
 
         interface:addStaticMethod(method);
     end

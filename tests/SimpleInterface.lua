@@ -3,7 +3,6 @@
 ---]]
 
 local LuaClass = require 'LuaClass';
-local dump = require 'dump'.any;
 
 -- Builder API ------------------------ --
 local builder = LuaClass.builder;
@@ -15,7 +14,7 @@ local public = builder.public;
 
 -- public interface SimpleInterface {
 --- @type SimpleInterfaceDefinition
-local SimpleInterface, scaffolding = interface 'SimpleInterface' (public) {
+local SimpleInterface = interface 'SimpleInterface' (public) {
 
     -- void aMethod();
     method 'aMethod' (),
@@ -42,7 +41,5 @@ local SimpleInterface, scaffolding = interface 'SimpleInterface' (public) {
     }
 };
 -- }
-
-print(dump(SimpleInterface, { pretty = true, label = true }));
 
 return SimpleInterface;
