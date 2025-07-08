@@ -28,8 +28,11 @@ local void = 'void';
 --- @field value any
 
 --- @param struct table
-local function compileFlags(struct, appliedStruct)
+--- @param appliedStruct table
+--- @param defaultScope string? (Default: 'package')
+local function compileFlags(struct, appliedStruct, defaultScope)
     local flags = struct.flags;
+    defaultScope = defaultScope or 'package';
 
     for i = 1, #flags do
         local flag = flags[i];
@@ -45,13 +48,12 @@ local function compileFlags(struct, appliedStruct)
         elseif flag == 'static' then
             errorf(2, 'Static flags cannot be assigned. They must be defined in a "static {}" block.');
         else
-            appliedStruct[flags[i]] = true;
+            appliedStruct[flag] = true;
         end
     end
 
-    -- (Default scope)
     if not appliedStruct.scope then
-        appliedStruct.scope = 'package';
+        appliedStruct.scope = defaultScope;
     end
 
     appliedStruct.flags = nil;
@@ -316,6 +318,8 @@ local mt_interface_body = function(self, ...)
         local entry = args[i];
 
         for _, arg in pairs(entry) do
+            -- print('[BUILDER][Interface] :: Parsing entry: ' .. dump(entry, { label = true, pretty = true }));
+
             if arg.__type__ == 'ExtendsTable' then
                 if self.extends then
                     error('Cannot redefine interface extensions.', 2);
@@ -360,16 +364,18 @@ local mt_interface_body = function(self, ...)
 
     -- Build methods.
     for name, method in pairs(self.methods) do
-        compileFlags(method, method);
+        compileFlags(method, method, public);
 
         -- Check flags.
         if method.static then
-            error('Invalid flag for interface method: "static". (Define this in a static block)');
+            errorf(2, 'Invalid flag "static" for interface method: %s (Define this in a static block)', name);
         elseif method.abstract then
-            error('Invalid flag for interface method: abstract.', 2);
+            errorf(2, 'Invalid flag "abstract" for interface method: %s', name);
         elseif method.default then
-            error(
-                "Invalid flag for interface method: default. (For default interface method behavior, don't define a body)");
+            errorf(2,
+                'Invalid flag "default" for interface method: %s (For default interface method behavior, don\'t define a body)',
+                name
+            );
         end
 
         -- Set default flag based off of absense of body function.
@@ -382,7 +388,7 @@ local mt_interface_body = function(self, ...)
 
     -- Build static field(s).
     for name, field in pairs(self.static.fields) do
-        compileFlags(field, field);
+        compileFlags(field, field, public);
 
         -- Check flags.
         if field.static then
@@ -540,7 +546,14 @@ end;
 local mt_field = {
     __call = function(self, ...)
         local args = { ... };
-        for i = 1, #args do
+        local argLen = #args;
+
+        -- Bypass the flags if this condition is met.
+        if argLen == 1 and isArray(args[1]) then
+            return mt_field_body(self, args[1]);
+        end
+
+        for i = 1, argLen do
             table.insert(self.flags, args[i]);
         end
         return setmetatable(self, {
@@ -743,16 +756,30 @@ local function processMethodArgs(self, args)
     if not self.returns then
         self.returns = { void };
     end
+
+    return self;
 end
 
 local mt_method_body = function(self, args)
-    processMethodArgs(self, args);
-    return self;
+    return processMethodArgs(self, args);
 end;
 
 local mt_method = {
     __call = function(self, ...)
         local args = { ... };
+        local argLen = #args;
+
+        -- Bypass the flags if this condition is met.
+        if argLen == 1 and isArray(args[1]) then
+            return processMethodArgs(self, args[1]);
+        end
+
+        -- If the method has no flags, a table is passed. Skip to the table definition.
+        if argLen == 1 and type(args[1]) == 'table' then
+            mt_method_body(self, args);
+            return;
+        end
+
         for i = 1, #args do
             table.insert(self.flags, args[i]);
         end
@@ -823,78 +850,94 @@ local toString = createMethodTemplate('toString', { public }, {
 
 -- MARK: - constructor
 
-local mt_constructor = {
-    __call = function(self, args)
-        for k, v in pairs(args) do
-            if k == 'body' then
-                local tv = type(v);
-                if tv ~= 'function' then
-                    errorf(2, 'Property "body" of constructor is not a function. {type = %s, value = %s}',
-                        type(v),
-                        dump(v)
-                    );
-                end
-                self.body = v;
-            elseif k == 'super' then
-                local tv = type(v);
-                if tv ~= 'function' then
-                    errorf(2, 'Property "super" of constructor is not a function. {type = %s, value = %s}',
-                        type(v),
-                        dump(v)
-                    );
-                end
-                self.super = v;
-            elseif type(k) == 'string' then
-                errorf(2, 'Unknown property of constructor: %s {type = %s, value = %s}',
-                    k,
+local mt_constructor_body = function(self, args)
+    for k, v in pairs(args) do
+        if k == 'body' then
+            local tv = type(v);
+            if tv ~= 'function' then
+                errorf(2, 'Property "body" of constructor is not a function. {type = %s, value = %s}',
                     type(v),
                     dump(v)
                 );
             end
+            self.body = v;
+        elseif k == 'super' then
+            local tv = type(v);
+            if tv ~= 'function' then
+                errorf(2, 'Property "super" of constructor is not a function. {type = %s, value = %s}',
+                    type(v),
+                    dump(v)
+                );
+            end
+            self.super = v;
+        elseif type(k) == 'string' then
+            errorf(2, 'Unknown property of constructor: %s {type = %s, value = %s}',
+                k,
+                type(v),
+                dump(v)
+            );
         end
+    end
 
-        for i = 1, #args do
-            local arg = args[i];
-            local targ = type(arg);
+    for i = 1, #args do
+        local arg = args[i];
+        local targ = type(arg);
 
-            --Enforce strict struct arguments.
-            if targ == 'table' then
-                if not arg.__type__ then
-                    errorf(2, 'Table entry for constructor is not a struct. {type = %s, value = %s}',
-                        targ, dump(arg)
-                    );
-                end
-                -- Apply parameters.
-                if arg.__type__ == 'ParametersTable' then
-                    self.parameters = arg;
-                else
-                    errorf(2, 'Unknown Table entry for constructor. {type = %s, value = %s}',
-                        arg.__type__, dump(arg)
-                    );
-                end
-            else
-                errorf(2, 'Table entry #%i for constructor is unknown. {type = %s, value = %s}',
-                    i,
+        --Enforce strict struct arguments.
+        if targ == 'table' then
+            if not arg.__type__ then
+                errorf(2, 'Table entry for constructor is not a struct. {type = %s, value = %s}',
                     targ, dump(arg)
                 );
             end
+            -- Apply parameters.
+            if arg.__type__ == 'ParametersTable' then
+                self.parameters = arg;
+            else
+                errorf(2, 'Unknown Table entry for constructor. {type = %s, value = %s}',
+                    arg.__type__, dump(arg)
+                );
+            end
+        else
+            errorf(2, 'Table entry #%i for constructor is unknown. {type = %s, value = %s}',
+                i,
+                targ, dump(arg)
+            );
         end
+    end
 
-        return setmetatable(self, {
-            -- __call = mt_property_body,
-            __tostring = mt_tostring
-        });
-    end,
+    return setmetatable(self, { __tostring = mt_tostring });
+end;
+
+local mt_constructor = {
+    __call = mt_constructor_body,
     __tostring = mt_tostring
 };
 
 --- @return table
 local function constructor(...)
-    local flags = { ... };
-    return setmetatable({
+    local t = {
         __type__ = 'ConstructorTable',
-        flags = flags,
-    }, mt_constructor);
+        flags = {}
+    };
+
+    local args = { ... };
+
+    if args and type(args) == 'table' and isArray(args) and #args ~= 0 and type(args[1]) == 'string' then
+        t.flags = args;
+    end
+
+    -- Bypass the flags if this condition is met.
+    if not args or (#args == 1 and type(args[1]) == 'table') then
+        print('cons args: ', dump(args));
+        if not args then
+            return setmetatable(t, mt_constructor);
+        else
+            return mt_constructor_body(t, args[1]);
+        end
+    end
+
+    return setmetatable(t, mt_constructor);
 end
 
 -- MARK: - Extends

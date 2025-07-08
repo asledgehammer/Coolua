@@ -2,6 +2,8 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+local dump = require 'dump'.any;
+
 local LuaClass = require 'LuaClass';
 
 -- Builder API ------------------------ --
@@ -20,7 +22,7 @@ local public = builder.public;
 -- ------------------------------------ --
 
 --- @type DimensionDefinition
-local Dimension = class 'Dimension' (public) {
+local Dimension, scaffolding = class 'Dimension' (public) {
 
     field 'width' (private) {
         properties {
@@ -44,7 +46,7 @@ local Dimension = class 'Dimension' (public) {
         set(public),
     },
 
-    constructor(public) {
+    constructor (public) {
 
         parameters {
             { name = 'width',  type = 'number' },
@@ -91,5 +93,8 @@ local Dimension = class 'Dimension' (public) {
         end
     }
 };
+
+-- print('\n\n # RESULT #\n');
+-- print(dump(scaffolding.constructors, { pretty = true, label = true }));
 
 return Dimension;
