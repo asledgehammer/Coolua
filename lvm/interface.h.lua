@@ -47,7 +47,7 @@ local InterfaceStructDefinition = {};
 --- @param definition FieldDefinitionParameter
 ---
 --- @return FieldDefinition
-function InterfaceStructDefinition:addField(definition) end
+function InterfaceStructDefinition:addStaticField(definition) end
 
 --- Attempts to resolve a FieldDefinition in the InterfaceStructDefinition. If the field isn't declared for the class level,
 --- the super-class(es) are checked.

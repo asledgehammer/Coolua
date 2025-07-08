@@ -290,6 +290,36 @@ function IAPI.isSuperInterface(self, interface)
     return false;
 end
 
+function IAPI.addStaticField(self, fd)
+    --- @type FieldDefinition
+    local args = {
+        __type__ = 'FieldDefinition',
+        audited = false,
+        class = self,
+        types = fd.types,
+        type = fd.type,
+        name = fd.name,
+        scope = 'public',
+        static = true,
+        final = true,
+        value = fd.value,
+        get = fd.get,
+        set = fd.set,
+        assignedOnce = false,
+    };
+
+    LVM.audit.auditField(self, args);
+    
+    -- Ensure that all constants are defined.
+    if not args.value then
+        errorf(2, '%s Cannot add interface field without a value: %s', self.printHeader, args.name);
+    end
+
+    self.declaredFields[args.name] = args;
+
+    return args;
+end
+
 -- MARK: Struct
 
 --- @param self InterfaceStructDefinition
@@ -571,6 +601,9 @@ function API.newInterface(definition, enclosingStruct)
 
     -- * General API * --
     id.finalize = IAPI.finalize;
+
+    -- * Fieldable API * --
+    id.addStaticField = IAPI.addStaticField;
 
     -- * Methodable API * --
     id.addMethod = IAPI.addMethod;
