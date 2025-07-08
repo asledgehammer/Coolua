@@ -8,11 +8,11 @@
 local dump = {};
 
 --- @class (exact) DumpConfiguration
---- @field level number
---- @field maxLevel number
---- @field label boolean
---- @field labelField string
---- @field pretty false
+--- @field level number?
+--- @field maxLevel number?
+--- @field label boolean?
+--- @field labelField string?
+--- @field pretty boolean?
 
 --- @class (exact) DumpMetadata
 --- @field level number

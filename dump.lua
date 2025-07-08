@@ -103,8 +103,8 @@ function dump.array(a, cfg, metadata)
     local indent0, indent1 = '', '';
     if cfg.pretty then
         newline = NEW_LINE;
-        indent0 = string.rep(DEFAULT_INDENT_STEP, cfg.level);
-        indent1 = string.rep(DEFAULT_INDENT_STEP, cfg.level + 1);
+        indent0 = string.rep(DEFAULT_INDENT_STEP, metadata.level);
+        indent1 = string.rep(DEFAULT_INDENT_STEP, metadata.level + 1);
     end
     local len = #a;
 
@@ -139,8 +139,8 @@ function dump.table(t, cfg, metadata)
     local indent0, indent1 = '', '';
     if cfg.pretty then
         newline = NEW_LINE;
-        indent0 = string.rep(DEFAULT_INDENT_STEP, cfg.level);
-        indent1 = string.rep(DEFAULT_INDENT_STEP, cfg.level + 1);
+        indent0 = string.rep(DEFAULT_INDENT_STEP, metadata.level);
+        indent1 = string.rep(DEFAULT_INDENT_STEP, metadata.level + 1);
     end
 
     local label = '';
