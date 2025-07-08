@@ -3,13 +3,9 @@
 ---]]
 
 local DebugUtils = require 'DebugUtils';
-local LVMUtils = require 'LVMUtils';
-local debugf = LVMUtils.debugf;
-local printf = LVMUtils.printf;
-local errorf = LVMUtils.errorf;
-local isValidName = LVMUtils.isValidName;
-local isArray = LVMUtils.isArray;
-local readonly = LVMUtils.readonly;
+
+local PrintPlus = require 'PrintPlus';
+local errorf = PrintPlus.errorf;
 
 --- @type LVM
 local LVM;

@@ -1,8 +1,6 @@
-local dump = require 'dump';
-
-local LVMUtils = require 'LVMUtils';
-local errorf = LVMUtils.errorf;
-local isArray = LVMUtils.isArray;
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
 
 -- Builder API ------------------------ --
 local builder = require 'LuaClassBuilder';

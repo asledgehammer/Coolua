@@ -2,11 +2,11 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local dump = require 'dump'.any;
+local PrintPlus = require 'PrintPlus';
+local errorf = PrintPlus.errorf;
+local debugf = PrintPlus.debugf;
 
 local LVMUtils = require 'LVMUtils';
-local debugf = LVMUtils.debugf;
-local errorf = LVMUtils.errorf;
 local firstCharToUpper = LVMUtils.firstCharToUpper;
 
 --- @type LVM

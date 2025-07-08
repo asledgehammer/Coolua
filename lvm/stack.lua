@@ -2,10 +2,10 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local DebugUtils = require 'DebugUtils';
+local PrintPlus = require 'PrintPlus';
+local debugf = PrintPlus.debugf;
 
-local LVMUtils = require 'LVMUtils';
-local debugf = LVMUtils.debugf;
+local DebugUtils = require 'DebugUtils';
 
 --- @type LVM
 local LVM;

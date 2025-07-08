@@ -3,8 +3,6 @@
 ---]]
 
 local LVM = require 'LVM';
-local LVMUtils = require 'LVMUtils';
-local debugf = LVMUtils.debugf;
 
 local builder = require 'LuaClassBuilder';
 

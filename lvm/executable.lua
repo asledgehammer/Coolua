@@ -6,10 +6,12 @@ local dump = require 'dump'.any;
 
 local DebugUtils = require 'DebugUtils';
 
+local PrintPlus = require 'PrintPlus';
+local errorf = PrintPlus.errorf;
+local debugf = PrintPlus.debugf;
+
 local LVMUtils = require 'LVMUtils';
 local arrayContains = LVMUtils.arrayContains;
-local errorf = LVMUtils.errorf;
-local debugf = LVMUtils.debugf;
 
 --- @type LVM
 local LVM;

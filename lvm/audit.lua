@@ -2,12 +2,14 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+local PrintPlus = require 'PrintPlus';
+local errorf = PrintPlus.errorf;
+
 local dump = require 'dump'.any;
 
 local LVMUtils = require 'LVMUtils';
 local isArray = LVMUtils.isArray;
 local isValidName = LVMUtils.isValidName;
-local errorf = LVMUtils.errorf;
 local arrayContainsDuplicates = LVMUtils.arrayContainsDuplicates;
 
 --- @type LVM

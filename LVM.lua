@@ -3,9 +3,9 @@
 ---]]
 
 local LVMUtils = require 'LVMUtils';
-local errorf = LVMUtils.errorf;
-local printf = LVMUtils.printf;
-local debugf = LVMUtils.debugf;
+
+local PrintPlus = require 'PrintPlus';
+local debugf = PrintPlus.debugf;
 
 --- @type LVM
 local LVM;
