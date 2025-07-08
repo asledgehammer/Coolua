@@ -97,9 +97,9 @@ end
 function dump.array(a, cfg, metadata)
     cfg = adaptConfiguration(cfg);
     metadata = metadata or createMetadata(cfg);
-    
+
     if isDiscovered(metadata, a) then
-       return dump.discovered();
+        return dump.discovered();
     end
     table.insert(metadata.discovered, a);
 
@@ -122,9 +122,14 @@ function dump.array(a, cfg, metadata)
     local s = '';
     for i = 1, #a do
         local v = a[i];
+
         metadata.level = metadata.level + 1;
-        local e = string.format('[%i] = %s', i, dump.any(v, cfg, metadata));
+        local e = dump.any(v, cfg, metadata);
         metadata.level = metadata.level - 1;
+
+        if cfg.label then
+            e = string.format('[%i] = %s', i, e);
+        end
         if s == '' then
             s = indent1 .. e;
         else
@@ -140,7 +145,7 @@ function dump.table(t, cfg, metadata)
     metadata = metadata or createMetadata(cfg);
 
     if isDiscovered(metadata, t) then
-       return dump.discovered();
+        return dump.discovered();
     end
     table.insert(metadata.discovered, t);
 
@@ -171,7 +176,7 @@ function dump.table(t, cfg, metadata)
     for i = 1, #keys do
         local key = keys[i];
         local value = t[key];
-        if key ~= '__type__' then
+        if not cfg.label or key ~= cfg.labelField then
             local sKey = key;
             if type(key) == 'number' then
                 sKey = '[' .. key .. ']'
