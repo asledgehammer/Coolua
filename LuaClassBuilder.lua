@@ -20,7 +20,6 @@ local protected = 'protected';
 local private = 'private';
 local abstract = 'abstract';
 local final = 'final';
-local default = 'default';
 local void = 'void';
 
 --- @class FieldProperties
@@ -924,5 +923,4 @@ return {
     public = public,
     final = final,
     abstract = abstract,
-    default = default
 };
