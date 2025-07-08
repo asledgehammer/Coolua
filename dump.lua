@@ -1,5 +1,3 @@
-local LVMUtils = require 'LVMUtils';
-
 ---[[
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
@@ -20,6 +18,19 @@ local DEFAULT_CONFIGURATION = {
     label = DEFAULT_LABEL,
     labelField = DEFAULT_LABEL_FIELD
 };
+
+--- @param t table
+---
+--- @return boolean result
+local function isArray(t)
+    if type(t) ~= 'table' then return false end
+    local i = 0;
+    for _ in pairs(t) do
+        i = i + 1;
+        if t[i] == nil then return false end
+    end
+    return true;
+end
 
 --- @param data DumpMetadata|nil
 --- @param e any
@@ -190,7 +201,7 @@ function dump.any(e, cfg, metadata)
     if t == 'table' then
         if e.__type__ and e.__type__ == 'ClassStructDefinition' then
             return dump.class(e);
-        elseif LVMUtils.isArray(e) then
+        elseif isArray(e) then
             return dump.array(e, cfg, metadata);
         else
             return dump.table(e, cfg, metadata);
