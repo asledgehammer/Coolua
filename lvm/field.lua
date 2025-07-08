@@ -7,7 +7,15 @@ local errorf = PrintPlus.errorf;
 local debugf = PrintPlus.debugf;
 
 local LVMUtils = require 'LVMUtils';
-local firstCharToUpper = LVMUtils.firstCharToUpper;
+
+--- Converts the first character to upper. (Used for get-set shorthand)
+---
+--- @param str string
+---
+--- @return string firstCharUpperString
+local function firstCharToUpper(str)
+    return string.upper(string.sub(str, 1, 1)) .. string.sub(str, 2);
+end
 
 --- @type LVM
 local LVM;

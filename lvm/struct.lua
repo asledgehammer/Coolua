@@ -39,7 +39,7 @@ function API.calcPathNamePackage(definition, enclosingDefinition)
         -- path = DebugUtils.getPath(4, LVM.ROOT_PATH, true);
         local split = path:split('.');
         name = table.remove(split, #split);
-        pkg = table.join(split, '.');
+        pkg = table.concat(split, '.');
 
         if definition.pkg then pkg = definition.pkg end
         if definition.name then name = definition.name end

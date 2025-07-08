@@ -6,7 +6,6 @@
 - TODO: Implement Package object.
 - TODO: Implement Stack object.
 - TODO: Implement Generics.
-- TODO: Migrate `string.join()` to `table.concat`.
 - TODO: (Ongoing) Cleanup Code.
 
 # ENUM:

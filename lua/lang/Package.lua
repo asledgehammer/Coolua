@@ -65,7 +65,7 @@ Package:addConstructor({
     body = function(self, path)
         local split = path:split('.');
         local name = table.remove(split, #split);
-        local pkg = table.join(split, '.');
+        local pkg = table.concat(split, '.');
         self.name = name;
         self.path = pkg;
         self.classes = {};
