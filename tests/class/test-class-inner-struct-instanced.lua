@@ -30,9 +30,9 @@ local EnclosingClass = class 'EnclosingClass' (public) {
 
 print('\n## TEST ##\n');
 
-print(EnclosingClass);
+local ins = EnclosingClass.new();
+
+print(ins);
+print(ins.EnclosedClass);
 print(EnclosingClass.EnclosedClass);
-print(packages);
-print(packages.tests);
-print(packages.tests.class);
-print(packages.tests.class.EnclosingClass.EnclosedClass);
+

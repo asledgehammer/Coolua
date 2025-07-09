@@ -26,19 +26,42 @@ function API.createInstanceMetatable(cd, o)
 
     local fields = {};
 
+    -- Set all instanced classes for the metatable.
+
+    local instancedStructs = {};
+    local classChain = {};
+    local next = cd;
+
+    repeat
+        table.insert(classChain, next);
+        next = next.super;
+    until not next;
+    for i = #classChain, 1, -1 do
+        for k, v in pairs(classChain[i].inner) do
+            if not v.static then
+                instancedStructs[k] = v;
+            end
+        end
+    end
+
     -- Copy functions & fields.
     for k, v in pairs(o) do
         if k ~= '__index' then
-            fields[k] = v;
+            fields[cd.path .. '@' .. k] = v;
         end
     end
 
     fields.__class__ = cd;
 
     mt.__index = function(_, field)
-
         if not cd.lock then
             cd:finalize();
+        end
+
+
+
+        if instancedStructs[field] then
+            return instancedStructs[field];
         end
 
         -- Super is to be treated differently / internally.

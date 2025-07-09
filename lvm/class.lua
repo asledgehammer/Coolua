@@ -179,7 +179,9 @@ function API.newClass(definition, outer)
 
     if outer then
         outer.inner[cd.name] = cd;
-        outer[cd.name] = cd;
+        if cd.static then
+            outer[cd.name] = cd;
+        end
     end
 
     --- Set the class to be accessable from a global package reference.
@@ -214,6 +216,9 @@ function API.newClass(definition, outer)
 
         if self.outer then
             self.outer.inner[self.name] = nil;
+            if self.static then
+                self.outer[self.name] = nil;
+            end
             self.outer = nil;
         end
 
@@ -224,7 +229,9 @@ function API.newClass(definition, outer)
 
         if outer then
             outer.inner[self.name] = self;
-            outer[self.name] = self;
+            if self.static then
+                outer[self.name] = self;
+            end
         end
     end
 
@@ -738,6 +745,13 @@ function API.newClass(definition, outer)
         --- @type table<string, MethodDefinition[]>
         LVM.executable.compileMethods(self);
 
+        -- If no constructors are provided, create a default, no-args public constructor.
+        if #self.declaredConstructors == 0 then
+            self:addConstructor {
+                scope = 'public'
+            };
+        end
+
         -- Change add methods.
         self.addMethod = function() errorf(2, '%s Cannot add methods. (Class is final!)', errHeader) end
         self.addField = function() errorf(2, '%s Cannot add fields. (Class is final!)', errHeader) end
@@ -747,7 +761,7 @@ function API.newClass(definition, outer)
         for iname, icd in pairs(cd.inner) do
             if icd.static then
                 print('Setting inner struct: ', name);
-                cd[name] = icd;
+                -- cd[name] = icd;
             end
         end
 
