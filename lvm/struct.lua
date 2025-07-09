@@ -2,6 +2,9 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+local PrintPlus = require 'PrintPlus';
+local errorf = PrintPlus.errorf;
+
 local DebugUtils = require 'DebugUtils';
 
 --- @type LVM
@@ -52,6 +55,22 @@ function API.calcPathNamePackage(definition, enclosingDefinition)
         name = name,
         pkg = pkg
     };
+end
+
+local mt_reference = {
+    __tostring = function(self)
+        return string.format('Reference(%s)', self.path);
+    end,
+    -- __index = function(self)
+    --     errorf(2, 'Definition is not initialized: %s', self.path);
+    -- end,
+    __newindex = function(self)
+        errorf(2, 'Definition is not initialized: %s', self.path);
+    end,
+};
+
+function API.newReference(path)
+    return setmetatable({ __type__ = 'StructReference', path = path }, mt_reference);
 end
 
 return API;

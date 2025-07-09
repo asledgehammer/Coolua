@@ -36,6 +36,11 @@ function API.createInstanceMetatable(cd, o)
     fields.__class__ = cd;
 
     mt.__index = function(_, field)
+
+        if not cd.lock then
+            cd:finalize();
+        end
+
         -- Super is to be treated differently / internally.
         if field == 'super' then
             return fields[field];
@@ -93,6 +98,10 @@ function API.createInstanceMetatable(cd, o)
     mt.__newindex = function(tbl, field, value)
         -- TODO: Visibility scope analysis.
         -- TODO: Type-checking.
+
+        if not cd.lock then
+            cd:finalize();
+        end
 
         if field == 'super' then
             if LVM.isOutside() then
@@ -168,7 +177,6 @@ function API.createInstanceMetatable(cd, o)
         end
 
         local context = ste:getContext();
-
 
         if fd.final then
             if not ste then

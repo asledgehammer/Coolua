@@ -52,14 +52,15 @@ function API.pushContext(context)
     -- Muting context.
     if LVM.isInside() or LVM.flags.ignorePushPopContext then return end
 
-    debugf(LVM.debug.scope, '[SCOPE] :: line %i ContextStack[%i] pushContext(%s)', DebugUtils.getCurrentLine(3), #stack + 1,
+    debugf(LVM.debug.scope, '[SCOPE] :: line %i ContextStack[%i] pushContext(%s)', DebugUtils.getCurrentLine(3),
+    #stack + 1,
         tostring(context));
 
     -- Prevent infinite loop.
     LVM.flags.ignorePushPopContext = true;
     table.insert(
         stack,
-        _G.lua.lang.StackTraceElement.new(
+        LVM.package.packages.lua.lang.StackTraceElement.new(
             context.path,
             context.line,
             context.class,

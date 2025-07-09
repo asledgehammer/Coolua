@@ -185,8 +185,14 @@ function API.resolveMethodDeep(methods, args)
 end
 
 function API.createMiddleMethod(cd, name, methods)
+
     --- @param o ClassInstance
     return function(o, ...)
+
+        if not cd.lock then
+            cd:finalize();
+        end
+
         local args = { ... };
         local md = API.resolveMethod(cd, name, methods, args);
 
@@ -368,9 +374,12 @@ function API.combineAllMethods(def, name, comb)
         if interfaceLen ~= 0 then
             for i = 1, interfaceLen do
                 local interface = def.interfaces[i];
+
+                API.combineAllMethods(interface, name, comb);
+
                 if interface.methods[name] then
                     local imCluster = interface.methods[name];
-
+                    
                     for imSignature, imd in pairs(imCluster) do
                         -- Here we ignore re-applied interface methods since they're already applied.
                         if not combCluster[name] and not imd.default then

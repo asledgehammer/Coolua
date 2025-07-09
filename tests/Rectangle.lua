@@ -3,8 +3,7 @@
 ---]]
 
 local LuaClass = require 'LuaClass';
-
-local Dimension = require 'tests/Dimension';
+local import = LuaClass.import;
 
 -- Builder API ------------------------ --
 local builder = LuaClass.builder;
@@ -24,6 +23,8 @@ local private = builder.private;
 local public = builder.public;
 local final = builder.final;
 -- ------------------------------------ --
+
+local Dimension = import 'tests.Dimension';
 
 --- @type RectangleDefinition
 local Rectangle = class 'Rectangle' (public) {

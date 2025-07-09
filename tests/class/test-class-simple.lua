@@ -2,6 +2,10 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+require 'LuaClass';
+
+print('## TEST ##\n');
+
 local Dimension = require 'tests/Dimension';
 
 local dim1 = Dimension.new(5, 5);

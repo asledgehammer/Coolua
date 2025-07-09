@@ -19,7 +19,7 @@ local API = {
     interface = false,
     constructor = false,
     super = false,
-    builder = false,
+    builder = true,
 
     -- Method(s)
     --- @param lvm LVM

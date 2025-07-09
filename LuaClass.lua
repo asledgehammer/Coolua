@@ -12,7 +12,9 @@ local builder = require 'LuaClassBuilder';
 local LuaClass = {
     newClass = LVM.class.newClass,
     newInterface = LVM.interface.newInterface,
-    builder = builder
+    builder = builder,
+    import = LVM.import,
+    packages = LVM.package.packages
 };
 
 LVM.stepIn();

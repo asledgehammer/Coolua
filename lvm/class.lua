@@ -2,18 +2,19 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local PrintPlus = require 'PrintPlus';
-local errorf = PrintPlus.errorf;
-local debugf = PrintPlus.debugf;
+local PrintPlus  = require 'PrintPlus';
+local dump       = require 'dump'
+local errorf     = PrintPlus.errorf;
+local debugf     = PrintPlus.debugf;
 
 local DebugUtils = require 'DebugUtils';
 
-local isArray = require 'LVMUtils'.isArray;
+local isArray    = require 'LVMUtils'.isArray;
 
 --- @type LVM
 local LVM;
 
-local API = {
+local API        = {
 
     __type__ = 'LVMModule',
 
@@ -78,6 +79,9 @@ function API.newClass(definition, outer)
     if definition.implements then
         if type(definition.implements) == 'table' then
             if definition.implements.__type__ == 'InterfaceStructDefinition' then
+                if not definition.implements.lock then
+                    definition.implements:finalize();
+                end
                 table.insert(interfaces, definition.implements);
             else
                 if not isArray(definition.implements) then
@@ -89,52 +93,68 @@ function API.newClass(definition, outer)
                     if interface.__type__ ~= 'InterfaceStructDefinition' then
                         errorf(2, '%s Implements argument #%i is not a Interface.');
                     end
+
+                    if not interface.lock then
+                        interface:finalize();
+                    end
+
                     table.insert(interfaces, interface);
                 end
             end
         end
     end
 
-    local cd = {
-
-        __type__ = 'ClassStructDefinition',
-
-        -- * Struct Properties * --
-        pkg = pkg,
-        path = path,
-        name = name,
-
-        static = definition.static or false,
-        final = definition.final or false,
-
-        -- * Scopable Properties * --
-        scope = definition.scope or 'package',
-
-        -- * Hierarchical Properties * --
-        super = super,
-        sub = {},
-
-        -- * Enclosurable Properties * --
-        outer = outer,
-        inner = {},
-        isChild = outer ~= nil,
-
-        -- * Class-Specific Properties * --
-        abstract = definition.abstract or false,
-        interfaces = interfaces,
-
-        -- * Method Properties * --
-        methods = {},
-        methodCache = {},
-    };
-
     -- Make sure that no class is made twice.
-    if LVM.forNameDef(cd.path) then
-        errorf(2, 'Struct is already defined: %s', cd.path);
-        return cd; -- NOTE: Useless return. Makes sure the method doesn't say it'll define something as nil.
+    -- if LVM.DEFINITIONS(path) then
+    -- errorf(2, 'Struct is already defined: %s', path);
+    -- return ; -- NOTE: Useless return. Makes sure the method doesn't say it'll define something as nil.
+    -- end
+
+    -- Here we check to see if anything has referenced the class prior to initialization. We graft to that reference.
+    local cd = LVM.DEFINITIONS[path];
+
+    if not cd then
+        cd = setmetatable({}, {
+            __tostring = function(self)
+                return LVM.print.printClass(self);
+            end
+        });
+
+        LVM.DEFINITIONS[path] = cd;
     end
 
-    LVM.DEFINITIONS[cd.path] = cd;
+
+    --- @cast cd any
+
+    cd.__type__ = 'ClassStructDefinition';
+
+    -- * Struct Properties * --
+    cd.pkg = pkg;
+    cd.path = path;
+    cd.name = name;
+
+    cd.static = definition.static or false;
+    cd.final = definition.final or false;
+
+    -- * Scopable Properties * --
+    cd.scope = definition.scope or 'package';
+
+    -- * Hierarchical Properties * --
+    cd.super = super;
+    cd.sub = {};
+
+    -- * Enclosurable Properties * --
+    cd.outer = outer;
+    cd.inner = {};
+    cd.isChild = outer ~= nil;
+
+    -- * Class-Specific Properties * --
+    cd.abstract = definition.abstract or false;
+    cd.interfaces = interfaces;
+
+    -- * Method Properties * --
+    cd.methods = {};
+    cd.methodCache = {};
 
     cd.type = cd.path;
     cd.printHeader = string.format('class (%s):', cd.path);
@@ -155,11 +175,19 @@ function API.newClass(definition, outer)
         end
     end
 
-    --- @cast cd ClassStructDefinition
+    LVM.DEFINITIONS[cd.path] = cd;
 
     if outer then
         outer.inner[cd.name] = cd;
+        outer[cd.name] = cd;
     end
+
+    --- Set the class to be accessable from a global package reference.
+    LVM.flags.allowPackageStructModifications = true;
+    LVM.package.addToPackageStruct(cd);
+    LVM.flags.allowPackageStructModifications = false;
+
+    --- @cast cd ClassStructDefinition
 
     -- MARK: - new()
 
@@ -167,7 +195,8 @@ function API.newClass(definition, outer)
         local errHeader = string.format('Class(%s):new():', cd.name);
 
         if not cd.lock then
-            errorf(2, '%s Cannot invoke constructor. (ClassStructDefinition is not finalized!)', errHeader);
+            cd:finalize();
+            -- errorf(2, '%s Cannot invoke constructor. (ClassStructDefinition is not finalized!)', errHeader);
         end
 
         -- TODO: Check if package-class exists.
@@ -391,7 +420,8 @@ function API.newClass(definition, outer)
         end
 
         if LVM.debug.constructor then
-            debugf(LVM.debug.constructor, '[CONSTRUCTOR] :: %s Adding class constructor: %s.%s', self.printHeader, self.name,
+            debugf(LVM.debug.constructor, '[CONSTRUCTOR] :: %s Adding class constructor: %s.%s', self.printHeader,
+                self.name,
                 args.signature);
         end
 
@@ -640,8 +670,19 @@ function API.newClass(definition, outer)
 
         if self.lock then
             errorf(2, '%s Cannot finalize. (Class is already finalized!)', errHeader);
-        elseif cd.super and (cd.super.__type__ == 'ClassStructDefinition' and not cd.super.lock) then
-            errorf(2, '%s Cannot finalize. (Super-Class %s is not finalized!)', errHeader, path);
+        end
+
+        -- Finalize superclass.
+        if cd.super and not cd.super.lock then
+            print('super: ', dump.any(cd.super));
+            cd.super:finalize();
+        end
+
+        -- Finalize any interface(s).
+        for i = 1, #cd.interfaces do
+            if not cd.interfaces[i] then
+                cd.interfaces[i]:finalize();
+            end
         end
 
         -- If any auto-methods are defined for fields (get, set), create them before compiling class methods.
@@ -656,6 +697,12 @@ function API.newClass(definition, outer)
         self.addMethod = function() errorf(2, '%s Cannot add methods. (Class is final!)', errHeader) end
         self.addField = function() errorf(2, '%s Cannot add fields. (Class is final!)', errHeader) end
         self.addConstructor = function() errorf(2, '%s Cannot add constructors. (Class is final!)', errHeader) end
+
+        -- Set default value(s) for classes.
+        for iname, icd in pairs(cd.inner) do
+            print('Setting inner class: ' .. iname)
+            cd[name] = icd;
+        end
 
         -- Set default value(s) for static fields.
         for name, fd in pairs(cd.declaredFields) do
@@ -722,7 +769,7 @@ function API.newClass(definition, outer)
         local mt = getmetatable(cd) or {};
         local __properties = {};
         for k, v in pairs(cd) do __properties[k] = v end
-        mt.__metatable = false;
+        -- mt.__metatable = false;
         mt.__index = __properties;
         mt.__tostring = function() return LVM.print.printClass(cd) end
 
@@ -850,7 +897,6 @@ function API.newClass(definition, outer)
             -- Apply forward the value metrics.
             fd.assignedOnce = true;
             fd.value = value;
-
         end
 
         setmetatable(cd, mt);
@@ -862,11 +908,6 @@ function API.newClass(definition, outer)
         if cd.super then
             table.insert(cd.super.sub, cd);
         end
-
-        --- Set the class to be accessable from a global package reference.
-        LVM.flags.allowPackageStructModifications = true;
-        LVM.package.addToPackageStruct(cd);
-        LVM.flags.allowPackageStructModifications = false;
 
         -- Add a reference for global package and static code.
         if outer then

@@ -12,7 +12,6 @@ local dump = require 'dump'.any;
 
 local LVM = require 'LVM';
 
-
 local isArray = require 'LVMUtils'.isArray;
 
 local public = 'public';
@@ -33,6 +32,11 @@ local void = 'void';
 local function compileFlags(struct, appliedStruct, defaultScope)
     local flags = struct.flags;
     defaultScope = defaultScope or 'package';
+
+    if not flags then
+        appliedStruct.flags = {};
+        return;
+    end
 
     for i = 1, #flags do
         local flag = flags[i];
@@ -166,8 +170,12 @@ end
 
 -- MARK: - Class
 
---- @type fun(self: ClassTable, enclosingCls: StructDefinition): ClassStructDefinition, ClassTable
 local buildClass;
+
+--- @param self table
+--- @param enclosingCls ClassStructDefinition?
+---
+--- @return ClassStructDefinition
 buildClass = function(self, enclosingCls)
     -- Build the class arguments. --
 
@@ -188,60 +196,74 @@ buildClass = function(self, enclosingCls)
     local cls = LVM.class.newClass(clsArgs, enclosingCls);
 
     -- Build fields.
-    for name, field in pairs(self.fields) do
-        compileFlags(field, field);
-        cls:addField(field);
+    if self.fields then
+        for name, field in pairs(self.fields) do
+            compileFlags(field, field);
+            cls:addField(field);
+        end
     end
 
     -- Build constructors.
-    local constructorLen = #self.constructors;
-    if constructorLen ~= 0 then
-        for i = 1, constructorLen do
-            local consArgs = self.constructors[i];
-            compileFlags(consArgs, consArgs);
-            cls:addConstructor(consArgs);
+    if self.constructors then
+        local constructorLen = #self.constructors;
+        if constructorLen ~= 0 then
+            for i = 1, constructorLen do
+                local consArgs = self.constructors[i];
+                compileFlags(consArgs, consArgs);
+                cls:addConstructor(consArgs);
+            end
         end
     end
 
     -- Build methods.
-    for name, method in pairs(self.methods) do
-        compileFlags(method, method);
-        local md;
-        if method.abstract then
-            cls:addAbstractMethod(method);
-        else
-            cls:addMethod(method);
+    if self.methods then
+        for name, method in pairs(self.methods) do
+            compileFlags(method, method);
+            if method.abstract then
+                cls:addAbstractMethod(method);
+            else
+                cls:addMethod(method);
+            end
         end
     end
 
-    -- Build static class(es).
-    for name, innerCls in pairs(self.static.classes) do
-        local innerClsDef = buildClass(innerCls, cls);
-    end
+    if self.static then
+        -- Build static class(es).
+        if self.static.classes then
+            for name, innerCls in pairs(self.static.classes) do
+                buildClass(innerCls, cls);
+            end
+        end
 
-    -- Build static field(s).
-    for name, field in pairs(self.static.fields) do
-        compileFlags(field, field);
-        field.static = true;
-        cls:addStaticField(field);
-    end
+        -- Build static field(s).
+        if self.static.fields then
+            for name, field in pairs(self.static.fields) do
+                compileFlags(field, field);
+                field.static = true;
+                cls:addStaticField(field);
+            end
+        end
 
-    -- Build static method(s).
-    for name, method in pairs(self.static.methods) do
-        compileFlags(method, method);
-        method.static = true;
-        cls:addStaticMethod(method);
+        -- Build static method(s).
+        if self.static.methods then
+            for name, method in pairs(self.static.methods) do
+                compileFlags(method, method);
+                method.static = true;
+                cls:addStaticMethod(method);
+            end
+        end
     end
 
     -- TODO: Add inner classes.
     -- TODO: Add inner interfaces.
     -- TODO: Add inner enums.
 
-    cls:finalize();
+    -- We don't finalize in the builder for cross-referencing.
+    -- cls:finalize();
 
     debugf(LVM.debug.builder, '[BUILDER] :: Built class: %s', tostring(cls));
 
-    return cls, self;
+    return cls;
 end
 
 --- @generic T: ClassDefinition
@@ -336,47 +358,12 @@ end
 
 -- MARK: - Interface
 
---- @return InterfaceStructDefinition, table
-local mt_interface_body = function(self, ...)
-    local args = { ... };
-    for i = 1, #args do
-        local entry = args[i];
-
-        for _, arg in pairs(entry) do
-            -- print('[BUILDER][Interface] :: Parsing entry: ' .. dump(entry, { label = true, pretty = true }));
-
-            if arg.__type__ == 'ExtendsTable' then
-                if self.extends then
-                    error('Cannot redefine interface extensions.', 2);
-                end
-                self.extends = arg.value;
-            elseif arg.__type__ == 'MethodTable' then
-                self.methods[arg.name] = arg;
-            elseif arg.__type__ == 'StaticTable' then
-                -- Static field(s)
-                for k, v in pairs(arg.fields) do
-                    self.static.fields[k] = v;
-                end
-                -- Static method(s)
-                for k, v in pairs(arg.methods) do
-                    self.static.methods[k] = v;
-                end
-                -- Static inner class(es)
-                for k, v in pairs(arg.classes) do
-                    self.static.classes[k] = v;
-                end
-                -- Static inner interface(s)
-                for k, v in pairs(arg.interfaces) do
-                    self.static.interfaces[k] = v;
-                end
-            else
-                error('Unknown type: ' .. tostring(arg.__type__), 2);
-            end
-        end
-    end
-
-    -- Build the interface arguments. --
-
+---
+--- @param self table
+--- @param enclosingInterface InterfaceStructDefinition
+---
+--- @return InterfaceStructDefinition interfaceDef, any table
+local function buildInterface(self, enclosingInterface)
     if not self.name then
         errorf(2, 'Interface doesn\'t have a name!');
     end
@@ -390,7 +377,7 @@ local mt_interface_body = function(self, ...)
     -- Build class flags.
     compileFlags(self, intArgs);
 
-    local interface = LVM.interface.newInterface(intArgs);
+    local interface = LVM.interface.newInterface(intArgs, enclosingInterface);
 
     -- Build methods.
     for name, method in pairs(self.methods) do
@@ -412,6 +399,8 @@ local mt_interface_body = function(self, ...)
         if not method.body then
             method.default = true;
         end
+
+        -- print('adding method: ', name, dump(method, {pretty = true, label = true}));
 
         interface:addMethod(method);
     end
@@ -478,11 +467,55 @@ local mt_interface_body = function(self, ...)
     -- TODO: Add inner interfaces.
     -- TODO: Add inner enums.
 
-    interface:finalize();
+    -- interface:finalize();
 
     debugf(LVM.debug.builder, '[BUILDER] :: Built interface: %s', tostring(interface));
 
     return interface, self;
+end
+
+--- @return InterfaceStructDefinition, table
+local mt_interface_body = function(self, ...)
+    local args = { ... };
+    for i = 1, #args do
+        local entry = args[i];
+
+        for _, arg in pairs(entry) do
+            -- print('[BUILDER][Interface] :: Parsing entry: ' .. dump(entry, { label = true, pretty = true }));
+
+            if arg.__type__ == 'ExtendsTable' then
+                if self.extends then
+                    error('Cannot redefine interface extensions.', 2);
+                end
+                self.extends = arg.value;
+            elseif arg.__type__ == 'MethodTable' then
+                self.methods[arg.name] = arg;
+            elseif arg.__type__ == 'StaticTable' then
+                -- Static field(s)
+                for k, v in pairs(arg.fields) do
+                    self.static.fields[k] = v;
+                end
+                -- Static method(s)
+                for k, v in pairs(arg.methods) do
+                    self.static.methods[k] = v;
+                end
+                -- Static inner class(es)
+                for k, v in pairs(arg.classes) do
+                    self.static.classes[k] = v;
+                end
+                -- Static inner interface(s)
+                for k, v in pairs(arg.interfaces) do
+                    self.static.interfaces[k] = v;
+                end
+            else
+                error('Unknown type: ' .. tostring(arg.__type__), 2);
+            end
+        end
+    end
+
+    -- Build the interface arguments. --
+
+    return buildInterface(self, self.extends);
 end;
 
 local mt_interface = {
@@ -972,7 +1005,7 @@ end
 
 -- MARK: - Extends
 
---- @param cls ClassStructDefinition|Class|string
+--- @param cls StructDefinition|StructReference|Class|string
 local function extends(cls)
     return {
         __type__ = 'ExtendsTable',
@@ -982,7 +1015,7 @@ end
 
 -- MARK: - Implements
 
---- @param ... InterfaceStructDefinition
+--- @param ... StructDefinition|StructReference
 local function implements(...)
     return {
         __type__ = 'ImplementsTable',
@@ -1000,6 +1033,9 @@ local function properties(t)
 end
 
 return {
+
+    import = LVM.import,
+
     class = class,
     interface = interface,
     extends = extends,

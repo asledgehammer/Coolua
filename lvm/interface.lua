@@ -3,6 +3,7 @@
 ---]]
 
 local DebugUtils = require 'DebugUtils';
+local dump       = require 'dump'
 
 local PrintPlus = require 'PrintPlus';
 local errorf = PrintPlus.errorf;
@@ -309,7 +310,7 @@ function IAPI.addStaticField(self, fd)
     };
 
     LVM.audit.auditField(self, args);
-    
+
     -- Ensure that all constants are defined.
     if not args.value then
         errorf(2, '%s Cannot add interface field without a value: %s', self.printHeader, args.name);
@@ -326,6 +327,7 @@ end
 ---
 --- @return InterfaceStructDefinition interfaceDef
 function IAPI.finalize(self)
+
     local errHeader = string.format('Interface(%s):finalize():', self.path);
 
     if self.lock then
@@ -395,7 +397,7 @@ function IAPI.finalize(self)
     local mt = getmetatable(self) or {};
     local __properties = {};
     for k, v in pairs(self) do __properties[k] = v end
-    mt.__metatable = false;
+    -- mt.__metatable = false;
     mt.__index = __properties;
     mt.__tostring = function() return LVM.print.printInterface(self) end
 
@@ -523,11 +525,6 @@ function IAPI.finalize(self)
         table.insert(self.super.sub, self);
     end
 
-    --- Set the class to be accessable from a global package reference.
-    LVM.flags.allowPackageStructModifications = true;
-    LVM.package.addToPackageStruct(self);
-    LVM.flags.allowPackageStructModifications = false;
-
     -- Add a reference for global package and static code to enclosing struct.
     if self.outer then
         LVM.stepIn();
@@ -545,51 +542,56 @@ function API.newInterface(definition, enclosingStruct)
     local name = locInfo.name;
     local pkg = locInfo.pkg;
 
-    local id = {
-        -- * Internal Type * --
-        __type__ = 'InterfaceStructDefinition',
+    --- @type any
+    local id = LVM.DEFINITIONS[path] or {};
 
-        -- * Struct Properties * --
-        path = path,
-        name = name,
-        pkg = pkg,
-        type = 'interface:' .. path,
+    -- * Internal Type * --
+    id.__type__ = 'InterfaceStructDefinition';
 
-        static = definition.static or false,
+    -- * Struct Properties * --
+    id.path = path;
+    id.name = name;
+    id.pkg = pkg;
+    id.type = 'interface:' .. path;
 
-        -- * Scopable Properties * --
-        scope = definition.scope or 'package',
+    id.static = definition.static or false;
 
-        -- * Hierarchical Properties * --
-        super = definition.extends,
-        subClasses = {},
+    -- * Scopable Properties * --
+    id.scope = definition.scope or 'package';
 
-        -- * Enclosurable Properties * --
-        outer = enclosingStruct,
-        inner = {},
-        isChild = enclosingStruct ~= nil,
+    -- * Hierarchical Properties * --
+    id.super = definition.extends;
+    id.subClasses = {};
 
-        -- * Fieldable Properties * --
-        declaredFields = {},
+    -- * Enclosurable Properties * --
+    id.outer = enclosingStruct;
+    id.inner = {};
+    id.isChild = enclosingStruct ~= nil;
 
-        -- * Methodable Properties * --
-        declaredMethods = {},
-        methods = {},
-        methodCache = {},
+    -- * Fieldable Properties * --
+    id.declaredFields = {};
 
-        -- * Debug Properties * --
-        printHeader = string.format('interface (%s):', path),
+    -- * Methodable Properties * --
+    id.declaredMethods = {};
+    id.methods = {};
+    id.methodCache = {};
 
-        lock = false
-    };
+    -- * Debug Properties * --
+    id.printHeader = string.format('interface (%s):', path);
 
-    -- Make sure that no class is made twice.
-    if LVM.forNameDef(id.path) then
-        errorf(2, 'Struct is already defined: %s', id.path);
-        return id; -- NOTE: Useless return. Makes sure the method doesn't say it'll define something as nil.
-    end
+    id.lock = false;
+
+    --- @cast id InterfaceStructDefinition
 
     LVM.DEFINITIONS[id.path] = id;
+
+    setmetatable(id, { __tostring = function(self) return LVM.print.printInterface(self) end });
+
+    -- -- Make sure that no class is made twice.
+    -- if LVM.forNameDef(id.path) then
+    --     errorf(2, 'Struct is already defined: %s', id.path);
+    --     return id; -- NOTE: Useless return. Makes sure the method doesn't say it'll define something as nil.
+    -- end
 
     -- Compile the generic parameters for the class.
     id.generics = LVM.generic.compileGenericTypesDefinition(id, definition.generics);
@@ -598,6 +600,11 @@ function API.newInterface(definition, enclosingStruct)
     if enclosingStruct then
         enclosingStruct.inner[id.name] = id;
     end
+
+    --- Set the class to be accessable from a global package reference.
+    LVM.flags.allowPackageStructModifications = true;
+    LVM.package.addToPackageStruct(id);
+    LVM.flags.allowPackageStructModifications = false;
 
     -- * General API * --
     id.finalize = IAPI.finalize;

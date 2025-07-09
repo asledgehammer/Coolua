@@ -67,3 +67,8 @@ function LVM.forNameDef(path) end
 ---
 --- @return Class|nil classObj The class object. If no definition exists with the path then nil is returned.
 function LVM.forName(path) end
+
+--- @param path string
+--- 
+--- @return StructDefinition|StructReference
+function LVM.import(path) end

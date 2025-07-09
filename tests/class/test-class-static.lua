@@ -2,6 +2,10 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+require 'LuaClass';
+
+print('## TEST ##\n');
+
 local Math = require 'tests/Math';
 
 local test = true;

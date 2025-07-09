@@ -3,38 +3,44 @@
 ---]]
 
 local LuaClass = require 'LuaClass';
-local newClass = LuaClass.newClass;
 
-local SimpleInterface = require 'tests/SimpleInterface';
+-- Builder API ------------------------ --
+local builder = LuaClass.builder;
+local import = builder.import;
+local class = builder.class;
+local implements = builder.implements;
+local constructor = builder.constructor;
+local method = builder.method;
+local public = builder.public;
+-- ------------------------------------ --
 
--- public class SimpleImplementation implements SimpleInterface {
-local SimpleImplementation = newClass({
-    scope = 'public',
-    implements = {
-        SimpleInterface
+local SimpleInterface = import 'tests.SimpleInterface';
+
+--- Java example:
+--- ```java
+--- public class SimpleImplementation implements SimpleInterface {
+--- 
+---   public SimpleImplementation() {}
+--- 
+---   @Override
+---   public void aMethod() {
+---     System.out.println("Hello from aMethod!");
+---   }
+--- 
+--- }
+--- ```
+local SimpleImplementation, scaffolding = class 'SimpleImplementation' (public) {
+
+    implements(SimpleInterface),
+
+    constructor(public) {},
+
+    method 'aMethod' (public) {
+        function()
+            print('Hello from aMethod!');
+        end
     }
-});
-
--- public SimpleImplementation() {}
-SimpleImplementation:addConstructor({ scope = 'public' });
-
--- @Override
--- public void aMethod() {
---   System.out.println("Hello from aMethod!");
--- }
-SimpleImplementation:addMethod({
-    scope = 'public',
-    name = 'aMethod',
-
-    --- @param self SimpleImplementation
-    body = function(self)
-        print('Hello form aMethod!');
-    end
-});
-
--- }
-
-SimpleImplementation:finalize();
+};
 
 --- @cast SimpleImplementation SimpleImplementationDefinition
 

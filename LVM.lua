@@ -138,6 +138,25 @@ LVM.class.setLVM(LVM);
 LVM.struct.setLVM(LVM);
 LVM.interface.setLVM(LVM);
 
+function LVM.import(path)
+
+    local def = LVM.DEFINITIONS[path];
+
+    if not def then
+        pcall(function()
+            def = require(string.gsub(path, '%.', '/'));
+        end);
+    end
+
+    if not def then
+        debugf(LVM.debug.scope, '[SCOPE] :: Could not resolve struct: %s (Creating StructReference)');
+        def = LVM.struct.newReference(path);
+        LVM.DEFINITIONS[path] = def;
+    end
+
+    return def;
+end
+
 --- @param path string
 ---
 --- @return StructDefinition|nil
@@ -159,7 +178,7 @@ function LVM.forName(path)
             --- @cast def ClassStructDefinition|InterfaceStructDefinition|EnumStructDefinition
 
             LVM.stepIn();
-            class = _G.lua.lang.Class.new(def);
+            class = LVM.package.packages.lua.lang.Class.new(def);
             LVM.stepOut();
 
             LVM.CLASSES[path] = class;

@@ -41,9 +41,13 @@
 
 -- MARK: - Definition
 
+--- @class StructReference A pre-initialized definition that is cross-referenced between class initializations.
+--- @field __type__ 'StructReference'
+--- @field path string The file/package path to the definition.
+
 --- @class StructDefinition: Methodable
 --- @field __type__ string The internal type. Used for evaluation for several components inside the LVM.
---- @field path string
+--- @field path string The file/package path to the definition.
 --- @field pkg string
 --- @field name string
 --- @field scope ClassScope
@@ -74,3 +78,8 @@ local API = {};
 ---
 --- @return {path: string, name: string, pkg: string}
 function API.calcPathNamePackage(definition, outer) end
+
+--- @param path string
+--- 
+--- @return StructReference
+function API.newReference(path) end

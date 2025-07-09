@@ -106,7 +106,6 @@ function API.printInterface(def)
     local sPkg = def.pkg;
     local sName = def.name;
     local sExtends = '';
-    local sImplements = '';
 
     if def.static then sStatic = 'static ' end
     if sPkg ~= '' then sPkg = sPkg .. '.' end
@@ -117,7 +116,7 @@ function API.printInterface(def)
         sExtends = string.format(' extends %s%s', sSuperPkg, def.super.name);
     end
 
-    return string.format('%s%sclass %s%s%s',
+    return string.format('%s%sinterface %s%s%s',
         sScope, sStatic, sPkg, sName, sExtends
     );
 end
