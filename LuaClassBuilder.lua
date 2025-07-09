@@ -357,16 +357,21 @@ local mt_interface_body = function(self, ...)
             elseif arg.__type__ == 'MethodTable' then
                 self.methods[arg.name] = arg;
             elseif arg.__type__ == 'StaticTable' then
-                for j = 1, #arg.body do
-                    local staticArg = arg.body[j];
-
-                    if staticArg.__type__ == 'StaticTable' then
-                        error('Cannot nest static blocks.', 2);
-                    elseif staticArg.__type__ == 'FieldTable' then
-                        self.static.fields[staticArg.name] = staticArg;
-                    elseif staticArg.__type__ == 'MethodTable' then
-                        self.static.methods[staticArg.name] = staticArg;
-                    end
+                -- Static field(s)
+                for k, v in pairs(arg.fields) do
+                    self.static.fields[k] = v;
+                end
+                -- Static method(s)
+                for k, v in pairs(arg.methods) do
+                    self.static.methods[k] = v;
+                end
+                -- Static inner class(es)
+                for k, v in pairs(arg.classes) do
+                    self.static.classes[k] = v;
+                end
+                -- Static inner interface(s)
+                for k, v in pairs(arg.interfaces) do
+                    self.static.interfaces[k] = v;
                 end
             else
                 error('Unknown type: ' .. tostring(arg.__type__), 2);
