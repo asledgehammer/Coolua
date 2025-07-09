@@ -272,22 +272,18 @@ local mt_class_body = function(self, ...)
             elseif arg.__type__ == 'StaticTable' then
                 -- Static inner class(es)
                 for k, v in pairs(arg.classes) do
-                    print('class: ', k, dump(v));
                     self.static.classes[k] = v;
                 end
                 -- Static inner interface(s)
                 for k, v in pairs(arg.interfaces) do
-                    print('interface: ', k, dump(v));
                     self.static.interfaces[k] = v;
                 end
                 -- Static field(s)
                 for k, v in pairs(arg.fields) do
-                    print('field: ', k, dump(v));
                     self.static.fields[k] = v;
                 end
                 -- Static method(s)
                 for k, v in pairs(arg.methods) do
-                    print('method: ', k, dump(v));
                     self.static.methods[k] = v;
                 end
             else

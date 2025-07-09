@@ -140,7 +140,7 @@ function API.printClass(def)
     local sFinal = '';
     local sAbstract = '';
     local sPkg = def.pkg;
-    local sName = def.path;
+    local sName = def.name;
     local sExtends = '';
     local sImplements = '';
 

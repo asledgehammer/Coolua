@@ -28,5 +28,4 @@ local EnclosingClass = class 'EnclosingClass' (public) {
 
 print(EnclosingClass);
 print(EnclosingClass.EnclosedClass);
--- print('_G.tests', dump(_G.tests));
--- print(_G.tests.EnclosingClass.EnclosedClass);
+print(_G.tests.class.EnclosingClass.EnclosedClass);

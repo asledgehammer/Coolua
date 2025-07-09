@@ -115,6 +115,7 @@ function API.getRelativePath()
 
     while
         relPath == '[C]' or
+        relPath == '=(tail call)' or
         relPath == 'DebugUtils' or
         relPath == 'LVM' or
         relPath == 'LVMUtils' or

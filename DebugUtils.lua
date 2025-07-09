@@ -2,18 +2,17 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+local PrintPlus = require "PrintPlus";
+local printf = PrintPlus.printf;
+local debugf = PrintPlus.debugf;
+
 local DebugUtils = {};
 
 --- @param str string
 ---
 --- @return string strWithoutAtSymbol
 local function removeAt(str)
-    if str:startsWith('@') then
-        str = str:sub(2);
-    end
-    -- if str:startsWith('.') then
-    --     str = str:sub(2);
-    -- end
+    if str:startsWith('@') then str = str:sub(2) end
     return str;
 end
 
@@ -67,8 +66,25 @@ else                        -- Native Lua Environment.
     --- @return string path
     function DebugUtils.getPath(levelOrFunc, rootPath, isClassPath)
         local dS = debug.getinfo(levelOrFunc, 'S');
-        if isClassPath then return modifyPath(removeAt(dS.source), rootPath) end
-        return removeAt(dS.source);
+        local result;
+        if isClassPath then
+            result = modifyPath(removeAt(dS.source), rootPath);
+        else
+            result = removeAt(dS.source);
+        end
+
+        if result:startsWith('.') then
+            while result:startsWith('.') do
+                result = string.sub(result, 2);
+            end
+        end
+
+        -- printf('DebugUtils.getPath(%s, %s, %s) = %s',
+        --     tostring(levelOrFunc), tostring(rootPath), tostring(isClassPath),
+        --     tostring(result)
+        -- );
+
+        return result;
     end
 
     --- @param levelOrFunc function|integer
