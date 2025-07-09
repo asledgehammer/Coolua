@@ -53,14 +53,6 @@ buildClass = function(self, enclosingStruct)
 
     local cls = LVM.class.newClass(clsArgs, enclosingStruct);
 
-    -- Build fields.
-    if self.fields then
-        for name, field in pairs(self.fields) do
-            buildFlags(field, field);
-            cls:addField(field);
-        end
-    end
-
     -- Build constructors.
     if self.constructors then
         local constructorLen = #self.constructors;
@@ -73,14 +65,40 @@ buildClass = function(self, enclosingStruct)
         end
     end
 
-    -- Build methods.
-    if self.methods then
-        for name, method in pairs(self.methods) do
-            buildFlags(method, method);
-            if method.abstract then
-                cls:addAbstractMethod(method);
-            else
-                cls:addMethod(method);
+    if self.instanced then
+        -- Add instanced class(es).
+        if self.instanced.classes then
+            for name, innerCls in pairs(self.instanced.classes) do
+                innerCls.static = false;
+                cls:addInstanceStruct(innerCls);
+            end
+        end
+
+        -- Add instanced interface(s).
+        if self.instanced.interfaces then
+            for name, innerInterface in pairs(self.instanced.interfaces) do
+                innerInterface.static = false;
+                cls:addInstanceStruct(innerInterface);
+            end
+        end
+
+        -- Build instanced field(s).
+        if self.instanced.fields then
+            for name, field in pairs(self.instanced.fields) do
+                buildFlags(field, field);
+                cls:addField(field);
+            end
+        end
+
+        -- Build instanced method(s).
+        if self.instanced.methods then
+            for name, method in pairs(self.instanced.methods) do
+                buildFlags(method, method);
+                if method.abstract then
+                    cls:addAbstractMethod(method);
+                else
+                    cls:addMethod(method);
+                end
             end
         end
     end
@@ -92,7 +110,7 @@ buildClass = function(self, enclosingStruct)
                 if innerCls.__type__ == 'ClassTable' then
                     buildClass(innerCls, cls);
                 elseif innerCls.__type__ == 'ClassStructDefinition' then
-                    innerCls:setEnclosingStruct(cls);
+                    innerCls:setOuterStruct(cls);
                 end
             end
         end
@@ -103,7 +121,7 @@ buildClass = function(self, enclosingStruct)
                 if innerInterface.__type__ == 'InterfaceTable' then
                     buildInterface(innerInterface, cls);
                 elseif innerInterface.__type__ == 'InterfaceStructDefinition' then
-                    innerInterface:setEnclosingStruct(cls);
+                    innerInterface:setOuterStruct(cls);
                 end
             end
         end
@@ -127,23 +145,16 @@ buildClass = function(self, enclosingStruct)
         end
     end
 
-    -- TODO: Add inner classes.
-    -- TODO: Add inner interfaces.
-    -- TODO: Add inner enums.
-
-    -- We don't finalize in the builder for cross-referencing.
-    -- cls:finalize();
-
     debugf(LVM.debug.builder, '[BUILDER] :: Built class: %s', tostring(cls));
 
     return cls;
 end
 
 --- @param self table
---- @param enclosingInterface InterfaceStructDefinition
+--- @param outerStruct StructDefinition
 ---
 --- @return InterfaceStructDefinition interfaceDef, any table
-local function buildInterface(self, enclosingInterface)
+local function buildInterface(self, outerStruct)
     if not self.name then
         errorf(2, 'Interface doesn\'t have a name!');
     end
@@ -157,7 +168,7 @@ local function buildInterface(self, enclosingInterface)
     -- Build class flags.
     buildFlags(self, intArgs);
 
-    local interface = LVM.interface.newInterface(intArgs, enclosingInterface);
+    local interface = LVM.interface.newInterface(intArgs, outerStruct);
 
     -- Build methods.
     for name, method in pairs(self.methods) do
@@ -192,7 +203,7 @@ local function buildInterface(self, enclosingInterface)
                 if innerCls.__type__ == 'ClassTable' then
                     buildClass(innerCls, interface);
                 elseif innerCls.__type__ == 'ClassStructDefinition' then
-                    innerCls:setEnclosingStruct(interface);
+                    innerCls:setOuterStruct(interface);
                 end
             end
         end
@@ -203,7 +214,7 @@ local function buildInterface(self, enclosingInterface)
                 if innerInterface.__type__ == 'InterfaceTable' then
                     buildInterface(innerInterface, interface);
                 elseif innerInterface.__type__ == 'InterfaceStructDefinition' then
-                    innerInterface:setEnclosingStruct(interface);
+                    innerInterface:setOuterStruct(interface);
                 end
             end
         end
@@ -440,10 +451,14 @@ local mt_class_body = function(self, ...)
                     error('Cannot redefine class implementations.', 2);
                 end
                 self.implements = arg.value;
+            elseif arg.__type__ == 'ClassStructDefinition' then
+                self.instanced.classes[arg.name] = arg;
+            elseif arg.__type__ == 'InterfaceStructDefinition' then
+                self.instanced.interfaces[arg.name] = arg;
             elseif arg.__type__ == 'FieldTable' then
-                self.fields[arg.name] = arg;
+                self.instanced.fields[arg.name] = arg;
             elseif arg.__type__ == 'MethodTable' then
-                self.methods[arg.name] = arg;
+                self.instanced.methods[arg.name] = arg;
             elseif arg.__type__ == 'ConstructorTable' then
                 table.insert(self.constructors, arg);
             elseif arg.__type__ == 'StaticTable' then
@@ -497,8 +512,12 @@ local function class(name)
         name = name,
         flags = {},
 
-        fields = {},
-        methods = {},
+        instanced = {
+            classes = {},
+            interfaces = {},
+            fields = {},
+            methods = {},
+        },
 
         static = {
             classes = {},

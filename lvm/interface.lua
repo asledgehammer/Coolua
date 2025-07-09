@@ -606,13 +606,24 @@ function API.newInterface(definition, enclosingStruct)
     LVM.flags.allowPackageStructModifications = false;
 
 
-    function id:setEnclosingStruct(outer)
+    -- MARK: - inner
+
+    function id:addStaticStruct(struct)
+        if struct.outer then
+            error('TODO: Document', 2);
+        end
+        struct.static = true;
+        struct:setOuterStruct(self);
+    end
+
+    function id:setOuterStruct(outer)
+
         if self.lock then
             errorf(2, '%s Cannot set enclosing struct. (definition is finalized)');
         end
 
         if self.outer then
-            self.outer.inner[cd.name] = nil;
+            self.outer.inner[self.name] = nil;
             self.outer = nil;
         end
 

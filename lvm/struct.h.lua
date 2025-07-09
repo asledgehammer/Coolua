@@ -52,11 +52,15 @@
 --- @field name string
 --- @field scope ClassScope
 --- @field printHeader string Used for informational prints.
+--- @field static boolean
 ---
 --- * Enclosure Properties *
 --- @field outer StructDefinition
 --- @field inner table<string, StructDefinition>
 local StructDefinition = {};
+
+--- @param struct StructDefinition
+function StructDefinition:setOuterStruct(struct) end
 
 --- @param struct StructDefinition
 ---

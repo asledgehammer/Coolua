@@ -16,7 +16,6 @@ local method = builder.method;
 local toString = builder.toString;
 local properties = builder.properties;
 local parameters = builder.parameters;
-local returns = builder.returns;
 local get = builder.get;
 local set = builder.set;
 local private = builder.private;
@@ -83,8 +82,6 @@ local Rectangle = class 'Rectangle' (public) {
 
     static {
         method 'sayHello' (public, final) {
-            returns 'void',
-
             function()
                 print('Hello, World!');
             end

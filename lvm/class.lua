@@ -189,8 +189,25 @@ function API.newClass(definition, outer)
 
     --- @cast cd ClassStructDefinition
 
-    function cd:setEnclosingStruct(outer)
+    -- MARK: - inner
 
+    function cd:addStaticStruct(struct)
+        if struct.outer then
+            error('TODO: Document', 2);
+        end
+        struct.static = true;
+        struct:setOuterStruct(self);
+    end
+
+    function cd:addInstanceStruct(struct)
+        if struct.outer then
+            error('TODO: Document', 2);
+        end
+        struct.static = false;
+        struct:setOuterStruct(self);
+    end
+
+    function cd:setOuterStruct(outer)
         if self.lock then
             errorf(2, '%s Cannot set enclosing struct. (definition is finalized)');
         end
@@ -263,6 +280,13 @@ function API.newClass(definition, outer)
         for name, func in pairs(middleMethods) do
             --- @diagnostic disable-next-line
             o[name] = func;
+        end
+
+        -- Set instanced inner structs for class instances.
+        for iname, icd in pairs(cd.inner) do
+            if not icd.static then
+                o[name] = icd;
+            end
         end
 
         LVM.meta.createInstanceMetatable(cd, o);
@@ -721,7 +745,10 @@ function API.newClass(definition, outer)
 
         -- Set default value(s) for classes.
         for iname, icd in pairs(cd.inner) do
-            cd[name] = icd;
+            if icd.static then
+                print('Setting inner struct: ', name);
+                cd[name] = icd;
+            end
         end
 
         -- Set default value(s) for static fields.
@@ -732,21 +759,6 @@ function API.newClass(definition, outer)
         end
 
         self.__supertable__ = LVM.super.createSuperTable(cd);
-
-        -- - @type table<ParameterDefinition[], function>
-        -- self.__constructors = {};
-
-        -- Set all definitions as read-only.
-        -- local constructorsLen = #self.declaredConstructors;
-        -- if constructorsLen ~= 0 then
-        --     for i = 1, constructorsLen do
-        --         --- @type ConstructorDefinition
-        --         local constructor = self.declaredConstructors[i];
-        --         self.__constructors[constructor.parameters] = constructor.func;
-        --         -- Set read-only.
-        --         self.declaredConstructors[i] = readonly(constructor);
-        --     end
-        -- end
 
         self.__middleMethods = {};
 
@@ -827,7 +839,7 @@ function API.newClass(definition, outer)
             end
 
             -- Inner class invocation.
-            if cd.sub[field] then
+            if cd.inner[field] then
                 if LVM.isOutside() then
                     errorf(2, 'Cannot set inner class explicitly. Use the API.');
                 end

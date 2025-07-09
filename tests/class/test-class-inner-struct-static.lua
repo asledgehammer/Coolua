@@ -2,8 +2,11 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+local PrintPlus = require 'PrintPlus';
+local printf = PrintPlus.printf;
+
 local LuaClass = require 'LuaClass';
-local dump     = require 'dump'
+local dump     = require 'dump'.any;
 local packages = LuaClass.packages;
 
 print('## TEST ##\n');
@@ -32,9 +35,6 @@ local EnclosingClass = class 'EnclosingClass' (public) {
 
 print('\n## TEST ##\n');
 
-print(EnclosingClass);
-print(EnclosingClass.EnclosedClass);
-print(packages);
-print(packages.tests);
-print(packages.tests.class);
-print(packages.tests.class.EnclosingClass.EnclosedClass);
+printf('enclosing class: %s', dump(EnclosingClass));
+printf('encloded class: %s', dump(EnclosingClass.EnclosedClass));
+printf('Explicit package-call to enclosed class: %s', dump(packages.tests.class.EnclosingClass.EnclosedClass));

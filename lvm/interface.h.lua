@@ -107,8 +107,16 @@ function InterfaceStructDefinition:getDeclaredMethod(name, args) end
 --- @returns ClassStructDefinition
 function InterfaceStructDefinition:finalize() end
 
+--- @param superInterface InterfaceStructDefinition
+---
+--- @return boolean
+function InterfaceStructDefinition:isSuperInterface(superInterface) end
+
+--- @param clsDef StructDefinition
+function InterfaceStructDefinition:addStaticStruct(clsDef) end
+
 --- @param outer StructDefinition
-function InterfaceStructDefinition:setEnclosingStruct(outer) end
+function InterfaceStructDefinition:setOuterStruct(outer) end
 
 
 -- MARK: - Module

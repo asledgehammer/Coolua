@@ -175,8 +175,14 @@ function ClassStructDefinition:isSubClass(class) end
 --- @return boolean
 function ClassStructDefinition:isSuperInterface(superInterface) end
 
+--- @param clsDef StructDefinition
+function ClassStructDefinition:addStaticStruct(clsDef) end
+
+--- @param clsDef StructDefinition
+function ClassStructDefinition:addInstanceStruct(clsDef) end
+
 --- @param outer StructDefinition
-function ClassStructDefinition:setEnclosingStruct(outer) end
+function ClassStructDefinition:setOuterStruct(outer) end
 
 -- MARK: - Module
 
