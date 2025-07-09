@@ -58,6 +58,8 @@ function API.newClass(definition, outer)
     local name = locInfo.name;
     local pkg = locInfo.pkg;
 
+    print('PATH: ' .. path);
+
     -- Make sure the class cannot be both final and abstract at the same time.
     if definition.final and definition.abstract then
         errorf(2, 'Class cannot be abstract AND final: %s', path);

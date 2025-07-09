@@ -14,27 +14,36 @@ local method = builder.method;
 local public = builder.public;
 -- ------------------------------------ --
 
--- public interface SimpleInterface {
+--- Java example:
+--- ```java
+--- package tests;
+--- 
+--- public interface SimpleInterface {
+--- 
+---   void aMethod();
+--- 
+---   default void bMethod() {
+---     System.out.println("Hello from bMethod!");
+---   }
+--- 
+---   public static void aStaticMethod() {
+---     System.out.println("Hello from a static interface method!");
+---   }
+--- 
+--- }
+--- ```
 --- @type SimpleInterfaceDefinition
-local SimpleInterface, scaffolding = interface 'SimpleInterface' (public) {
+local SimpleInterface = interface 'SimpleInterface' (public) {
 
-    -- void aMethod();
     method 'aMethod',
 
-    -- default void bMethod() {
-    --   System.out.println("Hello from bMethod!");
-    -- }
     method 'bMethod' {
-        --- @param self SimpleInterface
-        function(self)
+        function()
             print('Hello from bMethod!');
         end
     },
 
     static {
-        -- public static void aStaticMethod() {
-        --   System.out.println("Hello from a static interface method!");
-        -- }
         method 'aStaticMethod' (public) {
             function()
                 print('Hello from a static interface method!');
@@ -42,9 +51,5 @@ local SimpleInterface, scaffolding = interface 'SimpleInterface' (public) {
         }
     }
 };
--- }
-
--- print('\n\n # RESULT #\n');
--- print(dump(scaffolding, { pretty = true, label = true }));
 
 return SimpleInterface;

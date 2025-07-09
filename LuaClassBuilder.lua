@@ -124,6 +124,10 @@ local mt_property = {
 
 --- @param body table
 local function static(body)
+    local classes = {};
+    local interfaces = {};
+    local methods = {};
+    local fields = {};
     for i = 1, #body do
         local entry = body[i];
         if type(entry) == 'table' then
@@ -134,15 +138,15 @@ local function static(body)
             end
             -- Set all valid bodies as static.
             if entry.__type__ == 'FieldTable' then
-                -- table.insert(entry.flags, 'static');
+                fields[entry.name] = entry;
             elseif entry.__type__ == 'MethodTable' then
-                -- table.insert(entry.flags, 'static');
+                methods[entry.name] = entry;
             elseif entry.__type__ == 'ClassTable' then
-                -- table.insert(entry.flags, 'static');
-            elseif entry.__type__ == 'InterfaceTable' then
-                -- table.insert(entry.flags, 'static');
-            elseif entry.__type__ == 'EnumTable' then
-                -- table.insert(entry.flags, 'static');
+                classes[entry.name] = entry;
+            elseif entry.__type__ == 'ClassStructDefinition' then
+                classes[entry.name] = entry;
+            elseif entry.__type__ == 'InterfaceStructDefinition' then
+                interfaces[entry.name] = entry;
             else
                 errorf(2, 'Entry #%i is an unknown struct. {type = %s, value = %s}',
                     i, entry.__type__, dump(entry)
@@ -153,55 +157,18 @@ local function static(body)
 
     return {
         __type__ = 'StaticTable',
-        body = body
+        classes = classes,
+        interfaces = interfaces,
+        fields = fields,
+        methods = methods,
     };
 end
 
 -- MARK: - Class
 
---- @generic T: ClassDefinition
----
---- @return T, table
-local mt_class_body = function(self, ...)
-    local args = { ... };
-    for i = 1, #args do
-        local entry = args[i];
-
-        for _, arg in pairs(entry) do
-            if arg.__type__ == 'ExtendsTable' then
-                if self.extends then
-                    error('Cannot redefine class extensions.', 2);
-                end
-                self.extends = arg.value;
-            elseif arg.__type__ == 'ImplementsTable' then
-                if self.implements then
-                    error('Cannot redefine class implementations.', 2);
-                end
-                self.implements = arg.value;
-            elseif arg.__type__ == 'FieldTable' then
-                self.fields[arg.name] = arg;
-            elseif arg.__type__ == 'MethodTable' then
-                self.methods[arg.name] = arg;
-            elseif arg.__type__ == 'ConstructorTable' then
-                table.insert(self.constructors, arg);
-            elseif arg.__type__ == 'StaticTable' then
-                for j = 1, #arg.body do
-                    local staticArg = arg.body[j];
-
-                    if staticArg.__type__ == 'StaticTable' then
-                        error('Cannot nest static blocks.', 2);
-                    elseif staticArg.__type__ == 'FieldTable' then
-                        self.static.fields[staticArg.name] = staticArg;
-                    elseif staticArg.__type__ == 'MethodTable' then
-                        self.static.methods[staticArg.name] = staticArg;
-                    end
-                end
-            else
-                error('Unknown type: ' .. tostring(arg.__type__), 2);
-            end
-        end
-    end
-
+--- @type fun(self: ClassTable, enclosingCls: StructDefinition): ClassStructDefinition, ClassTable
+local buildClass;
+buildClass = function(self, enclosingCls)
     -- Build the class arguments. --
 
     if not self.name then
@@ -218,7 +185,7 @@ local mt_class_body = function(self, ...)
     -- Build class flags.
     compileFlags(self, clsArgs);
 
-    local cls = LVM.class.newClass(clsArgs);
+    local cls = LVM.class.newClass(clsArgs, enclosingCls);
 
     -- Build fields.
     for name, field in pairs(self.fields) do
@@ -247,6 +214,11 @@ local mt_class_body = function(self, ...)
         end
     end
 
+    -- Build static class(es).
+    for name, innerCls in pairs(self.static.classes) do
+        local innerClsDef = buildClass(innerCls, cls);
+    end
+
     -- Build static field(s).
     for name, field in pairs(self.static.fields) do
         compileFlags(field, field);
@@ -270,6 +242,61 @@ local mt_class_body = function(self, ...)
     debugf(LVM.debug.builder, '[BUILDER] :: Built class: %s', tostring(cls));
 
     return cls, self;
+end
+
+--- @generic T: ClassDefinition
+---
+--- @return T, table
+local mt_class_body = function(self, ...)
+    local args = { ... };
+    for i = 1, #args do
+        local entry = args[i];
+
+        for _, arg in pairs(entry) do
+            if arg.__type__ == 'ExtendsTable' then
+                if self.extends then
+                    error('Cannot redefine class extensions.', 2);
+                end
+                self.extends = arg.value;
+            elseif arg.__type__ == 'ImplementsTable' then
+                if self.implements then
+                    error('Cannot redefine class implementations.', 2);
+                end
+                self.implements = arg.value;
+            elseif arg.__type__ == 'FieldTable' then
+                self.fields[arg.name] = arg;
+            elseif arg.__type__ == 'MethodTable' then
+                self.methods[arg.name] = arg;
+            elseif arg.__type__ == 'ConstructorTable' then
+                table.insert(self.constructors, arg);
+            elseif arg.__type__ == 'StaticTable' then
+                -- Static inner class(es)
+                for k, v in pairs(arg.classes) do
+                    print('class: ', k, dump(v));
+                    self.static.classes[k] = v;
+                end
+                -- Static inner interface(s)
+                for k, v in pairs(arg.interfaces) do
+                    print('interface: ', k, dump(v));
+                    self.static.interfaces[k] = v;
+                end
+                -- Static field(s)
+                for k, v in pairs(arg.fields) do
+                    print('field: ', k, dump(v));
+                    self.static.fields[k] = v;
+                end
+                -- Static method(s)
+                for k, v in pairs(arg.methods) do
+                    print('method: ', k, dump(v));
+                    self.static.methods[k] = v;
+                end
+            else
+                error('Unknown type: ' .. tostring(arg.__type__), 2);
+            end
+        end
+    end
+
+    return buildClass(self);
 end;
 
 local mt_class = {
@@ -301,6 +328,8 @@ local function class(name)
         methods = {},
 
         static = {
+            classes = {},
+            interfaces = {},
             fields = {},
             methods = {},
         },

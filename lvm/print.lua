@@ -140,7 +140,7 @@ function API.printClass(def)
     local sFinal = '';
     local sAbstract = '';
     local sPkg = def.pkg;
-    local sName = def.name;
+    local sName = def.path;
     local sExtends = '';
     local sImplements = '';
 
@@ -152,7 +152,7 @@ function API.printClass(def)
     if def.super and def.super.path ~= 'lua.lang.Object' then
         local sSuperPkg = '';
         if def.super.pkg then sSuperPkg = def.super.pkg .. '.' end
-        sExtends = string.format(' extends %s%s', sSuperPkg, def.super.name);
+        sExtends = string.format(' extends %s%s', sSuperPkg, def.super.path);
     end
 
     if def.interfaces then
@@ -160,7 +160,7 @@ function API.printClass(def)
             local interface = def.interfaces[i];
             local sInterfacePkg = '';
             if interface.pkg then sInterfacePkg = interface.pkg .. '.' end
-            local sInterface = string.format('%s%s', sInterfacePkg, interface.name);
+            local sInterface = string.format('%s%s', sInterfacePkg, interface.path);
             if sImplements == '' then
                 sImplements = sInterface;
             else

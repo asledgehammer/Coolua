@@ -26,7 +26,7 @@ function API.calcPathNamePackage(definition, enclosingDefinition)
     local pkg;
 
     if enclosingDefinition then
-        path = enclosingDefinition.path .. '$' .. enclosingDefinition.name;
+        path = enclosingDefinition.path .. '$' .. definition.name;
         pkg = definition.pkg or enclosingDefinition.pkg;
         if not definition.name then
             error('Name not defined for child class.', 3);
