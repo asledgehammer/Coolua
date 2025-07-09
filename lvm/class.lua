@@ -189,6 +189,28 @@ function API.newClass(definition, outer)
 
     --- @cast cd ClassStructDefinition
 
+    function cd:setEnclosingStruct(outer)
+
+        if self.lock then
+            errorf(2, '%s Cannot set enclosing struct. (definition is finalized)');
+        end
+
+        if self.outer then
+            self.outer.inner[self.name] = nil;
+            self.outer = nil;
+        end
+
+        local locInfo = LVM.struct.calcPathNamePackage(definition, outer);
+        self.path = locInfo.path;
+        self.name = locInfo.name;
+        self.pkg = locInfo.pkg;
+
+        if outer then
+            outer.inner[self.name] = self;
+            outer[self.name] = self;
+        end
+    end
+
     -- MARK: - new()
 
     function cd.new(...)
@@ -674,7 +696,6 @@ function API.newClass(definition, outer)
 
         -- Finalize superclass.
         if cd.super and not cd.super.lock then
-            print('super: ', dump.any(cd.super));
             cd.super:finalize();
         end
 
@@ -700,7 +721,6 @@ function API.newClass(definition, outer)
 
         -- Set default value(s) for classes.
         for iname, icd in pairs(cd.inner) do
-            print('Setting inner class: ' .. iname)
             cd[name] = icd;
         end
 

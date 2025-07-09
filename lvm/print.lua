@@ -138,15 +138,13 @@ function API.printClass(def)
     local sStatic = '';
     local sFinal = '';
     local sAbstract = '';
-    local sPkg = def.pkg;
-    local sName = def.name;
+    local sPath = def.path;
     local sExtends = '';
     local sImplements = '';
 
     if def.abstract then sAbstract = 'abstract ' end
     if def.final then sFinal = 'final ' end
     if def.static then sStatic = 'static ' end
-    if sPkg ~= '' then sPkg = sPkg .. '.' end
 
     if def.super and def.super.path ~= 'lua.lang.Object' then
         local sSuperPkg = '';
@@ -171,8 +169,8 @@ function API.printClass(def)
         end
     end
 
-    return string.format('%s%s%s%sclass %s%s%s%s',
-        sScope, sStatic, sAbstract, sFinal, sPkg, sName, sExtends, sImplements
+    return string.format('%s%s%s%sclass %s%s%s',
+        sScope, sStatic, sAbstract, sFinal, sPath, sExtends, sImplements
     );
 end
 

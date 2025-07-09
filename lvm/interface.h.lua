@@ -107,6 +107,10 @@ function InterfaceStructDefinition:getDeclaredMethod(name, args) end
 --- @returns ClassStructDefinition
 function InterfaceStructDefinition:finalize() end
 
+--- @param outer StructDefinition
+function InterfaceStructDefinition:setEnclosingStruct(outer) end
+
+
 -- MARK: - Module
 
 --- @class LVMInterfaceModule: LVMModule

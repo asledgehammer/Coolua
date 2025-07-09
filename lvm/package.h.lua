@@ -4,7 +4,7 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
---- @alias PackageTable table<string, PackageTable>
+--- @alias PackageTable { [string]: (PackageTable | StructDefinition) }
 
 --- @class LVMPackageModule: LVMModule
 --- @field packages PackageTable

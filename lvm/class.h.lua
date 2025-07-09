@@ -6,7 +6,7 @@
 
 -- MARK: - Definition
 
---- @class (exact) ClassMethodDefinitionParameter 
+--- @class (exact) ClassMethodDefinitionParameter
 --- @field scope ClassScope? (Default: public)
 --- @field final boolean? (Default: false)
 --- @field name string
@@ -15,7 +15,7 @@
 --- @field returns (string[]|string)? (Default: void)
 --- @field body function
 
---- @class (exact) ClassStaticMethodDefinitionParameter 
+--- @class (exact) ClassStaticMethodDefinitionParameter
 --- @field scope ClassScope? (Default: public)
 --- @field final boolean? (Default: false)
 --- @field name string
@@ -24,7 +24,7 @@
 --- @field returns (string[]|string)? (Default: void)
 --- @field body function
 
---- @class (exact) ClassAbstractMethodDefinitionParameter 
+--- @class (exact) ClassAbstractMethodDefinitionParameter
 --- @field scope ClassScope? (Default: public)
 --- @field final boolean? (Default: false)
 --- @field name string
@@ -174,6 +174,9 @@ function ClassStructDefinition:isSubClass(class) end
 ---
 --- @return boolean
 function ClassStructDefinition:isSuperInterface(superInterface) end
+
+--- @param outer StructDefinition
+function ClassStructDefinition:setEnclosingStruct(outer) end
 
 -- MARK: - Module
 

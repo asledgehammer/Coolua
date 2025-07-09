@@ -26,17 +26,270 @@ local void = 'void';
 --- @field types string[]
 --- @field value any
 
+-- MARK: - build
+
+--- @type function, function, function
+local buildClass, buildInterface, buildFlags;
+
+--- @param self table
+--- @param enclosingStruct StructDefinition?
+---
+--- @return ClassStructDefinition
+buildClass = function(self, enclosingStruct)
+    -- Build the class arguments. --
+
+    if not self.name then
+        errorf(2, 'Class doesn\'t have a name!');
+    end
+
+    local clsArgs = {
+        name = self.name,
+        extends = self.extends,
+        implements = self.implements
+    };
+
+    -- Build class flags.
+    buildFlags(self, clsArgs);
+
+    local cls = LVM.class.newClass(clsArgs, enclosingStruct);
+
+    -- Build fields.
+    if self.fields then
+        for name, field in pairs(self.fields) do
+            buildFlags(field, field);
+            cls:addField(field);
+        end
+    end
+
+    -- Build constructors.
+    if self.constructors then
+        local constructorLen = #self.constructors;
+        if constructorLen ~= 0 then
+            for i = 1, constructorLen do
+                local consArgs = self.constructors[i];
+                buildFlags(consArgs, consArgs);
+                cls:addConstructor(consArgs);
+            end
+        end
+    end
+
+    -- Build methods.
+    if self.methods then
+        for name, method in pairs(self.methods) do
+            buildFlags(method, method);
+            if method.abstract then
+                cls:addAbstractMethod(method);
+            else
+                cls:addMethod(method);
+            end
+        end
+    end
+
+    if self.static then
+        -- Build static class(es).
+        if self.static.classes then
+            for name, innerCls in pairs(self.static.classes) do
+                if innerCls.__type__ == 'ClassTable' then
+                    buildClass(innerCls, cls);
+                elseif innerCls.__type__ == 'ClassStructDefinition' then
+                    innerCls:setEnclosingStruct(cls);
+                end
+            end
+        end
+
+        -- Build static interface(s).
+        if self.static.interfaces then
+            for name, innerInterface in pairs(self.static.interfaces) do
+                if innerInterface.__type__ == 'InterfaceTable' then
+                    buildInterface(innerInterface, cls);
+                elseif innerInterface.__type__ == 'InterfaceStructDefinition' then
+                    innerInterface:setEnclosingStruct(cls);
+                end
+            end
+        end
+
+        -- Build static field(s).
+        if self.static.fields then
+            for name, field in pairs(self.static.fields) do
+                buildFlags(field, field);
+                field.static = true;
+                cls:addStaticField(field);
+            end
+        end
+
+        -- Build static method(s).
+        if self.static.methods then
+            for name, method in pairs(self.static.methods) do
+                buildFlags(method, method);
+                method.static = true;
+                cls:addStaticMethod(method);
+            end
+        end
+    end
+
+    -- TODO: Add inner classes.
+    -- TODO: Add inner interfaces.
+    -- TODO: Add inner enums.
+
+    -- We don't finalize in the builder for cross-referencing.
+    -- cls:finalize();
+
+    debugf(LVM.debug.builder, '[BUILDER] :: Built class: %s', tostring(cls));
+
+    return cls;
+end
+
+--- @param self table
+--- @param enclosingInterface InterfaceStructDefinition
+---
+--- @return InterfaceStructDefinition interfaceDef, any table
+local function buildInterface(self, enclosingInterface)
+    if not self.name then
+        errorf(2, 'Interface doesn\'t have a name!');
+    end
+
+    --- @type InterfaceStructDefinitionParameter
+    local intArgs = {
+        name = self.name,
+        extends = self.extends,
+    };
+
+    -- Build class flags.
+    buildFlags(self, intArgs);
+
+    local interface = LVM.interface.newInterface(intArgs, enclosingInterface);
+
+    -- Build methods.
+    for name, method in pairs(self.methods) do
+        buildFlags(method, method, public);
+
+        -- Check flags.
+        if method.static then
+            errorf(2, 'Invalid flag "static" for interface method: %s (Define this in a static block)', name);
+        elseif method.abstract then
+            errorf(2, 'Invalid flag "abstract" for interface method: %s', name);
+        elseif method.default then
+            errorf(2,
+                'Invalid flag "default" for interface method: %s (For default interface method behavior, don\'t define a body)',
+                name
+            );
+        end
+
+        -- Set default flag based off of absense of body function.
+        if not method.body then
+            method.default = true;
+        end
+
+        -- print('adding method: ', name, dump(method, {pretty = true, label = true}));
+
+        interface:addMethod(method);
+    end
+
+    if self.static then
+        -- Build static class(es).
+        if self.static.classes then
+            for name, innerCls in pairs(self.static.classes) do
+                if innerCls.__type__ == 'ClassTable' then
+                    buildClass(innerCls, interface);
+                elseif innerCls.__type__ == 'ClassStructDefinition' then
+                    innerCls:setEnclosingStruct(interface);
+                end
+            end
+        end
+
+        -- Build static interface(s).
+        if self.static.interfaces then
+            for name, innerInterface in pairs(self.static.interfaces) do
+                if innerInterface.__type__ == 'InterfaceTable' then
+                    buildInterface(innerInterface, interface);
+                elseif innerInterface.__type__ == 'InterfaceStructDefinition' then
+                    innerInterface:setEnclosingStruct(interface);
+                end
+            end
+        end
+
+        -- Build static field(s).
+        for name, field in pairs(self.static.fields) do
+            buildFlags(field, field, public);
+
+            -- Check flags.
+            if field.static then
+                errorf(2,
+                    'Invalid flag "static" for interface field: %s. (It\'s in a static block so this isn\'t needed)',
+                    name
+                );
+            elseif field.final then
+                errorf(2, 'Invalid flag "final" for interface field: %s. (All interface fields are constants)', name);
+            elseif field.scope == 'public' then
+                errorf(2, 'Invalid flag "public" for interface field: %s. (All interface fields are public)', name);
+            end
+
+            -- All interface fields requires a value.
+            if not field.value then
+                errorf(2, 'No default value for interface field: %s.', name);
+            end
+
+            field.scope = 'public';
+            field.static = true;
+            field.final = true;
+
+            interface:addStaticField(field);
+        end
+
+        -- Build static method(s).
+        for name, method in pairs(self.static.methods) do
+            if not method.body then
+                errorf(2, 'body function missing for static interface method. (Static methods must have a body.)', 2);
+            end
+
+            buildFlags(method, method);
+
+            -- Check flags.
+            if method.static then
+                errorf(2,
+                    'Invalid flag "static" for interface method: %s. (It\'s in a static block so this isn\'t needed.)',
+                    name
+                );
+            elseif method.abstract then
+                errorf(2, 'Invalid flag "abstract" for interface method: %s (Interface methods cannot be abstract.)',
+                    name
+                );
+            elseif method.default then
+                errorf(2,
+                    'Invalid flag "default" for static interface method: %s (Static interface methods must have a body.)',
+                    name
+                );
+            end
+
+            method.static = true;
+            method.final = true;
+
+            interface:addStaticMethod(method);
+        end
+    end
+
+    -- TODO: Add inner classes.
+    -- TODO: Add inner interfaces.
+    -- TODO: Add inner enums.
+
+    -- interface:finalize();
+
+    debugf(LVM.debug.builder, '[BUILDER] :: Built interface: %s', tostring(interface));
+
+    return interface, self;
+end
+
 --- @param struct table
 --- @param appliedStruct table
 --- @param defaultScope string? (Default: 'package')
-local function compileFlags(struct, appliedStruct, defaultScope)
+buildFlags = function(struct, appliedStruct, defaultScope)
     local flags = struct.flags;
     defaultScope = defaultScope or 'package';
 
-    if not flags then
-        appliedStruct.flags = {};
-        return;
-    end
+    -- if not flags then
+    --     appliedStruct.flags = {};
+    --     return;
+    -- end
 
     for i = 1, #flags do
         local flag = flags[i];
@@ -59,8 +312,6 @@ local function compileFlags(struct, appliedStruct, defaultScope)
     if not appliedStruct.scope then
         appliedStruct.scope = defaultScope;
     end
-
-    appliedStruct.flags = nil;
 end
 
 --- @param e ClassStructDefinition|Class|table|string
@@ -170,102 +421,6 @@ end
 
 -- MARK: - Class
 
-local buildClass;
-
---- @param self table
---- @param enclosingCls ClassStructDefinition?
----
---- @return ClassStructDefinition
-buildClass = function(self, enclosingCls)
-    -- Build the class arguments. --
-
-    if not self.name then
-        errorf(2, 'Class doesn\'t have a name!');
-    end
-
-    --- @type ClassStructDefinitionParameter
-    local clsArgs = {
-        name = self.name,
-        extends = self.extends,
-        implements = self.implements
-    };
-
-    -- Build class flags.
-    compileFlags(self, clsArgs);
-
-    local cls = LVM.class.newClass(clsArgs, enclosingCls);
-
-    -- Build fields.
-    if self.fields then
-        for name, field in pairs(self.fields) do
-            compileFlags(field, field);
-            cls:addField(field);
-        end
-    end
-
-    -- Build constructors.
-    if self.constructors then
-        local constructorLen = #self.constructors;
-        if constructorLen ~= 0 then
-            for i = 1, constructorLen do
-                local consArgs = self.constructors[i];
-                compileFlags(consArgs, consArgs);
-                cls:addConstructor(consArgs);
-            end
-        end
-    end
-
-    -- Build methods.
-    if self.methods then
-        for name, method in pairs(self.methods) do
-            compileFlags(method, method);
-            if method.abstract then
-                cls:addAbstractMethod(method);
-            else
-                cls:addMethod(method);
-            end
-        end
-    end
-
-    if self.static then
-        -- Build static class(es).
-        if self.static.classes then
-            for name, innerCls in pairs(self.static.classes) do
-                buildClass(innerCls, cls);
-            end
-        end
-
-        -- Build static field(s).
-        if self.static.fields then
-            for name, field in pairs(self.static.fields) do
-                compileFlags(field, field);
-                field.static = true;
-                cls:addStaticField(field);
-            end
-        end
-
-        -- Build static method(s).
-        if self.static.methods then
-            for name, method in pairs(self.static.methods) do
-                compileFlags(method, method);
-                method.static = true;
-                cls:addStaticMethod(method);
-            end
-        end
-    end
-
-    -- TODO: Add inner classes.
-    -- TODO: Add inner interfaces.
-    -- TODO: Add inner enums.
-
-    -- We don't finalize in the builder for cross-referencing.
-    -- cls:finalize();
-
-    debugf(LVM.debug.builder, '[BUILDER] :: Built class: %s', tostring(cls));
-
-    return cls;
-end
-
 --- @generic T: ClassDefinition
 ---
 --- @return T, table
@@ -358,122 +513,6 @@ end
 
 -- MARK: - Interface
 
----
---- @param self table
---- @param enclosingInterface InterfaceStructDefinition
----
---- @return InterfaceStructDefinition interfaceDef, any table
-local function buildInterface(self, enclosingInterface)
-    if not self.name then
-        errorf(2, 'Interface doesn\'t have a name!');
-    end
-
-    --- @type InterfaceStructDefinitionParameter
-    local intArgs = {
-        name = self.name,
-        extends = self.extends,
-    };
-
-    -- Build class flags.
-    compileFlags(self, intArgs);
-
-    local interface = LVM.interface.newInterface(intArgs, enclosingInterface);
-
-    -- Build methods.
-    for name, method in pairs(self.methods) do
-        compileFlags(method, method, public);
-
-        -- Check flags.
-        if method.static then
-            errorf(2, 'Invalid flag "static" for interface method: %s (Define this in a static block)', name);
-        elseif method.abstract then
-            errorf(2, 'Invalid flag "abstract" for interface method: %s', name);
-        elseif method.default then
-            errorf(2,
-                'Invalid flag "default" for interface method: %s (For default interface method behavior, don\'t define a body)',
-                name
-            );
-        end
-
-        -- Set default flag based off of absense of body function.
-        if not method.body then
-            method.default = true;
-        end
-
-        -- print('adding method: ', name, dump(method, {pretty = true, label = true}));
-
-        interface:addMethod(method);
-    end
-
-    -- Build static field(s).
-    for name, field in pairs(self.static.fields) do
-        compileFlags(field, field, public);
-
-        -- Check flags.
-        if field.static then
-            errorf(2, 'Invalid flag "static" for interface field: %s. (It\'s in a static block so this isn\'t needed)',
-                name
-            );
-        elseif field.final then
-            errorf(2, 'Invalid flag "final" for interface field: %s. (All interface fields are constants)', name);
-        elseif field.scope == 'public' then
-            errorf(2, 'Invalid flag "public" for interface field: %s. (All interface fields are public)', name);
-        end
-
-        -- All interface fields requires a value.
-        if not field.value then
-            errorf(2, 'No default value for interface field: %s.', name);
-        end
-
-        field.scope = 'public';
-        field.static = true;
-        field.final = true;
-
-        interface:addStaticField(field);
-    end
-
-    -- Build static method(s).
-    for name, method in pairs(self.static.methods) do
-        if not method.body then
-            errorf(2, 'body function missing for static interface method. (Static methods must have a body.)', 2);
-        end
-
-        compileFlags(method, method);
-
-        -- Check flags.
-        if method.static then
-            errorf(2,
-                'Invalid flag "static" for interface method: %s. (It\'s in a static block so this isn\'t needed.)',
-                name
-            );
-        elseif method.abstract then
-            errorf(2, 'Invalid flag "abstract" for interface method: %s (Interface methods cannot be abstract.)',
-                name
-            );
-        elseif method.default then
-            errorf(2,
-                'Invalid flag "default" for static interface method: %s (Static interface methods must have a body.)',
-                name
-            );
-        end
-
-        method.static = true;
-        method.final = true;
-
-        interface:addStaticMethod(method);
-    end
-
-    -- TODO: Add inner classes.
-    -- TODO: Add inner interfaces.
-    -- TODO: Add inner enums.
-
-    -- interface:finalize();
-
-    debugf(LVM.debug.builder, '[BUILDER] :: Built interface: %s', tostring(interface));
-
-    return interface, self;
-end
-
 --- @return InterfaceStructDefinition, table
 local mt_interface_body = function(self, ...)
     local args = { ... };
@@ -563,13 +602,13 @@ local mt_field_body = function(self, ...)
                     if v2.__type__ == 'GetterTable' then
                         self.get = {};
                         if v2.flags then
-                            compileFlags(v2, self.get);
+                            buildFlags(v2, self.get);
                         end
                         self.get.body = v2.body;
                     elseif v2.__type__ == 'SetterTable' then
                         self.set = {};
                         if v2.flags then
-                            compileFlags(v2, self.set);
+                            buildFlags(v2, self.set);
                         end
                         self.set.body = v2.body;
                     elseif v2.__type__ == 'PropertiesTable' then
@@ -992,7 +1031,6 @@ local function constructor(...)
 
     -- Bypass the flags if this condition is met.
     if not args or (#args == 1 and type(args[1]) == 'table') then
-        print('cons args: ', dump(args));
         if not args then
             return setmetatable(t, mt_constructor);
         else

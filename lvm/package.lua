@@ -9,7 +9,8 @@ local debugf = PrintPlus.debugf;
 local LVM;
 
 --- @type LVMPackageModule
-local API = {
+local API;
+API = {
 
     __type__ = 'LVMModule',
 
@@ -19,6 +20,7 @@ local API = {
     setLVM = function(lvm)
         LVM = lvm;
         LVM.moduleCount = LVM.moduleCount + 1;
+        API.packages = API.newPackageStruct('Default Package');
     end
 };
 

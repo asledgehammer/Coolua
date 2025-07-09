@@ -3,14 +3,16 @@
 ---]]
 
 local LuaClass = require 'LuaClass';
+local dump     = require 'dump'
 local packages = LuaClass.packages;
+
+print('## TEST ##\n');
 
 local builder = LuaClass.builder;
 local static = builder.static;
 local class = builder.class;
 local public = builder.public;
 
-print('## TEST ##\n');
 
 -- Main files need to initialize LuaClass. --
 

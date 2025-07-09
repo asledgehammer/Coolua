@@ -5,13 +5,13 @@
 local DebugUtils = require 'DebugUtils';
 local dump       = require 'dump'
 
-local PrintPlus = require 'PrintPlus';
-local errorf = PrintPlus.errorf;
+local PrintPlus  = require 'PrintPlus';
+local errorf     = PrintPlus.errorf;
 
 --- @type LVM
 local LVM;
 
-local API = {
+local API        = {
 
     __type__ = 'LVMModule',
 
@@ -24,7 +24,7 @@ local API = {
 };
 
 -- Internal API
-local IAPI = {};
+local IAPI       = {};
 
 -- MARK: - Method
 
@@ -327,7 +327,6 @@ end
 ---
 --- @return InterfaceStructDefinition interfaceDef
 function IAPI.finalize(self)
-
     local errHeader = string.format('Interface(%s):finalize():', self.path);
 
     if self.lock then
@@ -605,6 +604,28 @@ function API.newInterface(definition, enclosingStruct)
     LVM.flags.allowPackageStructModifications = true;
     LVM.package.addToPackageStruct(id);
     LVM.flags.allowPackageStructModifications = false;
+
+
+    function id:setEnclosingStruct(outer)
+        if self.lock then
+            errorf(2, '%s Cannot set enclosing struct. (definition is finalized)');
+        end
+
+        if self.outer then
+            self.outer.inner[cd.name] = nil;
+            self.outer = nil;
+        end
+
+        local locInfo = LVM.struct.calcPathNamePackage(definition, outer);
+        self.path = locInfo.path;
+        self.name = locInfo.name;
+        self.pkg = locInfo.pkg;
+
+        if outer then
+            outer.inner[self.name] = self;
+            outer[self.name] = self;
+        end
+    end
 
     -- * General API * --
     id.finalize = IAPI.finalize;
