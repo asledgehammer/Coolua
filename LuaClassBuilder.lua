@@ -14,17 +14,18 @@ local LVM = require 'LVM';
 
 local isArray = require 'LVMUtils'.isArray;
 
+--- @type PublicFlag
 local public = 'public';
+--- @type ProtectedFlag
 local protected = 'protected';
+--- @type PrivateFlag
 local private = 'private';
+--- @type AbstractFlag
 local abstract = 'abstract';
+--- @type FinalFlag
 local final = 'final';
+--- @type VoidType
 local void = 'void';
-
---- @class FieldProperties
---- @field type string
---- @field types string[]
---- @field value any
 
 -- MARK: - build
 
@@ -434,9 +435,10 @@ end
 
 -- MARK: - Class
 
---- @generic T: ClassDefinition
+--- @param self any
+--- @param ... ClassTableBody
 ---
---- @return T, table
+--- @return ClassStructDefinition
 local mt_class_body = function(self, ...)
     local args = { ... };
     for i = 1, #args do
@@ -444,41 +446,48 @@ local mt_class_body = function(self, ...)
 
         for _, arg in pairs(entry) do
             if arg.__type__ == 'ExtendsTable' then
+                --- @cast arg ExtendsTable
                 if self.extends then
                     error('Cannot redefine class extensions.', 2);
                 end
                 self.extends = arg.value;
             elseif arg.__type__ == 'ImplementsTable' then
+                --- @cast arg ImplementsTable
                 if self.implements then
                     error('Cannot redefine class implementations.', 2);
                 end
                 self.implements = arg.value;
             elseif arg.__type__ == 'ClassStructDefinition' then
+                --- @cast arg ClassStructDefinition
                 self.instanced.classes[arg.name] = arg;
             elseif arg.__type__ == 'InterfaceStructDefinition' then
+                --- @cast arg InterfaceStructDefinition
                 self.instanced.interfaces[arg.name] = arg;
             elseif arg.__type__ == 'FieldTable' then
+                --- @cast arg FieldTable
                 self.instanced.fields[arg.name] = arg;
             elseif arg.__type__ == 'MethodTable' then
+                --- @cast arg MethodTable
                 self.instanced.methods[arg.name] = arg;
             elseif arg.__type__ == 'ConstructorTable' then
                 table.insert(self.constructors, arg);
             elseif arg.__type__ == 'StaticTable' then
+                --- @cast arg StaticTable
                 -- Static inner class(es)
-                for k, v in pairs(arg.classes) do
-                    self.static.classes[k] = v;
+                for name, class in pairs(arg.classes) do
+                    self.static.classes[name] = class;
                 end
                 -- Static inner interface(s)
-                for k, v in pairs(arg.interfaces) do
-                    self.static.interfaces[k] = v;
+                for name, interface in pairs(arg.interfaces) do
+                    self.static.interfaces[name] = interface;
                 end
                 -- Static field(s)
-                for k, v in pairs(arg.fields) do
-                    self.static.fields[k] = v;
+                for name, field in pairs(arg.fields) do
+                    self.static.fields[name] = field;
                 end
                 -- Static method(s)
-                for k, v in pairs(arg.methods) do
-                    self.static.methods[k] = v;
+                for name, method in pairs(arg.methods) do
+                    self.static.methods[name] = method;
                 end
             else
                 error('Unknown type: ' .. tostring(arg.__type__), 2);
@@ -489,8 +498,8 @@ local mt_class_body = function(self, ...)
     return buildClass(self);
 end;
 
+--- @type fun(flagsOrBody: ModifierFlag[]|TableBody)
 local mt_class = {
-    --- @generic T: ClassDefinition
     __call = function(self, ...)
         local args = { ... };
         for i = 1, #args do
@@ -504,37 +513,34 @@ local mt_class = {
     __tostring = mt_tostring
 };
 
---- @generic T: ClassDefinition
 --- @param name string
 ---
---- @return T
+--- @return ClassStructDefinition
 local function class(name)
-    return setmetatable({
+    local t = {
         __type__ = 'ClassTable',
         name = name,
         flags = {},
-
         instanced = {
             classes = {},
             interfaces = {},
             fields = {},
             methods = {},
         },
-
         static = {
             classes = {},
             interfaces = {},
             fields = {},
             methods = {},
         },
-
         constructors = {},
-    }, mt_class);
+    };
+    return setmetatable(t, mt_class);
 end
 
 -- MARK: - Interface
 
---- @return InterfaceStructDefinition, table
+--- @return InterfaceStructDefinition
 local mt_interface_body = function(self, ...)
     local args = { ... };
     for i = 1, #args do
@@ -552,20 +558,20 @@ local mt_interface_body = function(self, ...)
                 self.methods[arg.name] = arg;
             elseif arg.__type__ == 'StaticTable' then
                 -- Static field(s)
-                for k, v in pairs(arg.fields) do
-                    self.static.fields[k] = v;
+                for k, method in pairs(arg.fields) do
+                    self.static.fields[k] = method;
                 end
                 -- Static method(s)
-                for k, v in pairs(arg.methods) do
-                    self.static.methods[k] = v;
+                for k, method in pairs(arg.methods) do
+                    self.static.methods[k] = method;
                 end
                 -- Static inner class(es)
-                for k, v in pairs(arg.classes) do
-                    self.static.classes[k] = v;
+                for k, method in pairs(arg.classes) do
+                    self.static.classes[k] = method;
                 end
                 -- Static inner interface(s)
-                for k, v in pairs(arg.interfaces) do
-                    self.static.interfaces[k] = v;
+                for k, method in pairs(arg.interfaces) do
+                    self.static.interfaces[k] = method;
                 end
             else
                 error('Unknown type: ' .. tostring(arg.__type__), 2);
@@ -579,6 +585,7 @@ local mt_interface_body = function(self, ...)
 end;
 
 local mt_interface = {
+    --- @param ... ModifierFlag
     __call = function(self, ...)
         local args = { ... };
         for i = 1, #args do
@@ -689,7 +696,7 @@ local mt_field = {
 
 --- @param name string
 ---
---- @return table
+--- @return FieldTable
 local function field(name)
     return setmetatable({
         __type__ = 'FieldTable',
@@ -921,7 +928,7 @@ local mt_method_preset = {
 
 --- @param name string
 ---
---- @return table
+--- @return MethodTable
 local function method(name)
     return setmetatable({
         __type__ = 'MethodTable',
@@ -946,6 +953,7 @@ local function getPresetMethodBody(funcName, t)
     return t[1];
 end
 
+--- @return fun(t: MethodTableBody): MethodTable
 local function createMethodTemplate(name, flags, properties)
     return function(t)
         local t2 = {
@@ -959,6 +967,7 @@ local function createMethodTemplate(name, flags, properties)
     end
 end
 
+--- @return MethodTable
 local equals = createMethodTemplate('equals', { public }, {
     parameters {
         { name = 'other', type = 'any' }
@@ -974,30 +983,30 @@ local toString = createMethodTemplate('toString', { public }, {
 -- MARK: - constructor
 
 local mt_constructor_body = function(self, args)
-    for k, v in pairs(args) do
+    for k, method in pairs(args) do
         if k == 'body' then
-            local tv = type(v);
+            local tv = type(method);
             if tv ~= 'function' then
                 errorf(2, 'Property "body" of constructor is not a function. {type = %s, value = %s}',
-                    type(v),
-                    dump(v)
+                    type(method),
+                    dump(method)
                 );
             end
-            self.body = v;
+            self.body = method;
         elseif k == 'super' then
-            local tv = type(v);
+            local tv = type(method);
             if tv ~= 'function' then
                 errorf(2, 'Property "super" of constructor is not a function. {type = %s, value = %s}',
-                    type(v),
-                    dump(v)
+                    type(method),
+                    dump(method)
                 );
             end
-            self.super = v;
+            self.super = method;
         elseif type(k) == 'string' then
             errorf(2, 'Unknown property of constructor: %s {type = %s, value = %s}',
                 k,
-                type(v),
-                dump(v)
+                type(method),
+                dump(method)
             );
         end
     end
@@ -1037,7 +1046,7 @@ local mt_constructor = {
     __tostring = mt_tostring
 };
 
---- @return table
+--- @return ConstructorTable
 local function constructor(...)
     local t = {
         __type__ = 'ConstructorTable',
