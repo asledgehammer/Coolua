@@ -230,6 +230,7 @@ function API.newClass(definition, outer)
         if outer then
             outer.inner[self.name] = self;
             if self.static then
+                PrintPlus.printf('outer[%s] = %s', self.name, tostring(self));
                 outer[self.name] = self;
             end
         end
@@ -760,8 +761,7 @@ function API.newClass(definition, outer)
         -- Set default value(s) for classes.
         for iname, icd in pairs(cd.inner) do
             if icd.static then
-                print('Setting inner struct: ', name);
-                -- cd[name] = icd;
+                cd[name] = icd;
             end
         end
 

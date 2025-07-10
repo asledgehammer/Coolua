@@ -110,7 +110,8 @@ buildClass = function(self, enclosingStruct)
                 if innerCls.__type__ == 'ClassTable' then
                     buildClass(innerCls, cls);
                 elseif innerCls.__type__ == 'ClassStructDefinition' then
-                    innerCls:setOuterStruct(cls);
+                    cls:addStaticStruct(innerCls);
+                    -- innerCls:setOuterStruct(cls);
                 end
             end
         end
@@ -121,7 +122,8 @@ buildClass = function(self, enclosingStruct)
                 if innerInterface.__type__ == 'InterfaceTable' then
                     buildInterface(innerInterface, cls);
                 elseif innerInterface.__type__ == 'InterfaceStructDefinition' then
-                    innerInterface:setOuterStruct(cls);
+                    cls:addStaticStruct(innerInterface);
+                    -- innerInterface:setOuterStruct(cls);
                 end
             end
         end
@@ -203,7 +205,7 @@ local function buildInterface(self, outerStruct)
                 if innerCls.__type__ == 'ClassTable' then
                     buildClass(innerCls, interface);
                 elseif innerCls.__type__ == 'ClassStructDefinition' then
-                    innerCls:setOuterStruct(interface);
+                    interface:addStaticStruct(innerCls);
                 end
             end
         end
@@ -214,7 +216,7 @@ local function buildInterface(self, outerStruct)
                 if innerInterface.__type__ == 'InterfaceTable' then
                     buildInterface(innerInterface, interface);
                 elseif innerInterface.__type__ == 'InterfaceStructDefinition' then
-                    innerInterface:setOuterStruct(interface);
+                    interface:addStaticStruct(innerInterface);
                 end
             end
         end
