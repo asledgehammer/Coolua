@@ -36,6 +36,8 @@ local InterfaceInstance = {};
 local InterfaceStructDefinitionParameter = {};
 
 --- @class InterfaceStructDefinition: HierarchicalStructDefinition, Fieldable
+--- @field __type__ 'InterfaceStructDefinition'
+--- @field __readonly__ boolean
 --- 
 --- @field printHeader string
 --- @field super InterfaceStructDefinition?

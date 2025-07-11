@@ -52,10 +52,11 @@
 
 --- @class (exact) ClassStructDefinition: HierarchicalStructDefinition, Genericable, Constructable, Fieldable, Staticable, Abstractable, Auditable
 --- @field __type__ 'ClassStructDefinition'
+--- @field __readonly__ boolean
 --- @field __supertable__ SuperTable
+--- 
 --- @field printHeader string
 --- @field type string
---- @field lock boolean
 --- @field classObj Class?
 --- @field super ClassStructDefinition?
 --- @field sub ClassStructDefinition[]

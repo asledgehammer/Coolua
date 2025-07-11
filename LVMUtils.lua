@@ -16,6 +16,8 @@ local API = {
 
 local meta;
 function API.readonly(table)
+    table.__readonly__ = true;
+
     meta = getmetatable(table) or {};
 
     local __newindex = function(_, field, value)
@@ -57,11 +59,11 @@ function API.isValidName(name)
 end
 
 --- @param t any
---- 
+---
 --- @return boolean result
 function API.isArray(t)
     if not t or type(t) ~= 'table' then return false end
-    
+
     local i = 0;
     for _ in pairs(t) do
         i = i + 1;

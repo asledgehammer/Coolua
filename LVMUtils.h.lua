@@ -1,10 +1,19 @@
 --- @meta
 
+---[[
+--- @author asledgehammer, JabDoesThings 2025
+---]]
+
+--- @class Readonly
+--- @field __readonly__ boolean
 
 --- @class LVMUtils
 local API = {};
 
-function API.readonly(table) end
+--- @param t table
+--- 
+--- @return Readonly
+function API.readonly(t) end
 
 --- Tests if: 
 --- - The name isn't empty.
