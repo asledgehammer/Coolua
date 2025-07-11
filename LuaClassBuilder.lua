@@ -14,7 +14,7 @@ local LVM = require 'LVM';
 
 local isArray = require 'LVMUtils'.isArray;
 
---- @type PublicFlag
+--- @type PublicFlag Structs with this flag are accessible to everything.
 local public = 'public';
 --- @type ProtectedFlag
 local protected = 'protected';
@@ -502,6 +502,14 @@ end;
 local mt_class = {
     __call = function(self, ...)
         local args = { ... };
+        local argLen = #args;
+
+        -- This isn't a flag-argument. Move to body definition.
+        if argLen == 1 and type(args[1]) == 'table' and isArray(args[1]) then
+            mt_class_body(self, ...);
+            return;
+        end
+
         for i = 1, #args do
             table.insert(self.flags, args[i]);
         end
@@ -588,6 +596,14 @@ local mt_interface = {
     --- @param ... ModifierFlag
     __call = function(self, ...)
         local args = { ... };
+        local argLen = #args;
+
+        -- This isn't a flag-argument. Move to body definition.
+        if argLen == 1 and type(args[1]) == 'table' and isArray(args[1]) then
+            mt_interface_body(self, ...);
+            return;
+        end
+
         for i = 1, #args do
             table.insert(self.flags, args[i]);
         end
