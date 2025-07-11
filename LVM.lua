@@ -2,6 +2,9 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+-- Require this to load injected functions to basic Lua types.
+require 'LuaPlus';
+
 local LVMUtils = require 'LVMUtils';
 
 local PrintPlus = require 'PrintPlus';
