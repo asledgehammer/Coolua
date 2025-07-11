@@ -227,15 +227,8 @@ local function buildInterface(self, outerStruct)
             buildFlags(field, field, public);
 
             -- Check flags.
-            if field.static then
-                errorf(2,
-                    'Invalid flag "static" for interface field: %s. (It\'s in a static block so this isn\'t needed)',
-                    name
-                );
-            elseif field.final then
-                errorf(2, 'Invalid flag "final" for interface field: %s. (All interface fields are constants)', name);
-            elseif field.scope == 'public' then
-                errorf(2, 'Invalid flag "public" for interface field: %s. (All interface fields are public)', name);
+            if field.scope ~= 'public' then
+                errorf(2, 'Invalid flag %s for interface field: %s. (All interface fields are public)', field.scope, name);
             end
 
             -- All interface fields requires a value.
@@ -561,6 +554,12 @@ local mt_interface_body = function(self, ...)
                     error('Cannot redefine interface extensions.', 2);
                 end
                 self.extends = arg.value;
+            elseif arg.__type__ == 'FieldTable' then
+                debugf(LVM.debug.warn,
+                    'WARNING: Field %s is defined for interface %s outside of static block. This can only be a ' ..
+                    'public static final field. Applying as such..'
+                );
+                self.static.fields[arg.name] = arg;
             elseif arg.__type__ == 'MethodTable' then
                 self.methods[arg.name] = arg;
             elseif arg.__type__ == 'StaticTable' then
