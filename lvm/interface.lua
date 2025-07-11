@@ -23,8 +23,155 @@ local API        = {
     end
 };
 
+local function applyMetatable(self)
+    local mt = getmetatable(self) or {};
+    local __properties = {};
+    for k, v in pairs(self) do __properties[k] = v end
+    -- mt.__metatable = false;
+    mt.__tostring = function() return LVM.print.printInterface(self) end
+
+    local finalizing = false;
+
+    mt.__index = function(_, field)
+        -- Interfaces cannot be instantiated so access to anything requires finalization.
+        if not finalizing and not self.lock then
+            finalizing = true;
+            self:finalize();
+            finalizing = false;
+        end
+
+        return __properties[field];
+    end
+
+    mt.__newindex = function(tbl, field, value)
+        -- TODO: Visibility scope analysis.
+        -- TODO: Type-checking.
+
+        if not self.lock then
+            __properties[field] = value;
+            return;
+        end
+
+        -- Interfaces cannot be instantiated so access to anything requires finalization.
+        if not finalizing and not self.lock then
+            finalizing = true;
+            self:finalize();
+            finalizing = false;
+        end
+
+        if field == 'super' or field == '__super__' then
+            errorf(2, '%s Cannot set super. (Static context)', self.printHeader);
+            return;
+        end
+
+        -- Post-finalize assignment.
+        if field == 'classObj' and not __properties['classObj'] then
+            __properties['classObj'] = value;
+            return;
+        end
+
+        local fd = self:getField(field);
+
+        -- Inner class invocation.
+        if self.children[field] then
+            if LVM.isOutside() then
+                errorf(2, 'Cannot set inner struct explicitly. Use the API.');
+            end
+
+            __properties[field] = value;
+
+            return;
+        end
+
+        if not fd then
+            errorf(2, 'FieldNotFoundException: Cannot set new field or method: %s.%s',
+                self.path, field
+            );
+            return;
+        elseif not fd.static then
+            errorf(2, 'StaticFieldException: Assigning non-static field in static context: %s.%s',
+                self.path, field
+            );
+            return;
+        end
+
+        local level, relPath = LVM.scope.getRelativePath();
+
+        LVM.stack.pushContext({
+            class = self,
+            element = fd,
+            context = 'field-set',
+            line = DebugUtils.getCurrentLine(level),
+            path = DebugUtils.getPath(level)
+        });
+
+        local callInfo = DebugUtils.getCallInfo(level, nil, true);
+        callInfo.path = relPath;
+        local scopeAllowed = LVM.scope.getScopeForCall(fd.class, callInfo);
+
+        if not LVM.scope.canAccessScope(fd.scope, scopeAllowed) then
+            local errMsg = string.format(
+                'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
+                self.name, fd.name,
+                fd.scope, scopeAllowed,
+                LVM.stack.printStackTrace()
+            );
+            LVM.stack.popContext();
+            print(errMsg);
+            error('', 2);
+            return;
+        end
+
+        -- (Just in-case)
+        if value == LVM.constants.UNINITIALIZED_VALUE then
+            local errMsg = string.format('%s Cannot set %s as UNINITIALIZED_VALUE. (Internal Error)\n%s',
+                self.printHeader, field, LVM.stack.printStackTrace()
+            );
+            LVM.stack.popContext();
+            error(errMsg, 2);
+            return;
+        end
+
+        if fd.final then
+            local ste = LVM.stack.getContext();
+            if not ste then
+                LVM.stack.popContext();
+                errorf(2, '%s Attempt to assign final field %s outside of Class scope.', self.printHeader, field);
+                return;
+            end
+
+            local context = ste:getContext();
+            local class = ste:getCallingClass();
+            if class ~= self then
+                LVM.stack.popContext();
+                errorf(2, '%s Attempt to assign final field %s outside of Class scope.', self.printHeader, field);
+                return;
+            elseif context ~= 'constructor' then
+                LVM.stack.popContext();
+                errorf(2, '%s Attempt to assign final field %s outside of constructor scope.', self.printHeader, field);
+                return;
+            elseif fd.assignedOnce then
+                LVM.stack.popContext();
+                errorf(2, '%s Attempt to assign final field %s. (Already defined)', self.printHeader, field);
+                return;
+            end
+        end
+
+        -- Set the value.
+        __properties[field] = value;
+
+        LVM.stack.popContext();
+
+        -- Apply forward the value metrics.
+        fd.assignedOnce = true;
+        fd.value = value;
+    end
+
+    setmetatable(self, mt);
+end
+
 -- Internal API
-local IAPI       = {};
+local IAPI = {};
 
 -- MARK: - Method
 
@@ -327,6 +474,8 @@ end
 ---
 --- @return InterfaceStructDefinition interfaceDef
 function IAPI.finalize(self)
+    print('Interface:finalize()');
+
     local errHeader = string.format('Interface(%s):finalize():', self.path);
 
     if self.lock then
@@ -334,6 +483,9 @@ function IAPI.finalize(self)
     elseif self.super and (self.super.__type__ == 'ClassStructDefinition' and not self.super.lock) then
         errorf(2, '%s Cannot finalize. (Super-Interface %s is not finalized!)', errHeader, self.path);
     end
+
+    -- If any auto-methods are defined for fields (get, set), create them before compiling class methods.
+    LVM.field.compileFieldAutoMethods(self);
 
     -- TODO: Audit everything.
 
@@ -393,129 +545,6 @@ function IAPI.finalize(self)
         self[name] = self.__middleMethods[name];
     end
 
-    local mt = getmetatable(self) or {};
-    local __properties = {};
-    for k, v in pairs(self) do __properties[k] = v end
-    -- mt.__metatable = false;
-    mt.__index = __properties;
-    mt.__tostring = function() return LVM.print.printInterface(self) end
-
-    mt.__index = __properties;
-
-    mt.__newindex = function(tbl, field, value)
-        -- TODO: Visibility scope analysis.
-        -- TODO: Type-checking.
-
-        if field == 'super' or field == '__super__' then
-            errorf(2, '%s Cannot set super. (Static context)', self.printHeader);
-            return;
-        end
-
-        -- Post-finalize assignment.
-        if field == 'classObj' and not __properties['classObj'] then
-            __properties['classObj'] = value;
-            return;
-        end
-
-        local fd = self:getField(field);
-
-        -- Inner class invocation.
-        if self.children[field] then
-            if LVM.isOutside() then
-                errorf(2, 'Cannot set inner struct explicitly. Use the API.');
-            end
-
-            __properties[field] = value;
-
-            return;
-        end
-
-        if not fd then
-            errorf(2, 'FieldNotFoundException: Cannot set new field or method: %s.%s',
-                self.path, field
-            );
-            return;
-        elseif not fd.static then
-            errorf(2, 'StaticFieldException: Assigning non-static field in static context: %s.%s',
-                self.path, field
-            );
-            return;
-        end
-
-        local level, relPath = LVM.scope.getRelativePath();
-
-        LVM.stack.pushContext({
-            class = self,
-            element = fd,
-            context = 'field-set',
-            line = DebugUtils.getCurrentLine(level),
-            path = DebugUtils.getPath(level)
-        });
-
-        local callInfo = DebugUtils.getCallInfo(level, nil, true);
-        callInfo.path = relPath;
-        local scopeAllowed = LVM.scope.getScopeForCall(fd.class, callInfo);
-
-        if not LVM.scope.canAccessScope(fd.scope, scopeAllowed) then
-            local errMsg = string.format(
-                'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
-                self.name, fd.name,
-                fd.scope, scopeAllowed,
-                LVM.stack.printStackTrace()
-            );
-            LVM.stack.popContext();
-            print(errMsg);
-            error('', 2);
-            return;
-        end
-
-        -- (Just in-case)
-        if value == LVM.constants.UNINITIALIZED_VALUE then
-            local errMsg = string.format('%s Cannot set %s as UNINITIALIZED_VALUE. (Internal Error)\n%s',
-                self.printHeader, field, LVM.stack.printStackTrace()
-            );
-            LVM.stack.popContext();
-            error(errMsg, 2);
-            return;
-        end
-
-        if fd.final then
-            local ste = LVM.stack.getContext();
-            if not ste then
-                LVM.stack.popContext();
-                errorf(2, '%s Attempt to assign final field %s outside of Class scope.', self.printHeader, field);
-                return;
-            end
-
-            local context = ste:getContext();
-            local class = ste:getCallingClass();
-            if class ~= self then
-                LVM.stack.popContext();
-                errorf(2, '%s Attempt to assign final field %s outside of Class scope.', self.printHeader, field);
-                return;
-            elseif context ~= 'constructor' then
-                LVM.stack.popContext();
-                errorf(2, '%s Attempt to assign final field %s outside of constructor scope.', self.printHeader, field);
-                return;
-            elseif fd.assignedOnce then
-                LVM.stack.popContext();
-                errorf(2, '%s Attempt to assign final field %s. (Already defined)', self.printHeader, field);
-                return;
-            end
-        end
-
-        -- Set the value.
-        __properties[field] = value;
-
-        LVM.stack.popContext();
-
-        -- Apply forward the value metrics.
-        fd.assignedOnce = true;
-        fd.value = value;
-    end
-
-    setmetatable(self, mt);
-
     self.lock = true;
     LVM.DEFINITIONS[self.path] = self;
 
@@ -532,6 +561,47 @@ function IAPI.finalize(self)
     end
 
     return self;
+end
+
+-- MARK: - Field
+
+--- Attempts to resolve a FieldDefinition in the ClassStructDefinition. If the field isn't declared for the class
+--- level, the super-class(es) are checked.
+---
+--- @param name string
+---
+--- @return FieldDefinition? fieldDefinition
+function IAPI.getField(self, name)
+    local fd = self:getDeclaredField(name);
+    if not fd and self.super then
+        return self.super:getField(name);
+    end
+    return fd;
+end
+
+--- Attempts to resolve a FieldDefinition in the ClassStructDefinition. If the field isn't defined in the class, nil
+--- is returned.
+---
+--- @param name string
+---
+--- @return FieldDefinition? fieldDefinition
+function IAPI.getDeclaredField(self, name)
+    return self.declaredFields[name];
+end
+
+function IAPI.getFields(self)
+    --- @type FieldDefinition[]
+    local array = {};
+
+    local next = self;
+    while next do
+        for _, fd in pairs(next.declaredFields) do
+            table.insert(array, fd);
+        end
+        next = next.super;
+    end
+
+    return array;
 end
 
 function API.newInterface(definition, enclosingStruct)
@@ -566,6 +636,7 @@ function API.newInterface(definition, enclosingStruct)
     id.outer = enclosingStruct;
     id.inner = {};
     id.isChild = enclosingStruct ~= nil;
+    id.children = {};
 
     -- * Fieldable Properties * --
     id.declaredFields = {};
@@ -584,7 +655,7 @@ function API.newInterface(definition, enclosingStruct)
 
     LVM.DEFINITIONS[id.path] = id;
 
-    setmetatable(id, { __tostring = function(self) return LVM.print.printInterface(self) end });
+    -- setmetatable(id, { __tostring = function(self) return LVM.print.printInterface(self) end });
 
     -- -- Make sure that no class is made twice.
     -- if LVM.forNameDef(id.path) then
@@ -617,7 +688,6 @@ function API.newInterface(definition, enclosingStruct)
     end
 
     function id:setOuterStruct(outer)
-
         if self.lock then
             errorf(2, '%s Cannot set enclosing struct. (definition is finalized)');
         end
@@ -643,6 +713,8 @@ function API.newInterface(definition, enclosingStruct)
 
     -- * Fieldable API * --
     id.addStaticField = IAPI.addStaticField;
+    id.getDeclaredField = IAPI.getDeclaredField;
+    id.getField = IAPI.getField;
 
     -- * Methodable API * --
     id.addMethod = IAPI.addMethod;
@@ -676,6 +748,8 @@ function API.newInterface(definition, enclosingStruct)
         --- @cast superStruct InterfaceStructDefinition
         return self == superStruct or self:isSuperInterface(superStruct);
     end
+
+    applyMetatable(id);
 
     return id;
 end

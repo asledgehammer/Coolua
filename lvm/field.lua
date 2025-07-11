@@ -67,9 +67,15 @@ function API.compileFieldAutoMethods(self)
 
                     fGet = fieldDef.get.body;
                 else
-                    fGet = function(ins)
-                        return ins[name];
-                    end;
+                    if fieldDef.static then
+                        fGet = function()
+                            return self[name];
+                        end
+                    else
+                        fGet = function(ins)
+                            return ins[name];
+                        end;
+                    end
                 end
             end
 
@@ -84,6 +90,14 @@ function API.compileFieldAutoMethods(self)
         end
 
         if tSet ~= 'nil' then
+
+            if fieldDef.final then
+                errorf(2, '%s Cannot add setter to final field: %s',
+                    self.printHeader,
+                    fieldDef.name
+                );
+            end
+
             local mSetDef = {
                 name = 'set' .. funcName,
                 scope = fieldDef.scope,
@@ -108,9 +122,15 @@ function API.compileFieldAutoMethods(self)
                     end
                     fSet = fieldDef.set.body;
                 else
-                    fSet = function(ins, value)
-                        ins[name] = value;
-                    end;
+                    if fieldDef.static then
+                        fSet = function()
+                            return self[name];
+                        end
+                    else
+                        fSet = function(ins)
+                            return ins[name];
+                        end;
+                    end
                 end
             end
 
