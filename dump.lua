@@ -161,9 +161,16 @@ function dump.table(t, cfg, metadata)
     local label = '';
     local s = '';
 
-    if cfg.label and t[cfg.labelField] then
-        label = '<' .. tostring(t[cfg.labelField]) .. '> ';
+    if cfg.label then
+        if t[cfg.labelField] then
+            label = '<' .. tostring(t[cfg.labelField]) .. '> ';
+        end
+        if t.__readonly__ then
+            label = label .. '(read-only) ';
+        end
     end
+
+
 
     -- Sort keys.
     local keys = {};
