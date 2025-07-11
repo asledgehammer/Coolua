@@ -506,8 +506,7 @@ local mt_class = {
 
         -- This isn't a flag-argument. Move to body definition.
         if argLen == 1 and type(args[1]) == 'table' and isArray(args[1]) then
-            mt_class_body(self, ...);
-            return;
+            return mt_class_body(self, ...);
         end
 
         for i = 1, #args do
@@ -600,8 +599,7 @@ local mt_interface = {
 
         -- This isn't a flag-argument. Move to body definition.
         if argLen == 1 and type(args[1]) == 'table' and isArray(args[1]) then
-            mt_interface_body(self, ...);
-            return;
+            return mt_interface_body(self, ...);
         end
 
         for i = 1, #args do
