@@ -10,7 +10,6 @@ local API = {
     __type__ = 'LVMModule',
 
     -- Field(s)
-    allowPackageStructModifications = false,
     bypassFieldSet = false,
     canSetAudit = false,
     ignorePushPopContext = false,

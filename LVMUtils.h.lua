@@ -10,9 +10,10 @@
 --- @class LVMUtils
 local API = {};
 
+--- @generic T: any
 --- @param t table
 --- 
---- @return Readonly
+--- @return T
 function API.readonly(t) end
 
 --- Tests if: 

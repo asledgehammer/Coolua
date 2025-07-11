@@ -79,6 +79,9 @@
 --- @field defaultSuperFuncInfo FunctionInfo
 local API = {};
 
+--- @param struct StructDefinition
+function API.createMiddleMethods(struct) end
+
 --- @param classDef StructDefinition
 --- @param name string
 --- @param methods table<string, MethodDefinition>

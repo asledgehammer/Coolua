@@ -187,7 +187,7 @@ function dump.table(t, cfg, metadata)
 
         if not cfg.ignoreEmptyTableArrays or not isArray(value) or #value ~= 0 then
             if not cfg.ignoreTableFunctions or type(value) ~= 'function' then
-                if not cfg.label or key ~= cfg.labelField then
+                if not cfg.label or (key ~= cfg.labelField and key ~= '__readonly__') then
                     local sKey = key;
                     if type(key) == 'number' then
                         sKey = '[' .. key .. ']'

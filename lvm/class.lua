@@ -2,19 +2,21 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local PrintPlus  = require 'PrintPlus';
-local dump       = require 'dump'
-local errorf     = PrintPlus.errorf;
-local debugf     = PrintPlus.debugf;
+local PrintPlus = require 'PrintPlus';
+local dump = require 'dump'
+local errorf = PrintPlus.errorf;
+local debugf = PrintPlus.debugf;
 
 local DebugUtils = require 'DebugUtils';
 
-local isArray    = require 'LVMUtils'.isArray;
+local LVMUtils = require 'LVMUtils';
+local isArray = LVMUtils.isArray;
+local readonly = LVMUtils.readonly;
 
 --- @type LVM
 local LVM;
 
-local API        = {
+local API = {
 
     __type__ = 'LVMModule',
 
@@ -24,6 +26,143 @@ local API        = {
         LVM.moduleCount = LVM.moduleCount + 1;
     end
 };
+
+local function applyStructMetatable(cd)
+    local mt = getmetatable(cd) or {};
+    local __properties = {};
+    for k, v in pairs(cd) do __properties[k] = v end
+    -- mt.__metatable = false;
+    mt.__index = __properties;
+    mt.__tostring = function() return LVM.print.printClass(cd) end
+
+    mt.__index = __properties;
+
+    mt.__newindex = function(_, field, value)
+        -- TODO: Visibility scope analysis.
+        -- TODO: Type-checking.
+
+        if field == 'super' or field == '__super__' then
+            errorf(2, '%s Cannot set super. (Static context)', cd.printHeader);
+            return;
+        end
+
+        -- Post-finalize assignment.
+        if field == 'classObj' and not __properties['classObj'] then
+            __properties['classObj'] = value;
+            return;
+        end
+
+        local fd = cd:getField(field);
+
+        -- Internal bypass for struct construction.
+        if LVM.isInside() then
+            -- Set the value.
+            __properties[field] = value;
+
+            -- Apply forward the value metrics. (If defined)
+            if fd then
+                fd.assignedOnce = true;
+                fd.value = value;
+            end
+
+            return;
+        end
+
+        -- Inner class invocation.
+        if cd.inner[field] then
+            if LVM.isOutside() then
+                errorf(2, 'Cannot set inner class explicitly. Use the API.');
+            end
+            __properties[field] = value;
+            return;
+        end
+
+        if not fd then
+            errorf(2, 'FieldNotFoundException: Cannot set new field or method: %s.%s',
+                cd.path, field
+            );
+            return;
+        elseif not fd.static then
+            errorf(2, 'StaticFieldException: Assigning non-static field in static context: %s.%s',
+                cd.path, field
+            );
+            return;
+        end
+
+        local level, relPath = LVM.scope.getRelativePath();
+
+        LVM.stack.pushContext({
+            class = cd,
+            element = fd,
+            context = 'field-set',
+            line = DebugUtils.getCurrentLine(level),
+            path = DebugUtils.getPath(level)
+        });
+
+        local callInfo = DebugUtils.getCallInfo(level, nil, true);
+        callInfo.path = relPath;
+        local scopeAllowed = LVM.scope.getScopeForCall(fd.class, callInfo);
+
+        if not LVM.scope.canAccessScope(fd.scope, scopeAllowed) then
+            local errMsg = string.format(
+                'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
+                cd.name, fd.name,
+                fd.scope, scopeAllowed,
+                LVM.stack.printStackTrace()
+            );
+            LVM.stack.popContext();
+            print(errMsg);
+            error('', 2);
+            return;
+        end
+
+        -- (Just in-case)
+        if value == LVM.constants.UNINITIALIZED_VALUE then
+            local errMsg = string.format('%s Cannot set %s as UNINITIALIZED_VALUE. (Internal Error)\n%s',
+                cd.printHeader, field, LVM.stack.printStackTrace()
+            );
+            LVM.stack.popContext();
+            error(errMsg, 2);
+            return;
+        end
+
+        if fd.final then
+            local ste = LVM.stack.getContext();
+            if not ste then
+                LVM.stack.popContext();
+                errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
+                return;
+            end
+
+            local context = ste:getContext();
+            local class = ste:getCallingClass();
+            if class ~= cd then
+                LVM.stack.popContext();
+                errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
+                return;
+            elseif context ~= 'constructor' then
+                LVM.stack.popContext();
+                errorf(2, '%s Attempt to assign final field %s outside of constructor scope.', cd.printHeader, field);
+                return;
+            elseif fd.assignedOnce then
+                LVM.stack.popContext();
+                errorf(2, '%s Attempt to assign final field %s. (Already defined)', cd.printHeader, field);
+                return;
+            end
+        end
+
+        -- Set the value.
+        __properties[field] = value;
+
+        LVM.stack.popContext();
+
+        -- Apply forward the value metrics.
+        fd.assignedOnce = true;
+        fd.value = value;
+    end
+
+    setmetatable(cd, mt);
+end
 
 --- @cast API LVMClassModule
 
@@ -104,12 +243,6 @@ function API.newClass(definition, outer)
         end
     end
 
-    -- Make sure that no class is made twice.
-    -- if LVM.DEFINITIONS(path) then
-    -- errorf(2, 'Struct is already defined: %s', path);
-    -- return ; -- NOTE: Useless return. Makes sure the method doesn't say it'll define something as nil.
-    -- end
-
     -- Here we check to see if anything has referenced the class prior to initialization. We graft to that reference.
     local cd = LVM.DEFINITIONS[path];
 
@@ -175,8 +308,6 @@ function API.newClass(definition, outer)
         end
     end
 
-    LVM.DEFINITIONS[cd.path] = cd;
-
     if outer then
         outer.inner[cd.name] = cd;
         if cd.static then
@@ -185,9 +316,9 @@ function API.newClass(definition, outer)
     end
 
     --- Set the class to be accessable from a global package reference.
-    LVM.flags.allowPackageStructModifications = true;
+    LVM.stepIn();
     LVM.package.addToPackageStruct(cd);
-    LVM.flags.allowPackageStructModifications = false;
+    LVM.stepOut();
 
     --- @cast cd ClassStructDefinition
 
@@ -773,179 +904,24 @@ function API.newClass(definition, outer)
         end
 
         self.__supertable__ = LVM.super.createSuperTable(cd);
+        LVM.executable.createMiddleMethods(self);
+        applyStructMetatable(self);
 
-        self.__middleMethods = {};
-
-        -- Insert boilerplate method invoker function.
-        for mName, methodCluster in pairs(self.methods) do
-            for _, md in pairs(methodCluster) do
-                if md.override then
-                    -- RULE: Cannot override method if super-method is final.
-                    if md.super.final then
-                        local sMethod = LVM.print.printMethod(md);
-                        errorf(2, '%s Method cannot override final method in super-class: %s',
-                            errHeader,
-                            md.super.class.name,
-                            sMethod
-                        );
-                        return cd;
-                        -- RULE: Cannot reduce scope of overrided super-method.
-                    elseif not LVM.scope.canAccessScope(md.scope, md.super.scope) then
-                        local sMethod = LVM.print.printMethod(md);
-                        errorf(2, '%s Method cannot reduce scope of super-class: %s (super-scope = %s, class-scope = %s)',
-                            errHeader,
-                            sMethod, md.super.scope, md.scope
-                        );
-                        return cd;
-                        -- RULE: override Methods must either be consistently static (or not) with their super-method(s).
-                    elseif md.static ~= md.super.static then
-                        local sMethod = LVM.print.printMethod(md);
-                        errorf(2,
-                            '%s All method(s) with identical signatures must either be static or not: %s (super.static = %s, class.static = %s)',
-                            errHeader,
-                            sMethod, tostring(md.super.static), tostring(md.static)
-                        );
-                        return cd;
-                    end
-                end
-            end
-            self.__middleMethods[mName] = LVM.executable.createMiddleMethod(cd, mName, methodCluster);
+        for k, v in pairs(self.declaredFields) do
+            --- @params T: FieldDefinition
+            self.declaredFields[k] = readonly(v);
         end
-
-        local mt = getmetatable(cd) or {};
-        local __properties = {};
-        for k, v in pairs(cd) do __properties[k] = v end
-        -- mt.__metatable = false;
-        mt.__index = __properties;
-        mt.__tostring = function() return LVM.print.printClass(cd) end
-
-        mt.__index = __properties;
-
-        mt.__newindex = function(_, field, value)
-            -- TODO: Visibility scope analysis.
-            -- TODO: Type-checking.
-
-            if field == 'super' or field == '__super__' then
-                errorf(2, '%s Cannot set super. (Static context)', cd.printHeader);
-                return;
+        for _, v in pairs(self.declaredMethods) do
+            for sig, method in pairs(v) do
+                --- @params T: MethodDefinition
+                v[sig] = readonly(method);
             end
-
-            -- Post-finalize assignment.
-            if field == 'classObj' and not __properties['classObj'] then
-                __properties['classObj'] = value;
-                return;
-            end
-
-            local fd = cd:getField(field);
-
-            -- Internal bypass for struct construction.
-            if LVM.isInside() then
-                -- Set the value.
-                __properties[field] = value;
-
-                -- Apply forward the value metrics. (If defined)
-                if fd then
-                    fd.assignedOnce = true;
-                    fd.value = value;
-                end
-
-                return;
-            end
-
-            -- Inner class invocation.
-            if cd.inner[field] then
-                if LVM.isOutside() then
-                    errorf(2, 'Cannot set inner class explicitly. Use the API.');
-                end
-                __properties[field] = value;
-                return;
-            end
-
-            if not fd then
-                errorf(2, 'FieldNotFoundException: Cannot set new field or method: %s.%s',
-                    cd.path, field
-                );
-                return;
-            elseif not fd.static then
-                errorf(2, 'StaticFieldException: Assigning non-static field in static context: %s.%s',
-                    cd.path, field
-                );
-                return;
-            end
-
-            local level, relPath = LVM.scope.getRelativePath();
-
-            LVM.stack.pushContext({
-                class = cd,
-                element = fd,
-                context = 'field-set',
-                line = DebugUtils.getCurrentLine(level),
-                path = DebugUtils.getPath(level)
-            });
-
-            local callInfo = DebugUtils.getCallInfo(level, nil, true);
-            callInfo.path = relPath;
-            local scopeAllowed = LVM.scope.getScopeForCall(fd.class, callInfo);
-
-            if not LVM.scope.canAccessScope(fd.scope, scopeAllowed) then
-                local errMsg = string.format(
-                    'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
-                    cd.name, fd.name,
-                    fd.scope, scopeAllowed,
-                    LVM.stack.printStackTrace()
-                );
-                LVM.stack.popContext();
-                print(errMsg);
-                error('', 2);
-                return;
-            end
-
-            -- (Just in-case)
-            if value == LVM.constants.UNINITIALIZED_VALUE then
-                local errMsg = string.format('%s Cannot set %s as UNINITIALIZED_VALUE. (Internal Error)\n%s',
-                    cd.printHeader, field, LVM.stack.printStackTrace()
-                );
-                LVM.stack.popContext();
-                error(errMsg, 2);
-                return;
-            end
-
-            if fd.final then
-                local ste = LVM.stack.getContext();
-                if not ste then
-                    LVM.stack.popContext();
-                    errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
-                    return;
-                end
-
-                local context = ste:getContext();
-                local class = ste:getCallingClass();
-                if class ~= cd then
-                    LVM.stack.popContext();
-                    errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
-                    return;
-                elseif context ~= 'constructor' then
-                    LVM.stack.popContext();
-                    errorf(2, '%s Attempt to assign final field %s outside of constructor scope.', cd.printHeader, field);
-                    return;
-                elseif fd.assignedOnce then
-                    LVM.stack.popContext();
-                    errorf(2, '%s Attempt to assign final field %s. (Already defined)', cd.printHeader, field);
-                    return;
-                end
-            end
-
-            -- Set the value.
-            __properties[field] = value;
-
-            LVM.stack.popContext();
-
-            -- Apply forward the value metrics.
-            fd.assignedOnce = true;
-            fd.value = value;
         end
-
-        setmetatable(cd, mt);
+        for i = 1, #self.declaredConstructors do
+            local next = self.declaredConstructors[i];
+            --- @params T: ConstructorDefinition
+            self.declaredConstructors[i] = readonly(next);
+        end
 
         self.__readonly__ = true;
         LVM.DEFINITIONS[cd.path] = cd;

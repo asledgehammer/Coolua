@@ -184,6 +184,47 @@ function API.resolveMethodDeep(methods, args)
     return md;
 end
 
+--- @param struct StructDefinition
+function API.createMiddleMethods(struct)
+    struct.__middleMethods = {};
+
+    -- Insert boilerplate method invoker function.
+    for mName, methodCluster in pairs(struct.methods) do
+        for _, md in pairs(methodCluster) do
+            if md.override then
+                -- RULE: Cannot override method if super-method is final.
+                if md.super.final then
+                    local sMethod = LVM.print.printMethod(md);
+                    errorf(2, '%s Method cannot override final method in super-class: %s',
+                        struct.printHeader,
+                        md.super.class.name,
+                        sMethod
+                    );
+                    return struct;
+                    -- RULE: Cannot reduce scope of overrided super-method.
+                elseif not LVM.scope.canAccessScope(md.scope, md.super.scope) then
+                    local sMethod = LVM.print.printMethod(md);
+                    errorf(2, '%s Method cannot reduce scope of super-class: %s (super-scope = %s, struct-scope = %s)',
+                        struct.printHeader,
+                        sMethod, md.super.scope, md.scope
+                    );
+                    return struct;
+                    -- RULE: override Methods must either be consistently static (or not) with their super-method(s).
+                elseif md.static ~= md.super.static then
+                    local sMethod = LVM.print.printMethod(md);
+                    errorf(2,
+                        '%s All method(s) with identical signatures must either be static or not: %s (super.static = %s, struct.static = %s)',
+                        struct.printHeader,
+                        sMethod, tostring(md.super.static), tostring(md.static)
+                    );
+                    return struct;
+                end
+            end
+        end
+        struct.__middleMethods[mName] = LVM.executable.createMiddleMethod(struct, mName, methodCluster);
+    end
+end
+
 function API.createMiddleMethod(cd, name, methods)
 
     --- @param o ClassInstance
@@ -414,8 +455,11 @@ function API.combineAllMethods(def, name, comb)
             -- end
             -- If signatures match, an override is detected.
             if combCluster[decSig] then
+
+                LVM.stepIn();
                 decMethod.override = true;
                 decMethod.super = combCluster[decSig];
+                LVM.stepOut();
 
                 debugf(LVM.debug.method, '[METHOD] :: %s OVERRIDING class method %s in hierarchy: %s',
                     def.printHeader,

@@ -3,15 +3,18 @@
 ---]]
 
 local DebugUtils = require 'DebugUtils';
-local dump       = require 'dump'
+local dump = require 'dump'
 
-local PrintPlus  = require 'PrintPlus';
-local errorf     = PrintPlus.errorf;
+local PrintPlus = require 'PrintPlus';
+local errorf = PrintPlus.errorf;
+
+local LVMUtils = require 'LVMUtils';
+local readonly = LVMUtils.readonly;
 
 --- @type LVM
 local LVM;
 
-local API        = {
+local API = {
 
     __type__ = 'LVMModule',
 
@@ -545,6 +548,17 @@ function IAPI.finalize(self)
     end
 
 
+    for k, v in pairs(self.declaredFields) do
+        --- @params T: FieldDefinition
+        self.declaredFields[k] = readonly(v);
+    end
+    for _, v in pairs(self.declaredMethods) do
+        for sig, method in pairs(v) do
+            --- @params T: MethodDefinition
+            v[sig] = readonly(method);
+        end
+    end
+
     self.__readonly__ = true;
     LVM.DEFINITIONS[self.path] = self;
 
@@ -655,14 +669,6 @@ function API.newInterface(definition, enclosingStruct)
 
     LVM.DEFINITIONS[id.path] = id;
 
-    -- setmetatable(id, { __tostring = function(self) return LVM.print.printInterface(self) end });
-
-    -- -- Make sure that no class is made twice.
-    -- if LVM.forNameDef(id.path) then
-    --     errorf(2, 'Struct is already defined: %s', id.path);
-    --     return id; -- NOTE: Useless return. Makes sure the method doesn't say it'll define something as nil.
-    -- end
-
     -- Compile the generic parameters for the class.
     id.generics = LVM.generic.compileGenericTypesDefinition(id, definition.generics);
 
@@ -672,10 +678,9 @@ function API.newInterface(definition, enclosingStruct)
     end
 
     --- Set the class to be accessable from a global package reference.
-    LVM.flags.allowPackageStructModifications = true;
+    LVM.stepIn();
     LVM.package.addToPackageStruct(id);
-    LVM.flags.allowPackageStructModifications = false;
-
+    LVM.stepOut();
 
     -- MARK: - inner
 
