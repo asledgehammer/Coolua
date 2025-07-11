@@ -15,7 +15,11 @@ local StackTraceElementDefinition = {};
 function StackTraceElementDefinition.new(path, line, class, context, element) end
 
 --- @class StackTraceElement: Object
----
+--- @field path string
+--- @field line integer
+--- @field class any
+--- @field context string
+--- @field element FieldDefinition|ConstructorDefinition|MethodDefinition
 local StackTraceElement = {};
 
 --- @return string

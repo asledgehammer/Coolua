@@ -13,35 +13,39 @@ StackTraceElement:addField({
     scope = 'private',
     final = true,
     type = 'string',
-    name = 'path'
+    name = 'path',
+    get = {}
 });
 
 StackTraceElement:addField({
     scope = 'private',
     final = true,
     type = 'number',
-    name = 'line'
+    name = 'line',
+    get = {}
 });
 
 StackTraceElement:addField({
     scope = 'private',
     final = true,
     type = 'any',
-    name = 'class'
+    name = 'class',
 });
 
 StackTraceElement:addField({
     scope = 'private',
     final = true,
     type = 'string',
-    name = 'context'
+    name = 'context',
+    get = {}
 });
 
 StackTraceElement:addField({
     scope = 'private',
     final = true,
     type = 'any',
-    name = 'element'
+    name = 'element',
+    get = {}
 });
 
 StackTraceElement:addConstructor({
@@ -131,28 +135,6 @@ StackTraceElement:addMethod({
             tostring(line)
         );
     end
-})
-
-StackTraceElement:addMethod({
-    scope = 'public',
-    final = true,
-    name = 'getPath',
-    type = 'string',
-
-    body = function(self)
-        return self.path;
-    end
-});
-
-StackTraceElement:addMethod({
-    scope = 'public',
-    final = true,
-    name = 'getLine',
-    type = 'number',
-
-    body = function(self)
-        return self.line;
-    end
 });
 
 StackTraceElement:addMethod({
@@ -163,29 +145,6 @@ StackTraceElement:addMethod({
 
     body = function(self)
         return self.class;
-    end
-});
-
-StackTraceElement:addMethod({
-    scope = 'public',
-    final = true,
-    name = 'getContext',
-    type = 'string',
-
-    body = function(self)
-        return self.context;
-    end
-});
-
-StackTraceElement:addMethod({
-    scope = 'public',
-    final = true,
-    name = 'getElement',
-    parameters = {},
-    type = 'any',
-
-    body = function(self)
-        return self.element;
     end
 });
 
