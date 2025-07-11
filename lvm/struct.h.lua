@@ -47,6 +47,8 @@
 
 --- @class StructDefinition: Methodable
 --- @field __type__ string The internal type. Used for evaluation for several components inside the LVM.
+--- @field __readonly__ boolean
+--- @field __supertable__ SuperTable
 --- @field path string The file/package path to the definition.
 --- @field pkg string
 --- @field name string
@@ -66,6 +68,11 @@ function StructDefinition:setOuterStruct(struct) end
 ---
 --- @return boolean
 function StructDefinition:isAssignableFromType(struct) end
+
+function StructDefinition:finalize() end
+
+--- @return boolean
+function StructDefinition:isFinalized() end
 
 --- @class HierarchicalStructDefinition: StructDefinition, Hierarchical
 

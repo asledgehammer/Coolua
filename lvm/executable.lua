@@ -80,6 +80,7 @@ function API.resolveMethod(struct, name, methods, args)
     );
 
     -- Attempt to resolve the method using exact method signature checks.
+    --- @type MethodDefinition?
     local md = methods[callSignature];
     if md then
         debugf(LVM.debug.methodCache, '[METHOD_CACHE] :: %s Caching exact method %s call signature: %s',
@@ -446,13 +447,6 @@ function API.combineAllMethods(def, name, comb)
     if decCluster then
         -- Go through each declaration and try to find a super-class one.
         for decSig, decMethod in pairs(decCluster) do
-            -- if LVM.debug.method then
-            --     print('check sigs: ', decSig);
-            --     print('sigs available: ');
-            --     for key, _ in pairs(combCluster) do
-            --         print('\t' .. key);
-            --     end
-            -- end
             -- If signatures match, an override is detected.
             if combCluster[decSig] then
 
