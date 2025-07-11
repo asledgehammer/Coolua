@@ -14,6 +14,7 @@ local dump = {};
 --- @field labelField string?
 --- @field pretty boolean?
 --- @field ignoreTableFunctions boolean?
+--- @field ignoreEmptyTableArrays boolean?
 
 --- @class (exact) DumpMetadata
 --- @field level number

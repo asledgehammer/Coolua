@@ -10,6 +10,7 @@ local DEFAULT_LABEL = false;
 local DEFAULT_LABEL_FIELD = '__type__';
 local DEFAULT_PRETTY = false;
 local DEFAULT_IGNORE_FUNCTIONS = false;
+local DEFAULT_IGNORE_EMPTY_TABLE_ARRAYS = false;
 
 --- The default configuration for all dumps.
 local DEFAULT_CONFIGURATION = {
@@ -18,7 +19,8 @@ local DEFAULT_CONFIGURATION = {
     maxLevel = DEFAULT_MAX_LEVEL,
     label = DEFAULT_LABEL,
     labelField = DEFAULT_LABEL_FIELD,
-    ignoreTableFunctions = DEFAULT_IGNORE_FUNCTIONS
+    ignoreTableFunctions = DEFAULT_IGNORE_FUNCTIONS,
+    ignoreEmptyTableArrays = DEFAULT_IGNORE_EMPTY_TABLE_ARRAYS,
 };
 
 --- @param t table
@@ -59,6 +61,7 @@ local function adaptConfiguration(cfg)
     if not cfg.labelField then cfg.labelField = DEFAULT_LABEL_FIELD end
     if not cfg.pretty then cfg.pretty = DEFAULT_PRETTY end
     if not cfg.ignoreTableFunctions then cfg.ignoreTableFunctions = DEFAULT_IGNORE_FUNCTIONS end
+    if not cfg.ignoreEmptyTableArrays then cfg.ignoreEmptyTableArrays = DEFAULT_IGNORE_EMPTY_TABLE_ARRAYS end
 
     return cfg;
 end
@@ -175,19 +178,21 @@ function dump.table(t, cfg, metadata)
         local key = keys[i];
         local value = t[key];
 
-        if not cfg.ignoreTableFunctions or type(value) ~= 'function' then
-            if not cfg.label or key ~= cfg.labelField then
-                local sKey = key;
-                if type(key) == 'number' then
-                    sKey = '[' .. key .. ']'
-                end
-                metadata.level = metadata.level + 1;
-                local e = string.format('%s = %s', tostring(sKey), dump.any(value, cfg, metadata));
-                metadata.level = metadata.level - 1;
-                if s == '' then
-                    s = indent1 .. e;
-                else
-                    s = s .. ',' .. newline .. indent1 .. e;
+        if not cfg.ignoreEmptyTableArrays or not isArray(value) or #value ~= 0 then
+            if not cfg.ignoreTableFunctions or type(value) ~= 'function' then
+                if not cfg.label or key ~= cfg.labelField then
+                    local sKey = key;
+                    if type(key) == 'number' then
+                        sKey = '[' .. key .. ']'
+                    end
+                    metadata.level = metadata.level + 1;
+                    local e = string.format('%s = %s', tostring(sKey), dump.any(value, cfg, metadata));
+                    metadata.level = metadata.level - 1;
+                    if s == '' then
+                        s = indent1 .. e;
+                    else
+                        s = s .. ',' .. newline .. indent1 .. e;
+                    end
                 end
             end
         end
