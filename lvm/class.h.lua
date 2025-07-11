@@ -152,8 +152,12 @@ function ClassStructDefinition:getDeclaredMethods(name) end
 --- @return MethodDefinition|nil methodDefinition
 function ClassStructDefinition:getDeclaredMethod(name, args) end
 
---- @returns ClassStructDefinition
+
+--- @return ClassStructDefinition
 function ClassStructDefinition:finalize() end
+
+--- @return boolean
+function ClassStructDefinition:isFinalized() end
 
 --- @param class ClassStructDefinition
 ---

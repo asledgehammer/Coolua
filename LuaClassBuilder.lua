@@ -87,6 +87,21 @@ buildClass = function(self, enclosingStruct)
         if self.instanced.fields then
             for name, field in pairs(self.instanced.fields) do
                 buildFlags(field, field);
+
+                -- Make sure no setters are defined.
+                if field.final and field.set then
+                    errorf(2, 'Cannot define a setter for field: %s (Field is final)',
+                        name
+                    );
+                end
+
+                -- Static definition outside of static block check.
+                if field.static then
+                    errorf(2, 'Cannot define static field outside of static block: %s',
+                        name
+                    );
+                end
+
                 cls:addField(field);
             end
         end
@@ -95,6 +110,14 @@ buildClass = function(self, enclosingStruct)
         if self.instanced.methods then
             for name, method in pairs(self.instanced.methods) do
                 buildFlags(method, method);
+
+                -- Static definition outside of static block check.
+                if method.static then
+                    errorf(2, 'Cannot define static method outside of static block: %s',
+                        name
+                    );
+                end
+
                 if method.abstract then
                     cls:addAbstractMethod(method);
                 else
@@ -133,6 +156,14 @@ buildClass = function(self, enclosingStruct)
         if self.static.fields then
             for name, field in pairs(self.static.fields) do
                 buildFlags(field, field);
+
+                -- Make sure no setters are defined.
+                if field.final and field.set then
+                    errorf(2, 'Cannot define a setter for field: %s (Field is final)',
+                        name
+                    );
+                end
+
                 field.static = true;
                 cls:addStaticField(field);
             end
@@ -225,6 +256,11 @@ local function buildInterface(self, outerStruct)
         -- Build static field(s).
         for name, field in pairs(self.static.fields) do
             buildFlags(field, field, public);
+
+            -- Make sure no setters are defined.
+            if field.set then
+                errorf(2, 'Cannot use setters for interface fields. (All fields are final)');
+            end
 
             -- Check flags.
             if field.scope ~= 'public' then

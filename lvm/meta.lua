@@ -54,7 +54,7 @@ function API.createInstanceMetatable(cd, o)
     fields.__class__ = cd;
 
     mt.__index = function(_, field)
-        if not cd.lock then
+        if not cd.__readonly__ then
             cd:finalize();
         end
 
@@ -122,7 +122,7 @@ function API.createInstanceMetatable(cd, o)
         -- TODO: Visibility scope analysis.
         -- TODO: Type-checking.
 
-        if not cd.lock then
+        if not cd.__readonly__ then
             cd:finalize();
         end
 

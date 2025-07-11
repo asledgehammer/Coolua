@@ -34,7 +34,7 @@ local function applyMetatable(self)
 
     mt.__index = function(_, field)
         -- Interfaces cannot be instantiated so access to anything requires finalization.
-        if not finalizing and not self.lock then
+        if not finalizing and not self.__readonly__ then
             finalizing = true;
             self:finalize();
             finalizing = false;
@@ -47,13 +47,13 @@ local function applyMetatable(self)
         -- TODO: Visibility scope analysis.
         -- TODO: Type-checking.
 
-        if not self.lock then
+        if not self.__readonly__ then
             __properties[field] = value;
             return;
         end
 
         -- Interfaces cannot be instantiated so access to anything requires finalization.
-        if not finalizing and not self.lock then
+        if not finalizing and not self.__readonly__ then
             finalizing = true;
             self:finalize();
             finalizing = false;
@@ -478,9 +478,9 @@ function IAPI.finalize(self)
 
     local errHeader = string.format('Interface(%s):finalize():', self.path);
 
-    if self.lock then
+    if self.__readonly__ then
         errorf(2, '%s Cannot finalize. (Interface is already finalized!)', errHeader);
-    elseif self.super and (self.super.__type__ == 'ClassStructDefinition' and not self.super.lock) then
+    elseif self.super and (self.super.__type__ == 'ClassStructDefinition' and not self.super.__readonly__) then
         errorf(2, '%s Cannot finalize. (Super-Interface %s is not finalized!)', errHeader, self.path);
     end
 
@@ -493,7 +493,6 @@ function IAPI.finalize(self)
 
     -- Change add methods.
     self.addMethod = function() errorf(2, '%s Cannot add methods. (Interface is final!)', errHeader) end
-    self.addField = function() errorf(2, '%s Cannot add fields. (Interface is final!)', errHeader) end
 
     -- Set default value(s) for static fields.
     for name, fd in pairs(self.declaredFields) do
@@ -545,7 +544,8 @@ function IAPI.finalize(self)
         self[name] = self.__middleMethods[name];
     end
 
-    self.lock = true;
+
+    self.__readonly__ = true;
     LVM.DEFINITIONS[self.path] = self;
 
     -- Set class as child.
@@ -649,7 +649,7 @@ function API.newInterface(definition, enclosingStruct)
     -- * Debug Properties * --
     id.printHeader = string.format('interface (%s):', path);
 
-    id.lock = false;
+    id.__readonly__ = false;
 
     --- @cast id InterfaceStructDefinition
 
@@ -688,7 +688,7 @@ function API.newInterface(definition, enclosingStruct)
     end
 
     function id:setOuterStruct(outer)
-        if self.lock then
+        if self.__readonly__ then
             errorf(2, '%s Cannot set enclosing struct. (definition is finalized)');
         end
 
@@ -747,6 +747,10 @@ function API.newInterface(definition, enclosingStruct)
 
         --- @cast superStruct InterfaceStructDefinition
         return self == superStruct or self:isSuperInterface(superStruct);
+    end
+
+    function id:isFinalized()
+        return self.__readonly__;
     end
 
     applyMetatable(id);

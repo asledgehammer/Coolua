@@ -79,7 +79,7 @@ function API.newClass(definition, outer)
     if definition.implements then
         if type(definition.implements) == 'table' then
             if definition.implements.__type__ == 'InterfaceStructDefinition' then
-                if not definition.implements.lock then
+                if not definition.implements.__readonly__ then
                     definition.implements:finalize();
                 end
                 table.insert(interfaces, definition.implements);
@@ -94,7 +94,7 @@ function API.newClass(definition, outer)
                         errorf(2, '%s Implements argument #%i is not a Interface.');
                     end
 
-                    if not interface.lock then
+                    if not interface.__readonly__ then
                         interface:finalize();
                     end
 
@@ -161,7 +161,7 @@ function API.newClass(definition, outer)
     cd.declaredFields = {};
     cd.declaredMethods = {};
     cd.declaredConstructors = {};
-    cd.lock = false;
+    cd.__readonly__ = false;
 
     -- Compile the generic parameters for the class.
     cd.generics = LVM.generic.compileGenericTypesDefinition(cd, definition.generics);
@@ -210,7 +210,7 @@ function API.newClass(definition, outer)
     end
 
     function cd:setOuterStruct(outer)
-        if self.lock then
+        if self.__readonly__ then
             errorf(2, '%s Cannot set enclosing struct. (definition is finalized)');
         end
 
@@ -241,7 +241,7 @@ function API.newClass(definition, outer)
     function cd.new(...)
         local errHeader = string.format('Class(%s):new():', cd.name);
 
-        if not cd.lock then
+        if not cd.__readonly__ then
             cd:finalize();
             -- errorf(2, '%s Cannot invoke constructor. (ClassStructDefinition is not finalized!)', errHeader);
         end
@@ -722,12 +722,12 @@ function API.newClass(definition, outer)
     function cd:finalize()
         local errHeader = string.format('Class(%s):finalize():', cd.path);
 
-        if self.lock then
+        if self.__readonly__ then
             errorf(2, '%s Cannot finalize. (Class is already finalized!)', errHeader);
         end
 
         -- Finalize superclass.
-        if cd.super and not cd.super.lock then
+        if cd.super and not cd.super.__readonly__ then
             cd.super:finalize();
         end
 
@@ -947,7 +947,7 @@ function API.newClass(definition, outer)
 
         setmetatable(cd, mt);
 
-        self.lock = true;
+        self.__readonly__ = true;
         LVM.DEFINITIONS[cd.path] = cd;
 
         -- Set class as child.
@@ -1031,6 +1031,10 @@ function API.newClass(definition, outer)
         end
 
         return false;
+    end
+
+    function cd:isFinalized()
+        return self.__readonly__;
     end
 
     return cd;

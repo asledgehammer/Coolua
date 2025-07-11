@@ -189,7 +189,7 @@ function API.createMiddleMethod(cd, name, methods)
     --- @param o ClassInstance
     return function(o, ...)
 
-        if not cd.lock then
+        if not cd.__readonly__ then
             cd:finalize();
         end
 

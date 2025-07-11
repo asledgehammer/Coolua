@@ -104,13 +104,21 @@ function InterfaceStructDefinition:getDeclaredMethods(name) end
 --- @return MethodDefinition|nil methodDefinition
 function InterfaceStructDefinition:getDeclaredMethod(name, args) end
 
---- @returns ClassStructDefinition
+--- @return InterfaceStructDefinition
 function InterfaceStructDefinition:finalize() end
 
---- @param superInterface InterfaceStructDefinition
+--- @return boolean
+function InterfaceStructDefinition:isFinalized() end
+
+--- @param interface InterfaceStructDefinition
 ---
 --- @return boolean
-function InterfaceStructDefinition:isSuperInterface(superInterface) end
+function InterfaceStructDefinition:isSuperInterface(interface) end
+
+--- @param interface InterfaceStructDefinition
+---
+--- @return boolean
+function InterfaceStructDefinition:isSubInterface(interface) end
 
 --- @param clsDef StructDefinition
 function InterfaceStructDefinition:addStaticStruct(clsDef) end
