@@ -112,12 +112,7 @@ function dump.array(a, cfg, metadata)
     end
     local len = #a;
 
-    local label = '';
-    if cfg.label then
-        label = string.format('<Array[%i]> ', len);
-    end
-
-    if len == 0 then return string.format('%s[]', label) end
+    if len == 0 then return '[]' end
 
     local s = '';
     for i = 1, #a do
@@ -137,7 +132,7 @@ function dump.array(a, cfg, metadata)
         end
     end
 
-    return string.format('%s[' .. newline .. '%s' .. newline .. indent0 .. ']', label, s);
+    return '[' .. newline .. s .. newline .. indent0 .. ']';
 end
 
 function dump.table(t, cfg, metadata)
