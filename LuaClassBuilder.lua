@@ -677,16 +677,13 @@ local mt_field_body = function(self, ...)
             if tv2 == 'table' then
                 if v2.__type__ then
                     if v2.__type__ == 'GetterTable' then
+                        print('field.get = ', dump(v2));
                         self.get = {};
-                        if v2.flags then
-                            buildFlags(v2, self.get);
-                        end
+                        buildFlags(v2, self.get);
                         self.get.body = v2.body;
                     elseif v2.__type__ == 'SetterTable' then
                         self.set = {};
-                        if v2.flags then
-                            buildFlags(v2, self.set);
-                        end
+                        buildFlags(v2, self.set);
                         self.set.body = v2.body;
                     elseif v2.__type__ == 'PropertiesTable' then
                         -- TODO: Undo lazy-passthrough of types without audit. -Jab, 7/6/2025
@@ -719,6 +716,7 @@ local mt_field_body = function(self, ...)
             end
         end
     end
+    print(dump(self, { pretty = true, label = true }));
     return self;
 end;
 
@@ -759,7 +757,10 @@ end
 local mt_getset = {
     __call = function(self, ...)
         local args = { ... };
-        for i = 1, #args do
+        local argLen = #args;
+        PrintPlus.printf('mt_getset(%s)', dump(args));
+
+        for i = 1, argLen do
             local t = args[i];
             if type(t) ~= 'table' or not isArray(t) then
                 error('getter/setter body is not a table-array', 2);
@@ -772,7 +773,8 @@ local mt_getset = {
             -- Validate the function argument.
             if self.body then
                 error('Cannot redefine body function for getter/setter.', 2);
-            elseif type(func) ~= 'function' then
+            elseif type(func) ~= 'function' and type(func) ~= 'nil' then
+                print(dump(args));
                 errorf(2, 'Body argument for getter/setter is not a function. {type = %s, value = %s}',
                     type(func), tostring(func)
                 );
@@ -788,11 +790,49 @@ local mt_getset = {
     __tostring = mt_tostring
 };
 
+local mt_getset_flags = {
+    __call = function(self, ...)
+        local args = { ... };
+        local argLen = #args;
+
+        PrintPlus.printf('mt_getset_flags(%s)', dump(args));
+
+        if argLen == 1 and isArray(args[1]) then
+            return mt_getset.__call(self, ...);
+        end
+
+        self.flags = args;
+        return setmetatable(self, mt_getset);
+    end,
+    __tostring = mt_tostring
+};
+
 --- @param ... string|table Flags
 local function get(...)
+    local args = { ... };
+    local argLen = #args;
+
+    PrintPlus.printf('get(%s)', dump(args));
+
+    if argLen == 1 and type(args[1]) == 'string' then
+        local arg = args[1];
+        if arg ~= 'public' and
+            arg ~= 'package' and
+            arg ~= 'protected' and
+            arg ~= 'private' and
+            arg ~= 'final'
+        then
+            return setmetatable({
+                __type__ = 'GetterTable',
+                flags = {},
+                name = args[1],
+            }, mt_getset_flags);
+        end
+    end
+
     return setmetatable({
         __type__ = 'GetterTable',
-        flags = { ... },
+        flags = { ... }
     }, mt_getset);
 end
 

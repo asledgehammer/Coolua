@@ -227,10 +227,8 @@ function API.createMiddleMethods(struct)
 end
 
 function API.createMiddleMethod(cd, name, methods)
-
     --- @param o ClassInstance
     return function(o, ...)
-
         if not cd.__readonly__ then
             cd:finalize();
         end
@@ -421,11 +419,12 @@ function API.combineAllMethods(def, name, comb)
 
                 if interface.methods[name] then
                     local imCluster = interface.methods[name];
-                    
+
                     for imSignature, imd in pairs(imCluster) do
                         -- Here we ignore re-applied interface methods since they're already applied.
                         if not combCluster[name] and not imd.default then
-                            debugf(LVM.debug.method, '[METHOD] :: %s IGNORING re-applied interface method in hierarchy: %s',
+                            debugf(LVM.debug.method,
+                                '[METHOD] :: %s IGNORING re-applied interface method in hierarchy: %s',
                                 def.printHeader,
                                 LVM.print.printMethod(imd)
                             );
@@ -449,7 +448,6 @@ function API.combineAllMethods(def, name, comb)
         for decSig, decMethod in pairs(decCluster) do
             -- If signatures match, an override is detected.
             if combCluster[decSig] then
-
                 LVM.stepIn();
                 decMethod.override = true;
                 decMethod.super = combCluster[decSig];
@@ -644,7 +642,8 @@ function API.createMiddleConstructor(classDef)
 
         if LVM.isOutside() and not LVM.scope.canAccessScope(cons.scope, scopeAllowed) then
             local errMsg = string.format(
-                'IllegalAccessException: The constructor %s.new(%s) is set as "%s" access level. (Access Level from call: "%s")\n%s',
+                'IllegalAccessException: The constructor %s.new(%s) is set as "%s" access level.' ..
+                ' (Access Level from call: "%s")\n%s',
                 cons.class.name, dump(cons.parameters),
                 cons.scope, scopeAllowed,
                 LVM.stack.printStackTrace()
