@@ -13,6 +13,7 @@ local dump = {};
 --- @field label boolean?
 --- @field labelField string?
 --- @field pretty boolean?
+--- @field ignoreTableFunctions boolean?
 
 --- @class (exact) DumpMetadata
 --- @field level number

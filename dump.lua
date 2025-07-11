@@ -9,6 +9,7 @@ local DEFAULT_MAX_LEVEL = 12;
 local DEFAULT_LABEL = false;
 local DEFAULT_LABEL_FIELD = '__type__';
 local DEFAULT_PRETTY = false;
+local DEFAULT_IGNORE_FUNCTIONS = false;
 
 --- The default configuration for all dumps.
 local DEFAULT_CONFIGURATION = {
@@ -16,7 +17,8 @@ local DEFAULT_CONFIGURATION = {
     level = 0,
     maxLevel = DEFAULT_MAX_LEVEL,
     label = DEFAULT_LABEL,
-    labelField = DEFAULT_LABEL_FIELD
+    labelField = DEFAULT_LABEL_FIELD,
+    ignoreTableFunctions = DEFAULT_IGNORE_FUNCTIONS
 };
 
 --- @param t table
@@ -56,6 +58,7 @@ local function adaptConfiguration(cfg)
     if not cfg.label then cfg.label = DEFAULT_LABEL end
     if not cfg.labelField then cfg.labelField = DEFAULT_LABEL_FIELD end
     if not cfg.pretty then cfg.pretty = DEFAULT_PRETTY end
+    if not cfg.ignoreTableFunctions then cfg.ignoreTableFunctions = DEFAULT_IGNORE_FUNCTIONS end
 
     return cfg;
 end
@@ -171,18 +174,21 @@ function dump.table(t, cfg, metadata)
     for i = 1, #keys do
         local key = keys[i];
         local value = t[key];
-        if not cfg.label or key ~= cfg.labelField then
-            local sKey = key;
-            if type(key) == 'number' then
-                sKey = '[' .. key .. ']'
-            end
-            metadata.level = metadata.level + 1;
-            local e = string.format('%s = %s', tostring(sKey), dump.any(value, cfg, metadata));
-            metadata.level = metadata.level - 1;
-            if s == '' then
-                s = indent1 .. e;
-            else
-                s = s .. ',' .. newline .. indent1 .. e;
+
+        if not cfg.ignoreTableFunctions or type(value) ~= 'function' then
+            if not cfg.label or key ~= cfg.labelField then
+                local sKey = key;
+                if type(key) == 'number' then
+                    sKey = '[' .. key .. ']'
+                end
+                metadata.level = metadata.level + 1;
+                local e = string.format('%s = %s', tostring(sKey), dump.any(value, cfg, metadata));
+                metadata.level = metadata.level - 1;
+                if s == '' then
+                    s = indent1 .. e;
+                else
+                    s = s .. ',' .. newline .. indent1 .. e;
+                end
             end
         end
     end
