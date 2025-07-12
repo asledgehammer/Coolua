@@ -22,7 +22,7 @@
 --- @field super MethodDefinition? (Internally assigned. If none, this is nil)
 --- @field generics GenericsTypesDefinition?
 --- @field parameters ParameterDefinition[]
---- @field returnTypes string[]
+--- @field returnTypes AllowedType[]|AllowedType
 ---
 --- * General Flags *
 --- @field static boolean
@@ -66,11 +66,11 @@
 --- @field audited boolean If true, the struct is audited and verified to be valid.
 --- @field class ClassStructDefinition
 --- @field name string
---- @field types string[]
+--- @field types AllowedType[]
 
 --- @class (exact) ParameterDefinitionParameter
---- @field types string[]?
---- @field type string?
+--- @field types AllowedType[]?
+--- @field type AllowedType?
 --- @field name string?
 
 -- MARK: - Module

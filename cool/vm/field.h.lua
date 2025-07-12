@@ -11,7 +11,7 @@
 --- @field audited boolean If true, the struct is audited and verified to be valid.
 --- @field class ClassStructDefinition
 --- @field name string
---- @field types string[]
+--- @field types AllowedType[]
 --- @field scope ClassScope
 --- @field value any
 --- @field static boolean
@@ -22,8 +22,8 @@
 
 --- @class (exact) FieldDefinitionParameter
 --- @field name string
---- @field types string[]?
---- @field type string?
+--- @field types AllowedType[]?
+--- @field type AllowedType?
 --- @field scope ClassScope?
 --- @field final boolean?
 --- @field value any?
@@ -32,8 +32,8 @@
 
 --- @class (exact) StaticFieldDefinitionParameter
 --- @field name string
---- @field types string[]?
---- @field type string?
+--- @field types AllowedType[]?
+--- @field type AllowedType?
 --- @field scope ClassScope?
 --- @field final boolean?
 --- @field value any?

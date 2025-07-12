@@ -3,17 +3,17 @@
 ---]]
 
 local VM = require 'cool/vm';
+local import = VM.import;
 local newClass = VM.class.newClass;
 
-require 'lua/lang/Object';
-
-local Package = require 'lua/lang/Package';
+local Object = import 'lua.lang.Object';
+local Package = import 'lua.lang.Package';
 
 -- public final class Class {
 local Class = newClass({
     -- Define these for debugging purposes.
-    path = 'lua.lang',
-    name = 'Class',
+    -- path = 'lua.lang',
+    -- name = 'Class',
 
     scope = 'public',
     final = true
@@ -94,7 +94,7 @@ Class:addMethod({
     parameters = {
         { type = 'any...' }
     },
-    returnTypes = 'lua.lang.Object',
+    returnTypes = Object,
     body = function(self, ...)
         return self.definition.new(...);
     end
@@ -104,7 +104,7 @@ Class:addMethod({
     scope = 'public',
     name = 'isAssignableFromType',
     parameters = {
-        { name = 'other', type = 'lua.lang.Class' }
+        { name = 'other', type = Class }
     },
     returnTypes = 'boolean',
 

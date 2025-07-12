@@ -337,13 +337,33 @@ function API.createSignature(definition)
         local s = '';
         for i = 1, parameterLen do
             local parameter = definition.parameters[i];
-            local sParameter = table.concat(parameter.types, '|');
+
+            local sParameter = '';
+            for i = 1, #parameter.types do
+                local next = parameter.types[i];
+                local sNext;
+                if type(next) == 'table' then
+                    --- @cast next StructDefinition
+                    sNext = next.path;
+                elseif type(next) == 'string' then
+                    sNext = next;
+                end
+
+                if sParameter == '' then
+                    sParameter = sNext;
+                else
+                    sParameter = sParameter .. '|' .. sNext;
+                end
+            end
+
+            -- local sParameter = table.concat(parameter.types, '|');
             if s == '' then
                 s = sParameter;
             else
                 s = s .. ', ' .. sParameter;
             end
         end
+        print(string.format('%s(%s)', name, s));
         return string.format('%s(%s)', name, s);
     end
 

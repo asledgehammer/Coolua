@@ -15,7 +15,7 @@ local InterfaceInstance = {};
 --- @field name string
 --- @field generics GenericsTypesDefinitionParameter?
 --- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
---- @field returnTypes (string[]|string)? (Default: void)
+--- @field returnTypes AllowedType[]|AllowedType
 --- @field body function?
 --- NOTE: The `default` flag is automatically true if a function body is provided at the time of adding the method. 
 
@@ -25,11 +25,11 @@ local InterfaceInstance = {};
 --- @field name string
 --- @field generics GenericsTypesDefinitionParameter?
 --- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
---- @field returnTypes (string[]|string)? (Default: void)
+--- @field returnTypes AllowedType[]|AllowedType
 --- @field body function?
 
-
 --- @class InterfaceStructDefinitionParameter: StructDefinitionParameter
+--- 
 --- @field extends InterfaceStructDefinition?
 --- @field static boolean?
 --- @field scope ClassScope? (Default: package)

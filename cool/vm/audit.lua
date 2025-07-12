@@ -54,7 +54,7 @@ function API.auditGenericType(def)
 end
 
 function API.auditField(cd, fd)
-local errHeader = string.format('Class(%s):addField():', cd.name);
+    local errHeader = string.format('Class(%s):addField():', cd.name);
 
     -- Validate name.
     if not fd.name then
@@ -233,9 +233,20 @@ function API.auditMethodReturnsProperty(returnTypes, errHeader)
         types = { 'void' };
     elseif type(returnTypes) == 'table' then
         --- @cast returnTypes table
-        if not isArray(returnTypes) then
-            errorf(2, '%s The property "returnTypes" is not a any or any[]. {type = %s, value = %s}',
-                errHeader, VM.type.getType(returnTypes), tostring(returnTypes)
+        if returnTypes.__type__ then
+            if returnTypes.__type__ ~= 'ClassStructDefinition' and returnTypes.__type__ ~= 'InterfaceStructDefinition' then
+                errorf(2,
+                    '%s The property "returnTypes" is not an array of types, a class or interface.' ..
+                    ' {type = %s, value = %s}',
+                    errHeader, VM.type.getType(returnTypes), dump(returnTypes)
+                );
+            end
+            types = { returnTypes };
+        elseif not isArray(returnTypes) then
+            errorf(2,
+                '%s The property "returnTypes" is not an array of types, a class or interface.' ..
+                ' {type = %s, value = %s}',
+                errHeader, VM.type.getType(returnTypes), dump(returnTypes)
             );
         end
         --- @cast returnTypes string[]

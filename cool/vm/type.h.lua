@@ -4,6 +4,8 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+--- @alias AllowedType StructDefinition|StructReference|string The allowed types to assign in a field type, parameter type, or method returnType.
+
 --- @class VMTypeModule: VMModule
 local API = {};
 

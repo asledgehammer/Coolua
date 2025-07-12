@@ -12,7 +12,7 @@
 --- @field name string
 --- @field generics GenericsTypesDefinitionParameter?
 --- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
---- @field returnTypes (string[]|string)? (Default: void)
+--- @field returnTypes AllowedType[]|AllowedType
 --- @field body function
 
 --- @class (exact) ClassStaticMethodDefinitionParameter
@@ -21,7 +21,7 @@
 --- @field name string
 --- @field generics GenericsTypesDefinitionParameter?
 --- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
---- @field returnTypes (string[]|string)? (Default: void)
+--- @field returnTypes AllowedType[]|AllowedType
 --- @field body function
 
 --- @class (exact) ClassAbstractMethodDefinitionParameter
@@ -30,7 +30,7 @@
 --- @field name string
 --- @field generics GenericsTypesDefinitionParameter?
 --- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
---- @field returnTypes (string[]|string)? (Default: void)
+--- @field returnTypes AllowedType[]|AllowedType
 --- @field body nil
 
 --- @class (exact) ClassStructDefinitionParameter: StructDefinitionParameter
