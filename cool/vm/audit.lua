@@ -280,19 +280,21 @@ function API.auditStructPropertyScope(structScope, propertyScope, errHeader)
         end
     end
 
-    local invalid = false;
-    if structScope == 'package' and propertyScope == 'public' then
-        invalid = true;
-    elseif structScope == 'protected' and propertyScope == 'public' or propertyScope == 'package' then
-        invalid = true;
-    elseif structScope == 'private' and propertyScope ~= 'private' then
-        invalid = true;
-    end
-    if invalid then
-        errorf(2, '%s Property scope is invalid: {structScope = %s, propertyScope = %s}',
-            errHeader, structScope, propertyScope
-        );
-    end
+    -- NOTE: Not consistent with Java rules.
+    --
+    -- local invalid = false;
+    -- if structScope == 'package' and propertyScope == 'public' then
+    --     invalid = true;
+    -- elseif structScope == 'protected' and propertyScope == 'public' or propertyScope == 'package' then
+    --     invalid = true;
+    -- elseif structScope == 'private' and propertyScope ~= 'private' then
+    --     invalid = true;
+    -- end
+    -- if invalid then
+    --     errorf(2, '%s Property scope is invalid: {structScope = %s, propertyScope = %s}',
+    --         errHeader, structScope, propertyScope
+    --     );
+    -- end
 
     return propertyScope;
 end
