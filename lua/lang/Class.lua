@@ -4,143 +4,123 @@
 
 local VM = require 'cool/vm';
 local import = VM.import;
-local newClass = VM.class.newClass;
+
+-- Builder API ------------------------ --
+local builder = require 'cool/builder';
+local class = builder.class;
+local field = builder.field;
+local constructor = builder.constructor;
+local method = builder.method;
+local parameters = builder.parameters;
+local properties = builder.properties;
+local get = builder.get;
+local returnTypes = builder.returnTypes;
+
+local public = builder.public;
+local private = builder.private;
+local final = builder.final;
+-- ------------------------------------ --
 
 local Object = import 'lua.lang.Object';
 local Package = import 'lua.lang.Package';
 
--- public final class Class {
-local Class = newClass({
-    -- Define these for debugging purposes.
-    -- path = 'lua.lang',
-    -- name = 'Class',
+-- NOTE: We create a placeholder of class and then define it because of references to itself.
+local Class = import 'lua.lang.Class';
 
-    scope = 'public',
-    final = true
-});
+Class = class 'Class' (public, final) {
 
--- private final String __type__;
-Class:addField({
-    scope = 'public',
-    name = '__type__',
-    type = 'string',
-});
-
--- private final String package { get; }
-Class:addField({
-    scope = 'private',
-    name = 'package',
-    type = Package,
-
-    get = { scope = 'public' }
-});
-
--- private final String name { get; };
-Class:addField({
-    scope = 'private',
-    final = true,
-    name = 'name',
-    type = 'string',
-
-    get = { scope = 'public' }
-});
-
--- private final ClassStructDefinition def { get; };
-Class:addField({
-    scope = 'private',
-    final = true,
-    name = 'definition',
-    types = {
-        'ClassStructDefinition',
-        'InterfaceStructDefinition',
-        'EnumStructDefinition'
+    field '__type__' (public, final) {
+        properties {
+            type = 'string',
+            value = 'lua.lang.Class'
+        }
     },
 
-    get = { scope = 'public' }
-});
+    field 'package' (private) {
+        properties {
+            type = 'string'
+        },
+        get(public) {
+            function(self)
+                if not self.package then
+                    self.package = VM.getPackage(self.definition.pkg);
+                end
+                return self.package;
+            end
+        },
+    },
 
--- private Class(String package, String name, ClassStructDefinition def)
-Class:addConstructor({
-    scope = 'private',
-    parameters = {
-        {
-            name = 'def',
+    field 'name' (private, final) {
+        properties {
+            type = 'string'
+        },
+        get(public) {},
+    },
+
+    field 'definition' (private, final) {
+        properties {
             types = {
                 'ClassStructDefinition',
                 'InterfaceStructDefinition',
                 'EnumStructDefinition'
             }
-        }
+        },
+        get(public) {}
     },
 
-    --- @param self Class
-    super = function(self)
-        self:super();
-    end,
-
-    --- @param self Class
-    --- @param definition ClassStructDefinition
-    body = function(self, definition)
-        self.definition = definition;
-        self.name = definition.name;
-        self.__type__ = 'lua.lang.Class';
-    end
-});
-
-Class:addMethod({
-    scope = 'public',
-    final = true,
-    name = 'new',
-    parameters = {
-        { type = 'any...' }
-    },
-    returnTypes = Object,
-    body = function(self, ...)
-        return self.definition.new(...);
-    end
-});
-
-Class:addMethod({
-    scope = 'public',
-    name = 'isAssignableFromType',
-    parameters = {
-        { name = 'other', type = Class }
-    },
-    returnTypes = 'boolean',
-
-    --- @param self Class
-    --- @param other Class|ClassStructDefinition
-    body = function(self, other)
-        if not other then
-            return false;
-        elseif other.__type__ == 'ClassStructDefinition' then
-            return self:getDefinition():isAssignableFromType(other);
-        else
-            return self:getDefinition():isAssignableFromType(other:getDefinition());
+    constructor(private) {
+        parameters {
+            {
+                name = 'def',
+                types = { 'ClassStructDefinition', 'InterfaceStructDefinition', 'EnumStructDefinition' }
+            }
+        },
+        --- @param self Class
+        --- @param definition ClassStructDefinition
+        body = function(self, definition)
+            self.definition = definition;
+            self.name = definition.name;
+            -- self.package = VM.getPackage(definition.pkg);
         end
-    end
-});
+    },
 
-Class:addMethod({
-    scope = 'public',
-    final = true,
-    name = 'isInterface',
-    returnTypes = 'boolean',
-    body = function(self)
-        return self.definition.__type__ == 'InterfaceStructDefinition';
-    end
-});
+    method 'new' (public, final) {
+        parameters({ type = 'any...' }),
+        returnTypes(Object),
+        function(self, ...)
+            return self.definition.new(...);
+        end
+    },
 
-Class:addMethod({
-    scope = 'public',
-    final = true,
-    name = 'isEnum',
-    returnTypes = 'boolean',
-    body = function(self)
-        return self.definition.__type__ == 'EnumStructDefinition';
-    end
-});
+    method 'isAssignableFromType' (public) {
+        parameters({ name = 'other', type = Class }),
+        returnTypes('boolean'),
+        --- @param self Class
+        --- @param other Class|ClassStructDefinition
+        function(self, other)
+            if not other then
+                return false;
+            elseif other.__type__ == 'ClassStructDefinition' then
+                return self:getDefinition():isAssignableFromType(other);
+            else
+                return self:getDefinition():isAssignableFromType(other:getDefinition());
+            end
+        end
+    },
 
--- }
+    method 'isInterface' (public, final) {
+        returnTypes('boolean'),
+        function(self)
+            return self.definition.__type__ == 'InterfaceStructDefinition';
+        end
+    },
 
-return Class:finalize();
+    method 'isEnum' (public, final) {
+        returnTypes('boolean'),
+        function(self)
+            return self.definition.__type__ == 'EnumStructDefinition';
+        end
+    }
+};
+
+return Class;
