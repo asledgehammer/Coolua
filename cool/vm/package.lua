@@ -50,4 +50,15 @@ function API.addToPackageStruct(def)
     pkgCurr[def.name] = def;
 end
 
+function API.getPackage(pkg)
+    local split = pkg:split('.');
+    local pkgCurr = API.packages;
+    for i = 1, #split do
+        local pkgNext = split[i];
+        if not pkgCurr[pkgNext] then return nil end
+        pkgCurr = pkgCurr[pkgNext];
+    end
+    return pkgCurr;
+end
+
 return API;

@@ -21,3 +21,6 @@ function API.newPackageStruct(path) end
 ---
 --- @param def StructDefinition
 function API.addToPackageStruct(def) end
+
+--- @return PackageTable|nil
+function API.getPackage(pkg) end

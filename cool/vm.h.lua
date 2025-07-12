@@ -24,6 +24,7 @@ function VMModule.setVM(vm) end
 --- @field ROOT_PATH string The root path of the running source code.
 --- @field DEFINITIONS table<string, StructDefinition> Key = `StructDefinition.path`
 --- @field CLASSES table<string, Class> Key = `StructDefinition.path`
+--- @field PACKAGES table<string, Package> Key = `StructDefinition.path`
 ---
 --- @field moduleCount number
 ---
@@ -71,3 +72,8 @@ function VM.forName(path) end
 ---
 --- @return StructDefinition|StructReference
 function VM.import(path) end
+
+--- @param path string
+---
+--- @return Package
+function VM.getPackage(path) end

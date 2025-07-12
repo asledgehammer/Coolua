@@ -81,6 +81,7 @@ VM = {
 
     DEFINITIONS = {},
     CLASSES = {},
+    PACKAGES = {},
 
     debug = debug,
     enum = require 'cool/vm/enum',
@@ -140,7 +141,6 @@ VM.struct.setVM(VM);
 VM.interface.setVM(VM);
 
 function VM.import(path)
-
     local def = VM.DEFINITIONS[path];
 
     if not def then
@@ -187,6 +187,19 @@ function VM.forName(path)
     end
 
     return class;
+end
+
+function VM.getPackage(path)
+    local pkg = VM.PACKAGES[path];
+    if not pkg then
+        local pkgTable = VM.package.getPackage(path);
+        if not pkgTable then
+            PrintPlus.errorf(2, 'Package doesn\'t exist: %s', path);
+        end
+        pkg = VM.import 'lua.lang.Package'.new(path);
+        VM.PACKAGES[path] = pkg;
+    end
+    return pkg;
 end
 
 debugf(VM.debug.internal, '[VM] :: Loaded %i Modules.', VM.moduleCount);
