@@ -205,6 +205,11 @@ function API.newClass(definition, outer)
         return;
     end
 
+    -- Grab where the call came from.
+    local level, relPath = vm.scope.getRelativePath();
+    local callInfo = DebugUtils.getCallInfo(level, vm.ROOT_PATH, true);
+    callInfo.path = relPath;
+
     local super = definition.extends;
     if super and super.final then
         errorf(2, 'Class cannot extend final Super-Class: %s extends final %s',
@@ -222,6 +227,24 @@ function API.newClass(definition, outer)
                 if not definition.implements.__readonly__ then
                     definition.implements:finalize();
                 end
+
+                -- Check and see if the calling code can access the interface.
+                local scopeCalled = vm.scope.getScopeForCall(definition.implements, callInfo);
+                if not vm.scope.canAccessScope(definition.implements.scope, scopeCalled) then
+                    local sClass = path;
+                    local sImplements = definition.implements.path;
+                    local errMsg = string.format(
+                        'IllegalAccessException: The class "%s" cannot implement "%s". (access is %s).' ..
+                        ' (Access Level from call: "%s")\n%s',
+                        sClass, sImplements,
+                        definition.implements.scope, scopeCalled,
+                        vm.stack.printStackTrace()
+                    );
+                    print(errMsg);
+                    error(errMsg, 2);
+                    return;
+                end
+
                 table.insert(interfaces, definition.implements);
             else
                 if not isArray(definition.implements) then
@@ -320,6 +343,47 @@ function API.newClass(definition, outer)
     vm.stepIn();
     vm.package.addToPackageStruct(cd);
     vm.stepOut();
+
+    if super then
+
+        -- Check and see if the calling code can access the class.
+        local scopeCalled = vm.scope.getScopeForCall(super, callInfo, cd);
+        if not vm.scope.canAccessScope(super.scope, scopeCalled) then
+            local sClass = path;
+            local sSuper = super.path;
+            local errMsg = string.format(
+                'IllegalAccessException: The class "%s" cannot extend "%s". (access is %s).' ..
+                ' (Access Level from call: "%s")\n%s',
+                sClass, sSuper,
+                super.scope, scopeCalled,
+                vm.stack.printStackTrace()
+            );
+            print(errMsg);
+            error(errMsg, 2);
+            return;
+        end
+    end
+
+    for i = 1, #cd.interfaces do
+        local interface = cd.interfaces[i];
+
+        -- Check and see if the calling code can access the interface.
+        local scopeCalled = vm.scope.getScopeForCall(interface, callInfo, cd);
+        if not vm.scope.canAccessScope(interface.scope, scopeCalled) then
+            local sClass = path;
+            local sImplements = interface.path;
+            local errMsg = string.format(
+                'IllegalAccessException: The class "%s" cannot implement "%s". (access is %s).' ..
+                ' (Access Level from call: "%s")\n%s',
+                sClass, sImplements,
+                interface.scope, scopeCalled,
+                vm.stack.printStackTrace()
+            );
+            print(errMsg);
+            error(errMsg, 2);
+            return;
+        end
+    end
 
     --- @cast cd ClassStructDefinition
 

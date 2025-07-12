@@ -122,7 +122,6 @@ function API.printInterface(def)
 end
 
 function API.printStruct(def)
-    
     if def.__type__ == 'ClassStructDefinition' then
         return API.printClass(def);
     elseif def.__type__ == 'InterfaceStructDefinition' then
@@ -134,7 +133,7 @@ function API.printStruct(def)
 end
 
 function API.printClass(def)
-    local sScope = def.scope .. ' ';
+    local sScope = '';
     local sStatic = '';
     local sFinal = '';
     local sAbstract = '';
@@ -142,14 +141,13 @@ function API.printClass(def)
     local sExtends = '';
     local sImplements = '';
 
+    if def.scope ~= 'package' then sScope = def.scope .. ' ' end
     if def.abstract then sAbstract = 'abstract ' end
     if def.final then sFinal = 'final ' end
     if def.static then sStatic = 'static ' end
 
     if def.super and def.super.path ~= 'lua.lang.Object' then
-        local sSuperPkg = '';
-        if def.super.pkg then sSuperPkg = def.super.pkg .. '.' end
-        sExtends = string.format(' extends %s%s', sSuperPkg, def.super.path);
+        sExtends = string.format(' extends %s', def.super.path);
     end
 
     if def.interfaces then

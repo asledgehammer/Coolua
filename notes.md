@@ -1,15 +1,12 @@
-# To Remember:
-- Implement generics type-casting.
+# POST_RELEASE:
+- TODO: Implement Generics.
+  - Implement generics type-casting.
+- Implement EnumStructDefinition.
 
 # GENERAL:
-- TODO: Implement Package object.
 - TODO: Implement Stack object.
-- TODO: Implement Generics.
-- TODO: (Ongoing) Cleanup Code.
 
-# INTERFACE:
-
-# CLASS:
+# STRUCTS:
 - TODO: Implement visibility-scope at class-level.
 
 # FIELDS:

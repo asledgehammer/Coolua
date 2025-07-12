@@ -2,11 +2,13 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-require 'cool';
+local cool = require 'cool';
+local import = cool.import;
 
 print('## TEST ##\n');
 
-local Dimension = require 'tests/Dimension';
+--- @type DimensionDefinition
+local Dimension = import 'tests/Dimension';
 
 local dim1 = Dimension.new(5, 5);
 local dim2 = Dimension.new(5, 4);

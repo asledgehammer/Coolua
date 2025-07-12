@@ -15,9 +15,10 @@ local API = {};
 
 --- @param class StructDefinition The class called.
 --- @param callInfo CallInfo
+--- @param callStruct StructDefinition? (Optional) For calls within struct construction.
 ---
 --- @return ClassScope
-function API.getScopeForCall(class, callInfo) end
+function API.getScopeForCall(class, callInfo, callStruct) end
 
 --- @param expected ClassScope
 --- @param given ClassScope

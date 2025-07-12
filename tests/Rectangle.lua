@@ -21,6 +21,7 @@ local set = builder.set;
 
 local private = builder.private;
 local public = builder.public;
+local protected = builder.protected;
 local final = builder.final;
 -- ------------------------------------ --
 
@@ -68,7 +69,6 @@ local Rectangle = class 'Rectangle' (public) {
             self.x = x;
             self.y = y;
         end
-
     },
 
     toString {

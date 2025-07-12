@@ -150,7 +150,7 @@ function vm.import(path)
     end
 
     if not def then
-        debugf(vm.debug.scope, '[SCOPE] :: Could not resolve struct: %s (Creating StructReference)');
+        debugf(vm.debug.scope, '[SCOPE] :: Could not resolve struct: %s (Creating StructReference)', path);
         def = vm.struct.newReference(path);
         vm.DEFINITIONS[path] = def;
     end

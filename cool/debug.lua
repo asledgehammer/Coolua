@@ -79,11 +79,6 @@ else                        -- Native Lua Environment.
             end
         end
 
-        -- printf('DebugUtils.getPath(%s, %s, %s) = %s',
-        --     tostring(levelOrFunc), tostring(rootPath), tostring(isClassPath),
-        --     tostring(result)
-        -- );
-
         return result;
     end
 
@@ -91,7 +86,9 @@ else                        -- Native Lua Environment.
     ---
     --- @return integer line
     function DebugUtils.getCurrentLine(levelOrFunc)
-        return debug.getinfo(levelOrFunc, 'l').currentline;
+        local line = debug.getinfo(levelOrFunc, 'l').currentline;
+        -- print('line: ', levelOrFunc, line, debug.getinfo(levelOrFunc - 1, 'l').currentline);
+        return line;
     end
 
     --- @param level integer

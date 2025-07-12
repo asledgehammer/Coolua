@@ -628,6 +628,8 @@ function API.newInterface(definition, enclosingStruct)
     --- @type any
     local id = vm.DEFINITIONS[path] or {};
 
+    local extends = definition.extends;
+
     -- * Internal Type * --
     id.__type__ = 'InterfaceStructDefinition';
 
@@ -643,7 +645,7 @@ function API.newInterface(definition, enclosingStruct)
     id.scope = definition.scope or 'package';
 
     -- * Hierarchical Properties * --
-    id.super = definition.extends;
+    id.extends = extends;
     id.subClasses = {};
 
     -- * Enclosurable Properties * --
@@ -681,6 +683,30 @@ function API.newInterface(definition, enclosingStruct)
     vm.stepIn();
     vm.package.addToPackageStruct(id);
     vm.stepOut();
+
+    if extends then
+        -- Grab where the call came from.
+        local level, relPath = vm.scope.getRelativePath();
+        local callInfo = DebugUtils.getCallInfo(level, vm.ROOT_PATH, true);
+        callInfo.path = relPath;
+
+        -- Check and see if the calling code can access the class.
+        local scopeCalled = vm.scope.getScopeForCall(extends, callInfo, id);
+        if not vm.scope.canAccessScope(extends.scope, scopeCalled) then
+            local sClass = path;
+            local sSuper = extends.path;
+            local errMsg = string.format(
+                'IllegalAccessException: The interface "%s" cannot extend "%s". (access is %s).' ..
+                ' (Access Level from call: "%s")\n%s',
+                sClass, sSuper,
+                extends.scope, scopeCalled,
+                vm.stack.printStackTrace()
+            );
+            print(errMsg);
+            error(errMsg, 2);
+            return;
+        end
+    end
 
     -- MARK: - inner
 

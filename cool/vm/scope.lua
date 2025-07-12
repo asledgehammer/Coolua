@@ -25,18 +25,20 @@ local API = {
 
 --- @cast API VMScopeModule
 
-function API.getScopeForCall(struct, callInfo)
+function API.getScopeForCall(struct, callInfo, callStruct)
     local value = 'public';
 
     -- Classes are locked to their package path and name.
-    local callStruct = vm.forNameDef(callInfo.path);
-
+    callStruct = callStruct or vm.DEFINITIONS[callInfo.path];
+    -- PrintPlus.printf('callStruct[%s]: %s', callInfo.path, tostring(callStruct));
 
     if callStruct then
         local ed = vm.executable.getExecutableFromLine(struct, callInfo.path, callInfo.currentLine);
         if ed then
             -- Inside struct definition. Can access everything in struct.
             value = 'private';
+        elseif callStruct.pkg == struct.pkg then
+            value = 'package';
         else
             -- Grab an executable definition that might be where the call comes from.
             --   NOTE: This allows private access to anonymous functions within the scope of a method.
@@ -54,35 +56,6 @@ function API.getScopeForCall(struct, callInfo)
                 value = 'package';
             end
         end
-    end
-
-
-    -- - If the class is nil, the call is coming from code outside of a class file entirely.
-    -- - If the executable is nil, then the call is coming from code inside of a class but not in a defined method or
-    --   constructor.
-    if callStruct then
-        -- Grab an executable definition that might be where the call comes from.
-        --   NOTE: This allows private access to anonymous functions within the scope of a method.
-        --         This is to mimic Java / C# lamda functions getting scoped access to private fields.
-        -- local ed = cd:getExecutableFromLine(callInfo.currentLine);
-        -- if ed then
-        if callStruct.path == struct.path then
-            -- The classes match. You have full access to everything.
-            value = 'private'
-        elseif struct:isAssignableFromType(callStruct) then
-            -- The class calling the function is a sub-class and can access protected-scope properties.
-            value = 'protected';
-        elseif callStruct.pkg == struct.pkg then
-            -- The class calling the function is in the same package and can access package-scope properties.
-            value = 'package';
-        end
-        -- else
-        --     -- We allow anonymous code outside the class system in-file to have package-level access.
-        --     if cd.package == class.package then
-        --         -- The class calling the function is in the same package and can access package-scope properties.
-        --         value = 'package';
-        --     end
-        -- end
     end
 
     debugf(vm.debug.scope, '[SCOPE] :: getScopeCall(%s, %s) = %s',
@@ -120,8 +93,10 @@ function API.getRelativePath()
         relPath = DebugUtils.getPath(level, vm.ROOT_PATH, true);
     end
 
-    local testDot = string.find(relPath, '.', 1, true);
+    -- FIX: Level off by one.
+    level = level - 1;
 
+    local testDot = string.find(relPath, '.', 1, true);
     if testDot == 1 then
         relPath = relPath:sub(2);
     end

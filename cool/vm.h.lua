@@ -68,9 +68,10 @@ function vm.forNameDef(path) end
 --- @return Class|nil classObj The class object. If no definition exists with the path then nil is returned.
 function vm.forName(path) end
 
+--- @generic T: StructDefinition|StructReference
 --- @param path string
 ---
---- @return StructDefinition|StructReference
+--- @return T
 function vm.import(path) end
 
 --- @param path string
