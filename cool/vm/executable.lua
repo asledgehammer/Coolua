@@ -363,7 +363,6 @@ function API.createSignature(definition)
                 s = s .. ', ' .. sParameter;
             end
         end
-        print(string.format('%s(%s)', name, s));
         return string.format('%s(%s)', name, s);
     end
 
