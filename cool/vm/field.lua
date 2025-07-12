@@ -17,7 +17,7 @@ local function firstCharToUpper(str)
 end
 
 --- @type VM
-local VM;
+local vm;
 
 local API = {
 
@@ -25,8 +25,8 @@ local API = {
 
     --- @param vm VM
     setVM = function(vm)
-        VM = vm;
-        VM.moduleCount = VM.moduleCount + 1;
+        vm = vm;
+        vm.moduleCount = vm.moduleCount + 1;
     end
 };
 
@@ -62,7 +62,7 @@ function API.compileFieldAutoMethods(self)
                             '%s The getter method definition for field "%s" is not a function; {type = %s, value = %s}',
                             self.printHeader,
                             name,
-                            VM.type.getType(fieldDef.get.body),
+                            vm.type.getType(fieldDef.get.body),
                             tostring(fieldDef.get.body)
                         );
                     end
@@ -83,7 +83,7 @@ function API.compileFieldAutoMethods(self)
 
             mGetDef.body = fGet;
 
-            debugf(VM.debug.method, '[METHOD] :: %s Creating auto-method: %s:%s()',
+            debugf(vm.debug.method, '[METHOD] :: %s Creating auto-method: %s:%s()',
                 self.printHeader,
                 self.name, mGetDef.name
             );
@@ -117,7 +117,7 @@ function API.compileFieldAutoMethods(self)
                             '%s The setter method definition for field "%s" is not a function; {type = %s, value = %s}',
                             self.printHeader,
                             name,
-                            VM.type.getType(fieldDef.get.body),
+                            vm.type.getType(fieldDef.get.body),
                             tostring(fieldDef.get.body)
                         );
                     end
@@ -137,14 +137,14 @@ function API.compileFieldAutoMethods(self)
 
             mSetDef.body = fSet;
 
-            debugf(VM.debug.method, '[METHOD] :: %s Creating auto-method: %s(...)',
+            debugf(vm.debug.method, '[METHOD] :: %s Creating auto-method: %s(...)',
                 self.printHeader,
                 mSetDef.name
             );
 
             local md = self:addMethod(mSetDef);
 
-            debugf(VM.debug.method, '[METHOD] :: %s Created auto-method: %s',
+            debugf(vm.debug.method, '[METHOD] :: %s Created auto-method: %s',
                 self.printHeader,
                 md.signature
             );
