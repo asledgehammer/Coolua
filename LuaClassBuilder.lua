@@ -225,8 +225,6 @@ local function buildInterface(self, outerStruct)
             method.default = true;
         end
 
-        -- print('adding method: ', name, dump(method, {pretty = true, label = true}));
-
         interface:addMethod(method);
     end
 
@@ -583,8 +581,6 @@ local mt_interface_body = function(self, ...)
         local entry = args[i];
 
         for _, arg in pairs(entry) do
-            -- print('[BUILDER][Interface] :: Parsing entry: ' .. dump(entry, { label = true, pretty = true }));
-
             if arg.__type__ == 'ExtendsTable' then
                 if self.extends then
                     error('Cannot redefine interface extensions.', 2);
@@ -677,12 +673,13 @@ local mt_field_body = function(self, ...)
             if tv2 == 'table' then
                 if v2.__type__ then
                     if v2.__type__ == 'GetterTable' then
-                        print('field.get = ', dump(v2));
                         self.get = {};
+                        self.get.name = v2.name;
                         buildFlags(v2, self.get);
                         self.get.body = v2.body;
                     elseif v2.__type__ == 'SetterTable' then
                         self.set = {};
+                        self.set.name = v2.name;
                         buildFlags(v2, self.set);
                         self.set.body = v2.body;
                     elseif v2.__type__ == 'PropertiesTable' then
@@ -716,7 +713,6 @@ local mt_field_body = function(self, ...)
             end
         end
     end
-    print(dump(self, { pretty = true, label = true }));
     return self;
 end;
 
@@ -758,8 +754,6 @@ local mt_getset = {
     __call = function(self, ...)
         local args = { ... };
         local argLen = #args;
-        PrintPlus.printf('mt_getset(%s)', dump(args));
-
         for i = 1, argLen do
             local t = args[i];
             if type(t) ~= 'table' or not isArray(t) then
@@ -774,7 +768,6 @@ local mt_getset = {
             if self.body then
                 error('Cannot redefine body function for getter/setter.', 2);
             elseif type(func) ~= 'function' and type(func) ~= 'nil' then
-                print(dump(args));
                 errorf(2, 'Body argument for getter/setter is not a function. {type = %s, value = %s}',
                     type(func), tostring(func)
                 );
@@ -795,8 +788,6 @@ local mt_getset_flags = {
         local args = { ... };
         local argLen = #args;
 
-        PrintPlus.printf('mt_getset_flags(%s)', dump(args));
-
         if argLen == 1 and isArray(args[1]) then
             return mt_getset.__call(self, ...);
         end
@@ -807,23 +798,49 @@ local mt_getset_flags = {
     __tostring = mt_tostring
 };
 
+local function isFlag(str)
+    return str == 'public' or
+        str == 'package' or
+        str == 'protected' or
+        str == 'private' or
+        str == 'final' or
+        str == 'abstract' or
+        str == 'static' or
+        str == 'default';
+end
+
 --- @param ... string|table Flags
 local function get(...)
     local args = { ... };
     local argLen = #args;
 
-    PrintPlus.printf('get(%s)', dump(args));
+    if argLen == 1 and type(args[1]) == 'string' then
+        local arg = args[1];
+        if not isFlag(arg) then
+            return setmetatable({
+                __type__ = 'GetterTable',
+                flags = {},
+                name = arg,
+            }, mt_getset_flags);
+        end
+    end
+
+    return setmetatable({
+        __type__ = 'GetterTable',
+        flags = args
+    }, mt_getset);
+end
+
+--- @param ... string|table Flags
+local function set(...)
+    local args = { ... };
+    local argLen = #args;
 
     if argLen == 1 and type(args[1]) == 'string' then
         local arg = args[1];
-        if arg ~= 'public' and
-            arg ~= 'package' and
-            arg ~= 'protected' and
-            arg ~= 'private' and
-            arg ~= 'final'
-        then
+        if not isFlag(arg) then
             return setmetatable({
-                __type__ = 'GetterTable',
+                __type__ = 'SetterTable',
                 flags = {},
                 name = args[1],
             }, mt_getset_flags);
@@ -831,16 +848,8 @@ local function get(...)
     end
 
     return setmetatable({
-        __type__ = 'GetterTable',
-        flags = { ... }
-    }, mt_getset);
-end
-
---- @param ... string|table Flags
-local function set(...)
-    return setmetatable({
         __type__ = 'SetterTable',
-        flags = { ... },
+        flags = args,
     }, mt_getset);
 end
 

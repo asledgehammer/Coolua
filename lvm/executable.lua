@@ -196,9 +196,10 @@ function API.createMiddleMethods(struct)
                 -- RULE: Cannot override method if super-method is final.
                 if md.super.final then
                     local sMethod = LVM.print.printMethod(md);
-                    errorf(2, '%s Method cannot override final method in super-class: %s',
+                    errorf(2, '%s Method cannot override final method in super-class: %s.%s',
                         struct.printHeader,
                         md.super.class.name,
+                        mName,
                         sMethod
                     );
                     return struct;

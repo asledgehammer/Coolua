@@ -29,12 +29,8 @@ local Dimension, scaffolding = class 'Dimension' (public) {
             type = 'number',
             value = 0
         },
-        get(public) {
-            function(self)
-                return self.width;
-            end
-        },
-        set(public)
+        get(public) {},
+        set(public) {},
     },
 
     field 'height' (private) {
@@ -42,8 +38,8 @@ local Dimension, scaffolding = class 'Dimension' (public) {
             type = 'number',
             value = 0
         },
-        get(public),
-        set(public),
+        get(public) {},
+        set(public) {},
     },
 
     constructor (public) {
@@ -87,6 +83,7 @@ local Dimension, scaffolding = class 'Dimension' (public) {
     toString {
         --- @param self Dimension
         function(self)
+            print('width', self:getWidth(), 'height', self:getHeight())
             return string.format('Dimension(width = %.4f, height = %.4f)',
                 self:getWidth(), self:getHeight()
             );

@@ -3,8 +3,9 @@
 ---]]
 
 local PrintPlus = require 'PrintPlus';
-local errorf = PrintPlus.errorf;
-local debugf = PrintPlus.debugf;
+local dump      = require 'dump'
+local errorf    = PrintPlus.errorf;
+local debugf    = PrintPlus.debugf;
 
 --- Converts the first character to upper. (Used for get-set shorthand)
 ---
@@ -33,7 +34,7 @@ local API = {
 
 --- @param self ClassStructDefinition|InterfaceStructDefinition
 function API.compileFieldAutoMethods(self)
-    for name, fieldDef in pairs(self.declaredFields) do
+    for _, fieldDef in pairs(self.declaredFields) do
         local funcName = firstCharToUpper(fieldDef.name);
         local tGet = type(fieldDef.get);
         local tSet = type(fieldDef.set);
@@ -42,8 +43,9 @@ function API.compileFieldAutoMethods(self)
         local fGet, fSet;
 
         if tGet ~= 'nil' then
+            local name = fieldDef.get.name or ('get' .. funcName);
             local mGetDef = {
-                name = 'get' .. funcName,
+                name = name,
                 scope = fieldDef.scope,
                 returns = fieldDef.types
             };
@@ -69,11 +71,11 @@ function API.compileFieldAutoMethods(self)
                 else
                     if fieldDef.static then
                         fGet = function()
-                            return self[name];
+                            return self[fieldDef.name];
                         end
                     else
                         fGet = function(ins)
-                            return ins[name];
+                            return ins[fieldDef.name];
                         end;
                     end
                 end
@@ -90,16 +92,15 @@ function API.compileFieldAutoMethods(self)
         end
 
         if tSet ~= 'nil' then
-
             if fieldDef.final then
                 errorf(2, '%s Cannot add setter to final field: %s',
                     self.printHeader,
                     fieldDef.name
                 );
             end
-
+            local name = fieldDef.set.name or ('set' .. funcName);
             local mSetDef = {
-                name = 'set' .. funcName,
+                name = name,
                 scope = fieldDef.scope,
                 parameters = {
                     { name = 'value', types = fieldDef.types }
@@ -124,11 +125,11 @@ function API.compileFieldAutoMethods(self)
                 else
                     if fieldDef.static then
                         fSet = function()
-                            return self[name];
+                            return self[fieldDef.name];
                         end
                     else
                         fSet = function(ins)
-                            return ins[name];
+                            return ins[fieldDef.name];
                         end;
                     end
                 end
