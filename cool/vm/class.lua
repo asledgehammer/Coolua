@@ -102,13 +102,31 @@ local function applyStructMetatable(cd)
 
         local callInfo = DebugUtils.getCallInfo(level, nil, true);
         callInfo.path = relPath;
-        local scopeAllowed = vm.scope.getScopeForCall(fd.class, callInfo);
 
-        if not vm.scope.canAccessScope(fd.scope, scopeAllowed) then
+        local classScopeAllowed = vm.scope.getScopeForCall(cd, callInfo);
+
+        -- Ensure that the class is accessible from the scope.
+        if not vm.scope.canAccessScope(cd.scope, classScopeAllowed) then
+            local sClass = cd.path;
+            local errMsg = string.format(
+                'IllegalAccessException: The class "%s" is "%s".' ..
+                ' (Access Level from call: "%s")\n%s',
+                sClass,
+                cd.scope, classScopeAllowed,
+                vm.stack.printStackTrace()
+            );
+            print(errMsg);
+            error(errMsg, 2);
+            return;
+        end
+
+        -- Next, ensure that the field is accessible from the scope.
+        local fieldScopeAllowed = vm.scope.getScopeForCall(fd.class, callInfo);
+        if not vm.scope.canAccessScope(fd.scope, fieldScopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
                 cd.name, fd.name,
-                fd.scope, scopeAllowed,
+                fd.scope, fieldScopeAllowed,
                 vm.stack.printStackTrace()
             );
             vm.stack.popContext();
@@ -345,7 +363,6 @@ function API.newClass(definition, outer)
     vm.stepOut();
 
     if super then
-
         -- Check and see if the calling code can access the class.
         local scopeCalled = vm.scope.getScopeForCall(super, callInfo, cd);
         if not vm.scope.canAccessScope(super.scope, scopeCalled) then

@@ -7,7 +7,7 @@
 - TODO: Implement Stack object.
 
 # STRUCTS:
-- TODO: Implement visibility-scope at class-level.
+- TODO: Implement visibility-scope at class-level access.
 
 # FIELDS:
 - TODO: Check assignment for type-compatability.

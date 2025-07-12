@@ -110,13 +110,31 @@ local function applyMetatable(self)
 
         local callInfo = DebugUtils.getCallInfo(level, nil, true);
         callInfo.path = relPath;
-        local scopeAllowed = vm.scope.getScopeForCall(fd.class, callInfo);
 
-        if not vm.scope.canAccessScope(fd.scope, scopeAllowed) then
+        local classScopeAllowed = vm.scope.getScopeForCall(self, callInfo);
+
+        -- Ensure that the interface is accessible from the scope.
+        if not vm.scope.canAccessScope(self.scope, classScopeAllowed) then
+            local sClass = self.path;
+            local errMsg = string.format(
+                'IllegalAccessException: The interface "%s" is "%s".' ..
+                ' (Access Level from call: "%s")\n%s',
+                sClass,
+                self.scope, classScopeAllowed,
+                vm.stack.printStackTrace()
+            );
+            print(errMsg);
+            error(errMsg, 2);
+            return;
+        end
+
+        -- Next, ensure that the field is accessible from the scope.
+        local fieldScopeAllowed = vm.scope.getScopeForCall(fd.class, callInfo);
+        if not vm.scope.canAccessScope(fd.scope, fieldScopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
                 self.name, fd.name,
-                fd.scope, scopeAllowed,
+                fd.scope, fieldScopeAllowed,
                 vm.stack.printStackTrace()
             );
             vm.stack.popContext();
@@ -139,7 +157,7 @@ local function applyMetatable(self)
             local ste = vm.stack.getContext();
             if not ste then
                 vm.stack.popContext();
-                errorf(2, '%s Attempt to assign final field %s outside of Class scope.', self.printHeader, field);
+                errorf(2, '%s Attempt to assign final field %s outside of interface scope.', self.printHeader, field);
                 return;
             end
 
@@ -147,7 +165,7 @@ local function applyMetatable(self)
             local class = ste:getCallingClass();
             if class ~= self then
                 vm.stack.popContext();
-                errorf(2, '%s Attempt to assign final field %s outside of Class scope.', self.printHeader, field);
+                errorf(2, '%s Attempt to assign final field %s outside of interface scope.', self.printHeader, field);
                 return;
             elseif context ~= 'constructor' then
                 vm.stack.popContext();
@@ -303,7 +321,7 @@ function IAPI.addStaticMethod(self, definition)
     return md;
 end
 
---- Attempts to resolve a MethodDefinition in the ClassStructDefinition. If the method isn't defined in the class,
+--- Attempts to resolve a MethodDefinition in the StructDefinition. If the method isn't defined in the interface,
 --- `nil` is returned.
 ---
 --- @param self InterfaceStructDefinition
@@ -388,15 +406,15 @@ end
 
 --- (Handles recursively going through sub-interfaces to see if a class is a sub-class)
 ---
---- @param subClass InterfaceStructDefinition
---- @param classToEval InterfaceStructDefinition
+--- @param subInterface InterfaceStructDefinition
+--- @param interfaceToEval InterfaceStructDefinition
 ---
 --- @return boolean result True if the interface to evaluate is a super-class of the subClass.
-function IAPI.__recurseSubInterface(subClass, classToEval)
-    local subLen = #subClass.sub;
+function IAPI.__recurseSubInterface(subInterface, interfaceToEval)
+    local subLen = #subInterface.sub;
     for i = 1, subLen do
-        local next = subClass.sub[i];
-        if IAPI.isAssignableFromType(next, classToEval) or IAPI.__recurseSubInterface(next, classToEval) then
+        local next = subInterface.sub[i];
+        if IAPI.isAssignableFromType(next, interfaceToEval) or IAPI.__recurseSubInterface(next, interfaceToEval) then
             return true;
         end
     end
@@ -407,7 +425,7 @@ end
 ---
 --- @return boolean result True if the interface to evaluate is a super-interface of the sub-interface.
 function IAPI:isSubInterface(self, interface)
-    if IAPI.__recurseSubClass(self, interface) then
+    if IAPI.__recurseSubInterface(self, interface) then
         return true;
     end
     return false;
@@ -477,7 +495,6 @@ end
 ---
 --- @return InterfaceStructDefinition interfaceDef
 function IAPI.finalize(self)
-    print('Interface:finalize()');
 
     local errHeader = string.format('Interface(%s):finalize():', self.path);
 
