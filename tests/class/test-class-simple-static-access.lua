@@ -6,7 +6,7 @@ require 'cool';
 
 print('## TEST ##\n');
 
-local Math = require 'cool/tests/Math';
+local Math = require 'tests/Math';
 
 local test = true;
 if test then

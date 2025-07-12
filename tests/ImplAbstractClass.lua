@@ -5,7 +5,7 @@
 local cool = require 'cool';
 local newClass = cool.newClass;
 
-local AbstractClass = require 'cool/tests/AbstractClass';
+local AbstractClass = require 'tests/AbstractClass';
 
 local ImplAbstractClass = newClass({
     scope = 'public',

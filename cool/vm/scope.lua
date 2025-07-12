@@ -33,7 +33,6 @@ function API.getScopeForCall(struct, callInfo)
 
 
     if callStruct then
-        
         local ed = VM.executable.getExecutableFromLine(struct, callInfo.path, callInfo.currentLine);
         if ed then
             -- Inside struct definition. Can access everything in struct.
@@ -55,7 +54,6 @@ function API.getScopeForCall(struct, callInfo)
                 value = 'package';
             end
         end
-
     end
 
 
@@ -116,11 +114,6 @@ function API.getRelativePath()
     while
         relPath == '[C]' or
         relPath == '=(tail call)' or
-        relPath == 'cool/debug' or
-        relPath == 'cool/vm' or
-        relPath == 'cool/vm/utils' or
-        relPath == 'cool' or
-        relPath == 'cool/builder' or
         relPath:startsWith('cool.')
     do
         level = level + 1;
@@ -128,7 +121,7 @@ function API.getRelativePath()
     end
 
     local testDot = string.find(relPath, '.', 1, true);
-    
+
     if testDot == 1 then
         relPath = relPath:sub(2);
     end

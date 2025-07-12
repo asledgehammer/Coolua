@@ -231,7 +231,8 @@ function API.newClass(definition, outer)
                 for i = 1, #definition.implements do
                     local interface = definition.implements[i];
                     if interface.__type__ ~= 'InterfaceStructDefinition' then
-                        errorf(2, '%s Implements argument #%i is not a Interface.');
+                        print('interface.__type__ = ', interface.__type__);
+                        errorf(2, '%s Implements argument #%i is not a Interface.', path, i);
                     end
 
                     if not interface.__readonly__ then

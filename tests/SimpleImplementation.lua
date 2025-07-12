@@ -15,7 +15,7 @@ local method = builder.method;
 local public = builder.public;
 -- ------------------------------------ --
 
-local SimpleInterface = import 'cool.tests.SimpleInterface';
+local SimpleInterface = import 'tests.SimpleInterface';
 
 --- Java example:
 --- ```java
@@ -30,7 +30,7 @@ local SimpleInterface = import 'cool.tests.SimpleInterface';
 --- 
 --- }
 --- ```
-local SimpleImplementation, scaffolding = class 'SimpleImplementation' (public) {
+local SimpleImplementation = class 'SimpleImplementation' (public) {
 
     implements(SimpleInterface),
 

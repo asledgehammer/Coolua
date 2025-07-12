@@ -24,6 +24,3 @@ print(dump(TestInterface, {
     ignoreTableFunctions = true,
     ignoreEmptyTableArrays = true
 }));
-
--- print(TestInterface.myField);
--- print(TestInterface.getMyField());

@@ -2,7 +2,7 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local PrintPlus = require "cool.print";
+local PrintPlus = require "cool/print";
 local printf = PrintPlus.printf;
 local debugf = PrintPlus.debugf;
 

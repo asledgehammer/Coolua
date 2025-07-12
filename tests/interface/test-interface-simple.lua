@@ -6,8 +6,8 @@ require 'cool';
 
 print('## TEST ##\n');
 
-local SimpleInterface = require 'cool/tests/SimpleInterface';
-local SimpleImplementation = require 'cool/tests/SimpleImplementation';
+local SimpleInterface = require 'tests/SimpleInterface';
+local SimpleImplementation = require 'tests/SimpleImplementation';
 
 print('Interface: \t' .. tostring(SimpleInterface));
 print('Class: \t' .. tostring(SimpleImplementation));

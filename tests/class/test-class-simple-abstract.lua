@@ -6,7 +6,7 @@ require 'cool';
 
 print('## TEST ##\n');
 
-local ImplAbstractClass = require 'cool/tests/ImplAbstractClass';
+local ImplAbstractClass = require 'tests/ImplAbstractClass';
 
 local o = ImplAbstractClass:new();
 o:aMethod();
