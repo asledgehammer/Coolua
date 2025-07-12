@@ -38,7 +38,7 @@ Class = class 'Class' (public, final) {
 
     field 'package' (private) {
         properties {
-            type = 'string'
+            type = Package
         },
         get(public) {
             function(self)
