@@ -249,15 +249,14 @@ function API.newClass(definition, outer)
     local cd = VM.DEFINITIONS[path];
 
     if not cd then
-        cd = setmetatable({}, {
-            __tostring = function(self)
-                return VM.print.printClass(self);
-            end
-        });
-
         VM.DEFINITIONS[path] = cd;
     end
 
+    cd = setmetatable({}, {
+        __tostring = function(self)
+            return VM.print.printClass(self);
+        end
+    });
 
     --- @cast cd any
 
