@@ -2,8 +2,8 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local LuaClass = require 'LuaClass';
-local newClass = LuaClass.newClass;
+local cool = require 'cool';
+local newClass = cool.newClass;
 
 local Stack = newClass({
     scope = 'public',

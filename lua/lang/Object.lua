@@ -2,12 +2,12 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local LVM = require 'LVM';
-local newClass = LVM.class.newClass;
+local VM = require 'cool/vm';
+local newClass = VM.class.newClass;
 
--- ! NOTE: All class objects for fields and parameter types are inferred using strings to prevent LVM-loading errors. !
+-- ! NOTE: All class objects for fields and parameter types are inferred using strings to prevent VM-loading errors. !
 
-LVM.flags.ignorePushPopContext = true;
+VM.flags.ignorePushPopContext = true;
 
 local Object = newClass({
 
@@ -18,7 +18,7 @@ local Object = newClass({
     scope = 'public'
 });
 
-LVM.flags.ignorePushPopContext = false;
+VM.flags.ignorePushPopContext = false;
 
 Object:addConstructor({
     scope = 'public',
@@ -78,7 +78,7 @@ Object:addMethod({
     ---
     --- @return string
     body = function(self)
-        return 'LuaClass: ' .. tostring(self.__type__);
+        return 'Class: ' .. tostring(self.__type__);
     end
 });
 

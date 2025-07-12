@@ -2,12 +2,11 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local dump = require 'dump'.any;
+require 'cool/vm';
+local dump = require 'cool/dump'.any;
 
-local LVM = require 'LVM';
-local newClass = LVM.class.newClass;
-
-local builder = require 'LuaClassBuilder';
+-- Builder API ------------------------ --
+local builder = require 'cool/builder';
 local class = builder.class;
 local field = builder.field;
 local constructor = builder.constructor;
@@ -20,6 +19,7 @@ local toString = builder.toString;
 local public = builder.public;
 local private = builder.private;
 local final = builder.final;
+-- ------------------------------------ --
 
 --- @type StackTraceElementDefinition
 local StackTraceElement = class 'StackTraceElement' (public) {
