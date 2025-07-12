@@ -378,6 +378,24 @@ function API.newClass(definition, outer)
             -- errorf(2, '%s Cannot invoke constructor. (ClassStructDefinition is not finalized!)', errHeader);
         end
 
+        -- Check and see if the calling code can access the class.
+        local level, relPath = vm.scope.getRelativePath();
+        local callInfo = DebugUtils.getCallInfo(level, vm.ROOT_PATH, true);
+        callInfo.path = relPath;
+        local scopeCalled = vm.scope.getScopeForCall(cd, callInfo);
+        if not vm.scope.canAccessScope(cd.scope, scopeCalled) then
+            local sClass = vm.print.printClass(cd);
+            local errMsg = string.format(
+                'IllegalAccessException: The class %s is set as "%s" access level. (Access Level from call: "%s")\n%s',
+                sClass,
+                cd.scope, scopeCalled,
+                vm.stack.printStackTrace()
+            );
+            print(errMsg);
+            error(errMsg, 2);
+            return;
+        end
+
         -- TODO: Check if package-class exists.
 
         local __class__;
