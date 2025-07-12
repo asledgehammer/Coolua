@@ -104,18 +104,16 @@ function API.createSuperTable(cd)
             return;
         end
 
-        local level, relPath = vm.scope.getRelativePath();
+        local callInfo = vm.scope.getRelativeCall();
 
         vm.stack.pushContext({
             class = cd,
             element = constructorDefinition,
             context = 'constructor',
-            line = DebugUtils.getCurrentLine(level),
-            path = DebugUtils.getPath(level)
+            line = callInfo.currentLine,
+            path = callInfo.path
         });
 
-        local callInfo = DebugUtils.getCallInfo(level, vm.ROOT_PATH, true);
-        callInfo.path = relPath;
         local scopeAllowed = vm.scope.getScopeForCall(constructorDefinition.class, callInfo);
 
         if not vm.scope.canAccessScope(constructorDefinition.scope, scopeAllowed) then
@@ -161,18 +159,16 @@ function API.createSuperTable(cd)
             return;
         end
 
-        local level, relPath = vm.scope.getRelativePath();
+        local callInfo = vm.scope.getRelativeCall();
 
         vm.stack.pushContext({
             class = cd,
             element = md,
             context = 'method',
-            line = DebugUtils.getCurrentLine(level),
-            path = DebugUtils.getPath(level)
+            line = callInfo.currentLine,
+            path = callInfo.path
         });
 
-        local callInfo = DebugUtils.getCallInfo(level, vm.ROOT_PATH, true);
-        callInfo.path = relPath;
         local scopeAllowed = vm.scope.getScopeForCall(md.class, callInfo);
 
         if not vm.scope.canAccessScope(md.scope, scopeAllowed) then

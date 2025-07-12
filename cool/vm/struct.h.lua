@@ -51,6 +51,8 @@
 --- @field __supertable__ SuperTable
 --- @field path string The file/package path to the definition.
 --- @field pkg string
+--- @field file string The exact file the struct is defined.
+--- @field folder string The exact folder the struct is defined.
 --- @field name string
 --- @field scope ClassScope
 --- @field printHeader string Used for informational prints.

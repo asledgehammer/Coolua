@@ -8,13 +8,15 @@
 
 --- @alias ClassScope 'private'|'protected'|'package'|'public'
 
+--- @alias DetailedCallInfo CallInfo|{file:string, folder:string}
+
 -- MARK: - Module
 
 --- @class VMScopeModule: VMModule
 local API = {};
 
 --- @param class StructDefinition The class called.
---- @param callInfo CallInfo
+--- @param callInfo DetailedCallInfo
 --- @param callStruct StructDefinition? (Optional) For calls within struct construction.
 ---
 --- @return ClassScope
@@ -30,3 +32,11 @@ function API.canAccessScope(expected, given) end
 ---
 --- @return integer level, string relativePath
 function API.getRelativePath() end
+
+--- Grabs the most immediate path outside the VM.
+---
+--- @return integer level, string relativePath, string folder
+function API.getRelativeFile() end
+
+--- @return DetailedCallInfo
+function API.getRelativeCall() end

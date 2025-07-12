@@ -29,7 +29,7 @@ local AbstractClass = class 'AbstractClass' (abstract) {
     }
 };
 
-local ImplementedClass = class 'ImplementedClass' (public, abstract) {
+local ImplementedClass = class 'ImplementedClass' (abstract) {
     extends(AbstractClass),
 
     aMethod {

@@ -30,7 +30,6 @@ function API.getScopeForCall(struct, callInfo, callStruct)
 
     -- Classes are locked to their package path and name.
     callStruct = callStruct or vm.DEFINITIONS[callInfo.path];
-    -- PrintPlus.printf('callStruct[%s]: %s', callInfo.path, tostring(callStruct));
 
     if callStruct then
         local ed = vm.executable.getExecutableFromLine(struct, callInfo.path, callInfo.currentLine);
@@ -54,7 +53,17 @@ function API.getScopeForCall(struct, callInfo, callStruct)
             elseif callStruct.pkg == struct.pkg then
                 -- The class calling the function is in the same package and can access package-scope properties.
                 value = 'package';
+            elseif callStruct.file == struct.file then
+                -- Both structs are defined in the same file.
+                value = 'package';
             end
+        end
+    else
+        -- No struct is found so look and see if the file or folder is calling the code.
+        if struct.file == callInfo.file then
+            value = 'protected';
+        elseif struct.folder == callInfo.folder then
+            value = 'package';
         end
     end
 
@@ -80,12 +89,52 @@ function API.canAccessScope(expected, given)
     end
 end
 
+function API.getRelativeCall()
+    local level, relPath = vm.scope.getRelativePath();
+    local _, file, folder = vm.scope.getRelativeFile();
+    --- @type DetailedCallInfo
+    local callInfo = DebugUtils.getCallInfo(level, vm.ROOT_PATH, true);
+    callInfo.path = relPath;
+    callInfo.file = file;
+    callInfo.folder = folder;
+    return callInfo;
+end
+
+function API.getRelativeFile()
+    local level = 1;
+    local relPath = DebugUtils.getPath(level, vm.ROOT_PATH, false);
+
+    while
+        relPath == '=[C]' or
+        relPath == '=(tail call)' or
+        relPath:startsWith('\\cool/')
+    do
+        level = level + 1;
+        relPath = DebugUtils.getPath(level, vm.ROOT_PATH, false);
+    end
+
+    -- FIX: Level off by one.
+    level = level - 1;
+
+    relPath = string.gsub(relPath, '\\', '/');
+    local testDot = string.find(relPath, '/', 1, true);
+    if testDot == 1 then
+        relPath = relPath:sub(2);
+    end
+
+    local split = relPath:split('/');
+    table.remove(split, #split);
+    local folder = table.concat(split, '/');
+
+    return level, relPath, folder;
+end
+
 function API.getRelativePath()
     local level = 1;
     local relPath = DebugUtils.getPath(level, vm.ROOT_PATH, true);
 
     while
-        relPath == '[C]' or
+        relPath == '=[C]' or
         relPath == '=(tail call)' or
         relPath:startsWith('cool.')
     do

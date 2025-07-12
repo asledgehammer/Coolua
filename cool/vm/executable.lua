@@ -244,26 +244,39 @@ function API.createMiddleMethod(cd, name, methods)
             return;
         end
 
+        local callInfo = vm.scope.getRelativeCall();
+
         vm.stack.pushContext({
             class = cd,
             element = md,
             context = 'method',
-            line = DebugUtils.getCurrentLine(3),
-            path = DebugUtils.getPath(3)
+            line = callInfo.currentLine,
+            path = callInfo.path
         });
 
-        local level, relPath = vm.scope.getRelativePath();
+        -- Ensure that the class is accessible from the scope.
+        local classScopeAllowed = vm.scope.getScopeForCall(cd, callInfo);
+        if not vm.scope.canAccessScope(cd.scope, classScopeAllowed) then
+            local sClass = cd.path;
+            local errMsg = string.format(
+                'IllegalAccessException: The class "%s" is "%s".' ..
+                ' (Access Level from call: "%s")\n%s',
+                sClass,
+                cd.scope, classScopeAllowed,
+                vm.stack.printStackTrace()
+            );
+            print(errMsg);
+            error(errMsg, 2);
+            return;
+        end
 
-        local callInfo = DebugUtils.getCallInfo(level, vm.ROOT_PATH, true);
-        callInfo.path = relPath;
-        local scopeAllowed = vm.scope.getScopeForCall(md.class, callInfo);
-
-        if not vm.scope.canAccessScope(md.scope, scopeAllowed) then
+        local methodScopeAllowed = vm.scope.getScopeForCall(cd, callInfo);
+        if not vm.scope.canAccessScope(md.scope, methodScopeAllowed) then
             local sMethod = vm.print.printMethod(md);
             local errMsg = string.format(
                 'IllegalAccessException: The method %s is set as "%s" access level. (Access Level from call: "%s")\n%s',
                 sMethod,
-                md.scope, scopeAllowed,
+                md.scope, methodScopeAllowed,
                 vm.stack.printStackTrace()
             );
             vm.stack.popContext();
@@ -386,6 +399,7 @@ end
 function API.getMethodNames(classDef, methodNames)
     methodNames = methodNames or {};
 
+    vm.stepIn();
     -- Grab any super-struct declarations.
     if classDef['super'] then
         --- @cast classDef ClassStructDefinition|InterfaceStructDefinition
@@ -402,6 +416,8 @@ function API.getMethodNames(classDef, methodNames)
             end
         end
     end
+    
+    vm.stepOut();
 
     -- Get struct-specific declarations.
     API.getDeclaredMethodNames(classDef, methodNames);
@@ -421,6 +437,7 @@ function API.combineAllMethods(def, name, comb)
         comb[name] = combCluster;
     end
 
+    vm.stepIn();
     -- Grab all the super-context methods first.
     if def['super'] then
         --- @cast def ClassStructDefinition|InterfaceStructDefinition
@@ -460,6 +477,8 @@ function API.combineAllMethods(def, name, comb)
             end
         end
     end
+
+    vm.stepOut();
 
     local decCluster = def.declaredMethods[name];
 
@@ -646,20 +665,33 @@ function API.createMiddleConstructor(classDef)
             return;
         end
 
-        local level, relPath = vm.scope.getRelativePath();
+        local callInfo = vm.scope.getRelativeCall();
 
         vm.stack.pushContext({
             class = classDef,
             element = cons,
             context = 'constructor',
-            line = DebugUtils.getCurrentLine(level),
-            path = DebugUtils.getPath(level)
+            line = callInfo.currentLine,
+            path = callInfo.path
         });
 
-        local callInfo = DebugUtils.getCallInfo(3, vm.ROOT_PATH, true);
-        callInfo.path = relPath;
-        local scopeAllowed = vm.scope.getScopeForCall(cons.class, callInfo);
+        -- Ensure that the class is accessible from the scope.
+        local classScopeAllowed = vm.scope.getScopeForCall(classDef, callInfo);
+        if not vm.scope.canAccessScope(classDef.scope, classScopeAllowed) then
+            local sClass = classDef.path;
+            local errMsg = string.format(
+                'IllegalAccessException: The class "%s" is "%s".' ..
+                ' (Access Level from call: "%s")\n%s',
+                sClass,
+                classDef.scope, classScopeAllowed,
+                vm.stack.printStackTrace()
+            );
+            print(errMsg);
+            error(errMsg, 2);
+            return;
+        end
 
+        local scopeAllowed = vm.scope.getScopeForCall(cons.class, callInfo);
         if vm.isOutside() and not vm.scope.canAccessScope(cons.scope, scopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The constructor %s.new(%s) is set as "%s" access level.' ..

@@ -81,18 +81,16 @@ function API.createInstanceMetatable(cd, o)
             return;
         end
 
-        local level, relPath = vm.scope.getRelativePath();
+        local callInfo = vm.scope.getRelativeCall();
 
         vm.stack.pushContext({
             class = cd,
             element = fd,
             context = 'field-get',
-            line = DebugUtils.getCurrentLine(level),
-            path = DebugUtils.getPath(level)
+            line = callInfo.currentLine,
+            path = callInfo.path
         });
 
-        local callInfo = DebugUtils.getCallInfo(level, vm.ROOT_PATH, true);
-        -- callInfo.path = relPath;
         local scopeAllowed = vm.scope.getScopeForCall(fd.class, callInfo);
 
         if not vm.flags.bypassFieldSet and not vm.scope.canAccessScope(fd.scope, scopeAllowed) then
@@ -156,18 +154,16 @@ function API.createInstanceMetatable(cd, o)
             return;
         end
 
-        local level, relPath = vm.scope.getRelativePath();
+        local callInfo = vm.scope.getRelativeCall();
 
         vm.stack.pushContext({
             class = cd,
             element = fd,
             context = 'field-set',
-            line = DebugUtils.getCurrentLine(level),
-            path = DebugUtils.getPath(level)
+            line = callInfo.currentLine,
+            path = callInfo.path
         });
 
-        local callInfo = DebugUtils.getCallInfo(level, vm.ROOT_PATH, true);
-        callInfo.path = relPath;
         local scopeAllowed = vm.scope.getScopeForCall(fd.class, callInfo);
 
         if not vm.flags.bypassFieldSet and not vm.scope.canAccessScope(fd.scope, scopeAllowed) then
@@ -265,10 +261,10 @@ function API.calcPathNamePackage(definition, enclosingDefinition)
         name = definition.name;
     else
         -- Generate the path to use.
-        _, path = vm.scope.getRelativePath();
+        local callInfo = vm.scope.getRelativeCall();
 
         -- path = DebugUtils.getPath(4, VM.ROOT_PATH, true);
-        local split = path:split('.');
+        local split = callInfo.path:split('.');
         name = table.remove(split, #split);
         pkg = table.concat(split, '.');
 

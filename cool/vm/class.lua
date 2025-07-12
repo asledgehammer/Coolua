@@ -33,10 +33,102 @@ local function applyStructMetatable(cd)
     local __properties = {};
     for k, v in pairs(cd) do __properties[k] = v end
     -- mt.__metatable = false;
-    mt.__index = __properties;
     mt.__tostring = function() return vm.print.printClass(cd) end
 
-    mt.__index = __properties;
+    mt.__index = function(self, field)
+        if vm.isInside() or field == 'super' then
+            return __properties[field];
+        end
+
+        vm.stepIn();
+
+        local fd = cd:getField(field);
+        
+        local callInfo = vm.scope.getRelativeCall();
+
+        vm.stack.pushContext({
+            class = cd,
+            element = fd,
+            context = 'field-set',
+            line = callInfo.currentLine,
+            path = callInfo.path
+        });
+
+        if not fd then
+            errorf(2, 'FieldNotFoundException: Cannot set new field or method: %s.%s',
+                cd.path, field
+            );
+            return;
+        elseif not fd.static then
+            errorf(2, 'StaticFieldException: Assigning non-static field in static context: %s.%s',
+                cd.path, field
+            );
+            return;
+        end
+
+        local callInfo = vm.scope.getRelativeCall();
+
+        vm.stack.pushContext({
+            class = cd,
+            element = fd,
+            context = 'field-set',
+            line = callInfo.currentLine,
+            path = callInfo.path
+        });
+
+        -- Ensure that the class is accessible from the scope.
+        local classScopeAllowed = vm.scope.getScopeForCall(cd, callInfo);
+        if not vm.scope.canAccessScope(cd.scope, classScopeAllowed) then
+            local sClass = cd.path;
+            local errMsg = string.format(
+                'IllegalAccessException: The class "%s" is "%s".' ..
+                ' (Access Level from call: "%s")\n%s',
+                sClass,
+                cd.scope, classScopeAllowed,
+                vm.stack.printStackTrace()
+            );
+            vm.stack.popContext();
+            vm.stepOut();
+            print(errMsg);
+            error(errMsg, 2);
+            return;
+        end
+
+        -- Next, ensure that the field is accessible from the scope.
+        local fieldScopeAllowed = vm.scope.getScopeForCall(fd.class, callInfo);
+        if not vm.scope.canAccessScope(fd.scope, fieldScopeAllowed) then
+            local errMsg = string.format(
+                'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
+                cd.name, fd.name,
+                fd.scope, fieldScopeAllowed,
+                vm.stack.printStackTrace()
+            );
+            vm.stack.popContext();
+            vm.stepOut();
+            print(errMsg);
+            error('', 2);
+            return;
+        end
+
+        vm.stepOut();
+
+        local value = __properties[field];
+
+        -- (Just in-case)
+        if value == vm.constants.UNINITIALIZED_VALUE then
+            local errMsg = string.format('%s Cannot set %s as UNINITIALIZED_VALUE. (Internal Error)\n%s',
+                cd.printHeader, field, vm.stack.printStackTrace()
+            );
+            vm.stack.popContext();
+            error(errMsg, 2);
+            return;
+        end
+
+        vm.stack.popContext();
+
+        -- Apply forward the value metrics.
+        return value;
+    end
 
     mt.__newindex = function(_, field, value)
         -- TODO: Visibility scope analysis.
@@ -90,22 +182,18 @@ local function applyStructMetatable(cd)
             return;
         end
 
-        local level, relPath = vm.scope.getRelativePath();
+        local callInfo = vm.scope.getRelativeCall();
 
         vm.stack.pushContext({
             class = cd,
             element = fd,
             context = 'field-set',
-            line = DebugUtils.getCurrentLine(level),
-            path = DebugUtils.getPath(level)
+            line = callInfo.currentLine,
+            path = callInfo.path
         });
 
-        local callInfo = DebugUtils.getCallInfo(level, nil, true);
-        callInfo.path = relPath;
-
-        local classScopeAllowed = vm.scope.getScopeForCall(cd, callInfo);
-
         -- Ensure that the class is accessible from the scope.
+        local classScopeAllowed = vm.scope.getScopeForCall(cd, callInfo);
         if not vm.scope.canAccessScope(cd.scope, classScopeAllowed) then
             local sClass = cd.path;
             local errMsg = string.format(
@@ -115,6 +203,7 @@ local function applyStructMetatable(cd)
                 cd.scope, classScopeAllowed,
                 vm.stack.printStackTrace()
             );
+            vm.stack.popContext();
             print(errMsg);
             error(errMsg, 2);
             return;
@@ -213,6 +302,8 @@ end
 --- @param outer StructDefinition?
 function API.newClass(definition, outer)
     local locInfo = vm.struct.calcPathNamePackage(definition, outer);
+    local _, file, folder = vm.scope.getRelativeFile();
+
     local path = locInfo.path;
     local name = locInfo.name;
     local pkg = locInfo.pkg;
@@ -224,9 +315,7 @@ function API.newClass(definition, outer)
     end
 
     -- Grab where the call came from.
-    local level, relPath = vm.scope.getRelativePath();
-    local callInfo = DebugUtils.getCallInfo(level, vm.ROOT_PATH, true);
-    callInfo.path = relPath;
+    local callInfo = vm.scope.getRelativeCall();
 
     local super = definition.extends;
     if super and super.final then
@@ -306,6 +395,8 @@ function API.newClass(definition, outer)
     -- * Struct Properties * --
     cd.pkg = pkg;
     cd.path = path;
+    cd.file = file;
+    cd.folder = folder;
     cd.name = name;
 
     cd.static = definition.static or false;
@@ -460,9 +551,7 @@ function API.newClass(definition, outer)
         end
 
         -- Check and see if the calling code can access the class.
-        local level, relPath = vm.scope.getRelativePath();
-        local callInfo = DebugUtils.getCallInfo(level, vm.ROOT_PATH, true);
-        callInfo.path = relPath;
+        local callInfo = vm.scope.getRelativeCall();
         local scopeCalled = vm.scope.getScopeForCall(cd, callInfo);
         if not vm.scope.canAccessScope(cd.scope, scopeCalled) then
             local sClass = vm.print.printClass(cd);

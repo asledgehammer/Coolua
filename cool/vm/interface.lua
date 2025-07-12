@@ -98,14 +98,14 @@ local function applyMetatable(self)
             return;
         end
 
-        local level, relPath = vm.scope.getRelativePath();
+            local callInfo = vm.scope.getRelativeCall();
 
         vm.stack.pushContext({
             class = self,
             element = fd,
             context = 'field-set',
-            line = DebugUtils.getCurrentLine(level),
-            path = DebugUtils.getPath(level)
+            line = callInfo.currentLine,
+            path = callInfo.path
         });
 
         local callInfo = DebugUtils.getCallInfo(level, nil, true);
@@ -642,6 +642,10 @@ function API.newInterface(definition, enclosingStruct)
     local name = locInfo.name;
     local pkg = locInfo.pkg;
 
+    local fileLevel, file, folder = vm.scope.getRelativeFile();
+    print('file: ', file);
+    print('folder: ', folder);
+
     --- @type any
     local id = vm.DEFINITIONS[path] or {};
 
@@ -654,6 +658,8 @@ function API.newInterface(definition, enclosingStruct)
     id.path = path;
     id.name = name;
     id.pkg = pkg;
+    id.file = file;
+    id.folder = folder;
     id.type = 'interface:' .. path;
 
     id.static = definition.static or false;
@@ -703,9 +709,7 @@ function API.newInterface(definition, enclosingStruct)
 
     if extends then
         -- Grab where the call came from.
-        local level, relPath = vm.scope.getRelativePath();
-        local callInfo = DebugUtils.getCallInfo(level, vm.ROOT_PATH, true);
-        callInfo.path = relPath;
+        local callInfo = vm.scope.getRelativeCall();
 
         -- Check and see if the calling code can access the class.
         local scopeCalled = vm.scope.getScopeForCall(extends, callInfo, id);
