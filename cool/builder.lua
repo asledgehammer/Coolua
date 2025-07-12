@@ -364,21 +364,21 @@ local function processTypes(e)
         -- This is a one-type definition.
         table.insert(types, e);
     elseif te == 'table' then
-        -- Cannot use dictionaries to define types.
-        if not isArray(e) then
+        if e.__type__ then
+            if e.__type__ == 'ClassStructDefinition' then
+                --- @cast e ClassStructDefinition
+                table.insert(types, e.path);
+            elseif e.getDefinition then
+                -- Convert clas to its VM definition and grab its path.
+                table.insert(types, e:getDefinition().path);
+            end
+            -- Cannot use dictionaries to define types.
+        elseif not isArray(e) then
             error('Return types is not a table-array.', 2);
         end
         -- Copy contents into new array.
         for i = 1, #e do
             table.insert(types, e[i]);
-        end
-    elseif e.__type__ then
-        if e.__type__ == 'ClassStructDefinition' then
-            --- @cast e ClassStructDefinition
-            table.insert(types, e.path);
-        elseif e.getDefinition then
-            -- Convert clas to its VM definition and grab its path.
-            table.insert(types, e:getDefinition().path);
         end
     end
 
@@ -880,8 +880,9 @@ local function parameters(...)
             local name = 'param_1';
             table.insert(t.value, { name = name, types = { paramDef } });
         elseif tParamDef == 'table' then
-            if type(paramDef) ~= 'table' or not isArray(paramDef) then
-                errorf(2, 'Parameters is not an array.');
+            if not isArray(paramDef) then
+                paramDef = { paramDef };
+                -- errorf(2, 'Parameters is not an array.');
             end
 
             for j = 1, #paramDef do
