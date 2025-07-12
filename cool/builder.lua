@@ -1215,6 +1215,7 @@ return {
     returns = returns,
     get = get,
     set = set,
+    createMethodTemplate = createMethodTemplate,
 
     -- * Preset Methods * --
     equals = equals,
