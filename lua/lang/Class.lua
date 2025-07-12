@@ -2,8 +2,8 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local VM = require 'cool/vm';
-local import = VM.import;
+local vm = require 'cool/vm';
+local import = vm.import;
 
 -- Builder API ------------------------ --
 local builder = require 'cool/builder';
@@ -43,7 +43,7 @@ Class = class 'Class' (public, final) {
         get(public) {
             function(self)
                 if not self.package then
-                    self.package = VM.getPackage(self.definition.pkg);
+                    self.package = vm.getPackage(self.definition.pkg);
                 end
                 return self.package;
             end

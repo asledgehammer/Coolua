@@ -2,12 +2,10 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local VM = require 'cool/vm';
-local newClass = VM.class.newClass;
+local vm = require 'cool/vm';
+local newClass = vm.class.newClass;
 
--- ! NOTE: All class objects for fields and parameter types are inferred using strings to prevent VM-loading errors. !
-
-VM.flags.ignorePushPopContext = true;
+vm.flags.ignorePushPopContext = true;
 
 local Object = newClass({
 
@@ -18,7 +16,7 @@ local Object = newClass({
     scope = 'public'
 });
 
-VM.flags.ignorePushPopContext = false;
+vm.flags.ignorePushPopContext = false;
 
 Object:addConstructor({
     scope = 'public',

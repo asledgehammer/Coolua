@@ -3,7 +3,7 @@
 ---]]
 
 --- @type VM
-local VM;
+local vm;
 
 local isArray = require 'cool/vm/utils'.isArray;
 
@@ -14,8 +14,8 @@ local API = {
 
     --- @param vm VM
     setVM = function(vm)
-        VM = vm;
-        VM.moduleCount = VM.moduleCount + 1;
+        vm = vm;
+        vm.moduleCount = vm.moduleCount + 1;
     end
 };
 

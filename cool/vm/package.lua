@@ -6,7 +6,7 @@ local PrintPlus = require 'cool/print';
 local debugf = PrintPlus.debugf;
 
 --- @type VM
-local VM;
+local vm;
 
 local utils = require 'cool/vm/utils';
 local readonly = utils.readonly;
@@ -21,8 +21,8 @@ API = {
 
     --- @param vm VM
     setVM = function(vm)
-        VM = vm;
-        VM.moduleCount = VM.moduleCount + 1;
+        vm = vm;
+        vm.moduleCount = vm.moduleCount + 1;
         API.packages = readonly({
             __type__ = 'PackageDefinition',
             path = '(Default Package)'
@@ -42,11 +42,11 @@ function API.addToPackageStruct(def)
                 __type__ = 'PackageDefinition',
                 path = subPath
             });
-            debugf(VM.debug.pkg, '[PACKAGE] :: CREATE package: %s', pkgNext);
+            debugf(vm.debug.pkg, '[PACKAGE] :: CREATE package: %s', pkgNext);
         end
         pkgCurr = pkgCurr[pkgNext];
     end
-    debugf(VM.debug.pkg, '[PACKAGE] :: package (%s): Adding class: %s', def.pkg, VM.print.printStruct(def));
+    debugf(vm.debug.pkg, '[PACKAGE] :: package (%s): Adding class: %s', def.pkg, vm.print.printStruct(def));
     pkgCurr[def.name] = def;
 end
 

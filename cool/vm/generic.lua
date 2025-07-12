@@ -6,7 +6,7 @@ local PrintPlus = require 'cool/print';
 local errorf = PrintPlus.errorf;
 
 --- @type VM
-local VM;
+local vm;
 local utils = require 'cool/vm/utils';
 local isArray = utils.isArray;
 
@@ -16,8 +16,8 @@ local API = {
 
     --- @param vm VM
     setVM = function(vm)
-        VM = vm;
-        VM.moduleCount = VM.moduleCount + 1;
+        vm = vm;
+        vm.moduleCount = vm.moduleCount + 1;
     end
 };
 
@@ -43,7 +43,7 @@ function API.compileGenericTypesDefinition(cd, genericDefinitionParam)
                 if type(gDefParam.types) ~= 'table' or not isArray(gDefParam.types) then
                     errorf(2, '%s Generic parameter %i types is not array. {type = %s, value = %s}',
                         cd.printHeader, i,
-                        VM.type.getType(gDefParam.types), tostring(gDefParam.types)
+                        vm.type.getType(gDefParam.types), tostring(gDefParam.types)
                     );
                 elseif #gDefParam.types == 0 then
                     errorf(2, '%s Generic parameter %i types is empty array.', cd.printHeader, i);

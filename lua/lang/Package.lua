@@ -2,8 +2,8 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local VM = require 'cool/vm';
-local newClass = VM.class.newClass;
+local vm = require 'cool/vm';
+local newClass = vm.class.newClass;
 
 require 'lua/lang/Object';
 

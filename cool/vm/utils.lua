@@ -3,12 +3,12 @@
 ---]]
 
 --- @type VM
-local VM;
+local vm;
 
 local API = {
     --- @param vm VM
     setVM = function(vm)
-        VM = vm;
+        vm = vm;
     end
 };
 
@@ -21,7 +21,7 @@ function API.readonly(table)
     meta = getmetatable(table) or {};
 
     local __newindex = function(_, field, value)
-        if VM.isOutside() then
+        if vm.isOutside() then
             error('Attempt to modify read-only object.', 2);
         end
 

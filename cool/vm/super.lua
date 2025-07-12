@@ -11,7 +11,7 @@ local dump = require 'cool/dump'.any;
 local DebugUtils = require 'cool/debug';
 
 --- @type VM
-local VM;
+local vm;
 
 --- @type VMSuperModule
 local API = {
@@ -20,8 +20,8 @@ local API = {
 
     --- @param vm VM
     setVM = function(vm)
-        VM = vm;
-        VM.moduleCount = VM.moduleCount + 1;
+        vm = vm;
+        vm.moduleCount = vm.moduleCount + 1;
     end
 };
 
@@ -47,7 +47,7 @@ function API.createSuperTable(cd)
             return nil;
         end
 
-        if VM.isInside() then
+        if vm.isInside() then
             return rawget(tbl, field);
         else
             if not properties.__middleMethods or not properties.__middleMethods[field] then
@@ -60,7 +60,7 @@ function API.createSuperTable(cd)
     -- Make SuperTables readonly.
 
     function mt.__newindex(tbl, field, value)
-        if VM.isInside() then
+        if vm.isInside() then
             rawset(tbl, field, value);
         else
             errorf(2, '%s Cannot modify SuperTable. (readonly)', cd.printHeader);
@@ -90,11 +90,11 @@ function API.createSuperTable(cd)
 
     local function __callConstructor(o, args)
         if cd.path ~= 'lua.lang.StackTraceElement' then
-            debugf(VM.debug.super, '[SUPER] :: %s Entering super constructor context', cd.printHeader);
+            debugf(vm.debug.super, '[SUPER] :: %s Entering super constructor context', cd.printHeader);
         end
 
         if cd.path == 'lua.lang.Object' then
-            debugf(VM.debug.super, '[SUPER] :: IGNORING object super call in chain.');
+            debugf(vm.debug.super, '[SUPER] :: IGNORING object super call in chain.');
             return;
         end
 
@@ -104,9 +104,9 @@ function API.createSuperTable(cd)
             return;
         end
 
-        local level, relPath = VM.scope.getRelativePath();
+        local level, relPath = vm.scope.getRelativePath();
 
-        VM.stack.pushContext({
+        vm.stack.pushContext({
             class = cd,
             element = constructorDefinition,
             context = 'constructor',
@@ -114,33 +114,33 @@ function API.createSuperTable(cd)
             path = DebugUtils.getPath(level)
         });
 
-        local callInfo = DebugUtils.getCallInfo(level, VM.ROOT_PATH, true);
+        local callInfo = DebugUtils.getCallInfo(level, vm.ROOT_PATH, true);
         callInfo.path = relPath;
-        local scopeAllowed = VM.scope.getScopeForCall(constructorDefinition.class, callInfo);
+        local scopeAllowed = vm.scope.getScopeForCall(constructorDefinition.class, callInfo);
 
-        if not VM.scope.canAccessScope(constructorDefinition.scope, scopeAllowed) then
+        if not vm.scope.canAccessScope(constructorDefinition.scope, scopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The constructor %s.new(%s) is set as "%s" access level. (Access Level from call: "%s")\n%s',
                 constructorDefinition.class.name, dump(constructorDefinition.parameters),
                 constructorDefinition.scope, scopeAllowed,
-                VM.stack.printStackTrace()
+                vm.stack.printStackTrace()
             );
-            VM.stack.popContext();
+            vm.stack.popContext();
             print(errMsg);
             error('', 2);
             return;
         end
 
-        VM.stepIn();
+        vm.stepIn();
         if super.__who__ then
             super.__who__.__super_flag__ = true;
         else
-            VM.stack.popContext();
+            vm.stack.popContext();
             error('super.__who__ is nil!', 2);
         end
-        VM.stepOut();
+        vm.stepOut();
 
-        VM.stack.popContext();
+        vm.stack.popContext();
 
         --- ClassInstance is below the Object layer.
         if cd.path ~= 'lua.lang.Object' then
@@ -150,7 +150,7 @@ function API.createSuperTable(cd)
 
     local function __callMethod(o, name, args)
         if cd.path ~= 'lua.lang.StackTraceElement' then
-            debugf(VM.debug.super, '[SUPER] :: %s Entering super method context', cd.printHeader);
+            debugf(vm.debug.super, '[SUPER] :: %s Entering super method context', cd.printHeader);
         end
 
         --- @type MethodDefinition|nil
@@ -161,9 +161,9 @@ function API.createSuperTable(cd)
             return;
         end
 
-        local level, relPath = VM.scope.getRelativePath();
+        local level, relPath = vm.scope.getRelativePath();
 
-        VM.stack.pushContext({
+        vm.stack.pushContext({
             class = cd,
             element = md,
             context = 'method',
@@ -171,19 +171,19 @@ function API.createSuperTable(cd)
             path = DebugUtils.getPath(level)
         });
 
-        local callInfo = DebugUtils.getCallInfo(level, VM.ROOT_PATH, true);
+        local callInfo = DebugUtils.getCallInfo(level, vm.ROOT_PATH, true);
         callInfo.path = relPath;
-        local scopeAllowed = VM.scope.getScopeForCall(md.class, callInfo);
+        local scopeAllowed = vm.scope.getScopeForCall(md.class, callInfo);
 
-        if not VM.scope.canAccessScope(md.scope, scopeAllowed) then
-            local sMethod = VM.print.printMethod(md);
+        if not vm.scope.canAccessScope(md.scope, scopeAllowed) then
+            local sMethod = vm.print.printMethod(md);
             local errMsg = string.format(
                 'IllegalAccessException: The method %s is set as "%s" access level. (Access Level from call: "%s")\n%s',
                 sMethod,
                 md.scope, scopeAllowed,
-                VM.stack.printStackTrace()
+                vm.stack.printStackTrace()
             );
-            VM.stack.popContext();
+            vm.stack.popContext();
             print(errMsg);
             error('', 2);
             return;
@@ -199,7 +199,7 @@ function API.createSuperTable(cd)
             -- TODO: Check type-cast of returned value.
         end, debug.traceback);
 
-        VM.stack.popContext();
+        vm.stack.popContext();
 
         if not result then error(errMsg) end
 
@@ -216,7 +216,7 @@ function API.createSuperTable(cd)
         end
 
         if cd.path ~= 'lua.lang.StackTraceElement' then
-            debugf(VM.debug.super, '[SUPER] :: %s Entering super context via call', cd.printHeader);
+            debugf(vm.debug.super, '[SUPER] :: %s Entering super context via call', cd.printHeader);
         end
 
 
@@ -225,16 +225,16 @@ function API.createSuperTable(cd)
 
         -- TODO: Write `__who__` for methods.
 
-        VM.stepIn();
+        vm.stepIn();
         local who = super.__who__;
-        VM.stepOut();
+        vm.stepOut();
 
         if who then
             if who.__type__ == 'ConstructorDefinition' then
                 -- Let upstream calls know super was invoked.
-                VM.stepIn();
+                vm.stepIn();
                 super.__call_count__ = super.__call_count__ + 1;
-                VM.stepOut();
+                vm.stepOut();
 
                 return __callConstructor(o, args);
             elseif who.__type__ == 'MethodDefinition' then

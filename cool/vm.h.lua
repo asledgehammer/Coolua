@@ -52,28 +52,28 @@ function VMModule.setVM(vm) end
 --- @field isOutside fun(): boolean
 --- @field stepIn fun()
 --- @field stepOut fun()
-local VM = {};
+local vm = {};
 
 --- Simulates path resolution from Java via `Class.forName(..)`. Resolves the definition struct.
 ---
 --- @param path string The path to the class. syntax: `<package>.<class>`
 ---
 --- @return ClassStructDefinition|nil The VM class definition struct. If no definition exists with the path then nil is returned.
-function VM.forNameDef(path) end
+function vm.forNameDef(path) end
 
 --- Simulates path resolution from Java via `Class.forName(..)`. Resolves (or builds) a Class object.
 ---
 --- @param path string The path to the class. syntax: `<package>.<class>`
 ---
 --- @return Class|nil classObj The class object. If no definition exists with the path then nil is returned.
-function VM.forName(path) end
+function vm.forName(path) end
 
 --- @param path string
 ---
 --- @return StructDefinition|StructReference
-function VM.import(path) end
+function vm.import(path) end
 
 --- @param path string
 ---
 --- @return Package
-function VM.getPackage(path) end
+function vm.getPackage(path) end

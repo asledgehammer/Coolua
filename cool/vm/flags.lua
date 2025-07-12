@@ -3,7 +3,7 @@
 ---]]
 
 --- @type VM
-local VM;
+local vm;
 
 local API = {
 
@@ -18,8 +18,8 @@ local API = {
     -- Method(s)
     --- @param vm VM
     setVM = function(vm)
-        VM = vm;
-        VM.moduleCount = VM.moduleCount + 1;
+        vm = vm;
+        vm.moduleCount = vm.moduleCount + 1;
     end
 };
 

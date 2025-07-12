@@ -8,7 +8,7 @@ local errorf = PrintPlus.errorf;
 local DebugUtils = require 'cool/debug';
 
 --- @type VM
-local VM;
+local vm;
 
 --- @type VMStructModule
 local API = {
@@ -18,8 +18,8 @@ local API = {
     -- Method(s)
     --- @param vm VM
     setVM = function(vm)
-        VM = vm;
-        VM.moduleCount = VM.moduleCount + 1;
+        vm = vm;
+        vm.moduleCount = vm.moduleCount + 1;
     end
 };
 
@@ -81,9 +81,9 @@ function API.createInstanceMetatable(cd, o)
             return;
         end
 
-        local level, relPath = VM.scope.getRelativePath();
+        local level, relPath = vm.scope.getRelativePath();
 
-        VM.stack.pushContext({
+        vm.stack.pushContext({
             class = cd,
             element = fd,
             context = 'field-get',
@@ -91,18 +91,18 @@ function API.createInstanceMetatable(cd, o)
             path = DebugUtils.getPath(level)
         });
 
-        local callInfo = DebugUtils.getCallInfo(level, VM.ROOT_PATH, true);
+        local callInfo = DebugUtils.getCallInfo(level, vm.ROOT_PATH, true);
         -- callInfo.path = relPath;
-        local scopeAllowed = VM.scope.getScopeForCall(fd.class, callInfo);
+        local scopeAllowed = vm.scope.getScopeForCall(fd.class, callInfo);
 
-        if not VM.flags.bypassFieldSet and not VM.scope.canAccessScope(fd.scope, scopeAllowed) then
+        if not vm.flags.bypassFieldSet and not vm.scope.canAccessScope(fd.scope, scopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
                 cd.name, fd.name,
                 fd.scope, scopeAllowed,
-                VM.stack.printStackTrace()
+                vm.stack.printStackTrace()
             );
-            VM.stack.popContext();
+            vm.stack.popContext();
             print(errMsg);
             error('', 2);
             return;
@@ -110,7 +110,7 @@ function API.createInstanceMetatable(cd, o)
 
         -- TODO: Implement generic type-cast checks.
 
-        VM.stack.popContext();
+        vm.stack.popContext();
 
         -- Get the value.
         if fd.static then
@@ -129,19 +129,19 @@ function API.createInstanceMetatable(cd, o)
         end
 
         if field == 'super' then
-            if VM.isOutside() then
+            if vm.isOutside() then
                 errorf(2, '%s Cannot set super(). (Reserved method)', cd.printHeader);
             end
             fields.super = value;
             return;
         elseif field == '__super__' then
-            if VM.isOutside() then
+            if vm.isOutside() then
                 errorf(2, '%s Cannot set __super__. (Internal field)', cd.printHeader);
             end
             fields.__super__ = value;
             return;
         elseif field == '__class__' then
-            if VM.isOutside() then
+            if vm.isOutside() then
                 errorf(2, '%s Cannot set __class__. (Internal field)', cd.printHeader);
             end
             fields.__class__ = value;
@@ -156,9 +156,9 @@ function API.createInstanceMetatable(cd, o)
             return;
         end
 
-        local level, relPath = VM.scope.getRelativePath();
+        local level, relPath = vm.scope.getRelativePath();
 
-        VM.stack.pushContext({
+        vm.stack.pushContext({
             class = cd,
             element = fd,
             context = 'field-set',
@@ -166,37 +166,37 @@ function API.createInstanceMetatable(cd, o)
             path = DebugUtils.getPath(level)
         });
 
-        local callInfo = DebugUtils.getCallInfo(level, VM.ROOT_PATH, true);
+        local callInfo = DebugUtils.getCallInfo(level, vm.ROOT_PATH, true);
         callInfo.path = relPath;
-        local scopeAllowed = VM.scope.getScopeForCall(fd.class, callInfo);
+        local scopeAllowed = vm.scope.getScopeForCall(fd.class, callInfo);
 
-        if not VM.flags.bypassFieldSet and not VM.scope.canAccessScope(fd.scope, scopeAllowed) then
+        if not vm.flags.bypassFieldSet and not vm.scope.canAccessScope(fd.scope, scopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
                 cd.name, fd.name,
                 fd.scope, scopeAllowed,
-                VM.stack.printStackTrace()
+                vm.stack.printStackTrace()
             );
-            VM.stack.popContext();
+            vm.stack.popContext();
             print(errMsg);
             error('', 2);
             return;
         end
 
         -- (Just in-case)
-        if value == VM.constants.UNINITIALIZED_VALUE then
+        if value == vm.constants.UNINITIALIZED_VALUE then
             local errMsg = string.format('%s Cannot set %s as UNINITIALIZED_VALUE. (Internal Error)\n%s',
-                cd.printHeader, field, VM.stack.printStackTrace()
+                cd.printHeader, field, vm.stack.printStackTrace()
             );
-            VM.stack.popContext();
+            vm.stack.popContext();
             error(errMsg, 2);
             return;
         end
 
-        local ste = VM.stack.getContext();
+        local ste = vm.stack.getContext();
 
         if not ste then
-            VM.stack.popContext();
+            vm.stack.popContext();
             error('Context is nil.', 2);
             return;
         end
@@ -205,21 +205,21 @@ function API.createInstanceMetatable(cd, o)
 
         if fd.final then
             if not ste then
-                VM.stack.popContext();
+                vm.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
                 return;
             end
 
             if ste:getCallingClass() ~= cd then
-                VM.stack.popContext();
+                vm.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
                 return;
             elseif context ~= 'constructor' then
-                VM.stack.popContext();
+                vm.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s outside of constructor scope.', cd.printHeader, field);
                 return;
             elseif fd.assignedOnce then
-                VM.stack.popContext();
+                vm.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s. (Already defined)', cd.printHeader, field);
                 return;
             end
@@ -234,14 +234,14 @@ function API.createInstanceMetatable(cd, o)
             fields[fd.class.path .. '@' .. field] = value;
         end
 
-        VM.stack.popContext();
+        vm.stack.popContext();
 
         -- Apply forward the value metrics.
         fd.assignedOnce = true;
         fd.value = value;
     end
 
-    mt.__eq = VM.class.equals;
+    mt.__eq = vm.class.equals;
 
     --- @return string text
     mt.__tostring = function()
@@ -265,7 +265,7 @@ function API.calcPathNamePackage(definition, enclosingDefinition)
         name = definition.name;
     else
         -- Generate the path to use.
-        _, path = VM.scope.getRelativePath();
+        _, path = vm.scope.getRelativePath();
 
         -- path = DebugUtils.getPath(4, VM.ROOT_PATH, true);
         local split = path:split('.');

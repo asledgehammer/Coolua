@@ -10,7 +10,7 @@ local debugf = PrintPlus.debugf;
 
 local dump = require 'cool/dump'.any;
 
-local VM = require 'cool/vm';
+local vm = require 'cool/vm';
 
 local isArray = require 'cool/vm/utils'.isArray;
 
@@ -52,7 +52,7 @@ buildClass = function(self, enclosingStruct)
     -- Build class flags.
     buildFlags(self, clsArgs);
 
-    local cls = VM.class.newClass(clsArgs, enclosingStruct);
+    local cls = vm.class.newClass(clsArgs, enclosingStruct);
 
     -- Build constructors.
     if self.constructors then
@@ -179,7 +179,7 @@ buildClass = function(self, enclosingStruct)
         end
     end
 
-    debugf(VM.debug.builder, '[BUILDER] :: Built class: %s', tostring(cls));
+    debugf(vm.debug.builder, '[BUILDER] :: Built class: %s', tostring(cls));
 
     return cls;
 end
@@ -202,7 +202,7 @@ local function buildInterface(self, outerStruct)
     -- Build class flags.
     buildFlags(self, intArgs);
 
-    local interface = VM.interface.newInterface(intArgs, outerStruct);
+    local interface = vm.interface.newInterface(intArgs, outerStruct);
 
     -- Build methods.
     for name, method in pairs(self.methods) do
@@ -315,7 +315,7 @@ local function buildInterface(self, outerStruct)
 
     -- interface:finalize();
 
-    debugf(VM.debug.builder, '[BUILDER] :: Built interface: %s', tostring(interface));
+    debugf(vm.debug.builder, '[BUILDER] :: Built interface: %s', tostring(interface));
 
     return interface, self;
 end
@@ -587,7 +587,7 @@ local mt_interface_body = function(self, ...)
                 end
                 self.extends = arg.value;
             elseif arg.__type__ == 'FieldTable' then
-                debugf(VM.debug.warn,
+                debugf(vm.debug.warn,
                     'WARNING: Field %s is defined for interface %s outside of static block. This can only be a ' ..
                     'public static final field. Applying as such..'
                 );
@@ -1201,7 +1201,7 @@ end
 
 return {
 
-    import = VM.import,
+    import = vm.import,
 
     class = class,
     interface = interface,

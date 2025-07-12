@@ -2,18 +2,18 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local VM = require 'cool/vm';
+local vm = require 'cool/vm';
 local builder = require 'cool/builder';
 
 local cool = {
-    newClass = VM.class.newClass,
-    newInterface = VM.interface.newInterface,
+    newClass = vm.class.newClass,
+    newInterface = vm.interface.newInterface,
     builder = builder,
-    import = VM.import,
-    packages = VM.package.packages
+    import = vm.import,
+    packages = vm.package.packages
 };
 
-VM.stepIn();
+vm.stepIn();
 
 -- Language-level
 require 'lua/lang/Object';
@@ -22,8 +22,8 @@ require 'lua/lang/Class';
 
 -- Language-util-level
 local StackTraceElement = require 'lua/lang/StackTraceElement';
-VM.forName(StackTraceElement.path);
+vm.forName(StackTraceElement.path);
 
-VM.stepOut();
+vm.stepOut();
 
 return cool;

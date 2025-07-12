@@ -13,7 +13,7 @@ local isArray = utils.isArray;
 local isValidName = utils.isValidName;
 
 --- @type VM
-local VM = nil;
+local vm = nil;
 
 local API = {
 
@@ -21,8 +21,8 @@ local API = {
 
     --- @param vm VM
     setVM = function(vm)
-        VM = vm;
-        VM.moduleCount = VM.moduleCount + 1;
+        vm = vm;
+        vm.moduleCount = vm.moduleCount + 1;
     end
 };
 
@@ -32,7 +32,7 @@ local API = {
 function API.auditGenericType(def)
     if not def.__type__ ~= 'GenericTypeDefinition' then
         errorf(2, 'Parameter is not a GenericTypeDefinition. {type = %s, value = %s}',
-            VM.type.getType(def),
+            vm.type.getType(def),
             tostring(def)
         );
     end
@@ -47,7 +47,7 @@ function API.auditGenericType(def)
         errorf(2, 'Property "types" is nil. (Must be an array))');
     elseif type(def.types) == 'table' or not isArray(def.types) then
         errorf(2, 'Property "types" is not an array. {type = %s, value = %s}',
-            VM.type.getType(def),
+            vm.type.getType(def),
             tostring(def)
         );
     end
@@ -132,8 +132,8 @@ function API.auditField(cd, fd)
     end
 
     -- Validate value:
-    if fd.value ~= VM.constants.UNINITIALIZED_VALUE then
-        if not VM.type.isAssignableFromType(fd.value, fd.types) then
+    if fd.value ~= vm.constants.UNINITIALIZED_VALUE then
+        if not vm.type.isAssignableFromType(fd.value, fd.types) then
             errorf(2,
                 '%s property "value" is not assignable from "types". {types = %s, value = {type = %s, value = %s}}',
                 errHeader, dump(fd.types), type(fd.value), tostring(fd.value)
@@ -155,14 +155,14 @@ function API.auditField(cd, fd)
     -- Validate final:
     if type(fd.final) ~= 'boolean' then
         errorf(2, '%s property "final" is not a boolean. {type = %s, value = %s}',
-            errHeader, VM.type.getType(fd.final), tostring(fd.final)
+            errHeader, vm.type.getType(fd.final), tostring(fd.final)
         );
     end
 
     -- Validate static:
     if type(fd.static) ~= 'boolean' then
         errorf(2, '%s property "static" is not a boolean. {type = %s, value = %s}',
-            errHeader, VM.type.getType(fd.static), tostring(fd.static)
+            errHeader, vm.type.getType(fd.static), tostring(fd.static)
         );
     end
 end
@@ -171,7 +171,7 @@ function API.auditFinalFields(cd, o)
     local fields = cd.declaredFields;
     for name, fd in pairs(fields) do
         local fieldValue = o[name];
-        if fd.final and fieldValue == VM.constants.UNINITIALIZED_VALUE then
+        if fd.final and fieldValue == vm.constants.UNINITIALIZED_VALUE then
             errorf(2, '%s Field is not initialized: %s (Check the FieldDefinitions and Constructors)',
                 cd.printHeader, name
             );
@@ -198,7 +198,7 @@ function API.auditParameter(parameter, i, errHeader)
     end
 
     -- Validate parameter name.
-    if not parameter.name and not VM.executable.isVararg(parameter.types[1]) then
+    if not parameter.name and not vm.executable.isVararg(parameter.types[1]) then
         errorf(2, '%s Parameter #%i doesn\'t have a defined name string.', errHeader, i);
     elseif parameter.name == '' then
         errorf(2, '%s Parameter #%i has an empty name string.', errHeader, i);
@@ -209,7 +209,7 @@ function API.auditParameters(parameters, errHeader)
     if parameters then
         if not parameters or type(parameters) ~= 'table' or not isArray(parameters) then
             errorf(2, '%s property "parameters" is not a ParameterDefinition[]. {type=%s, value=%s}',
-                errHeader, VM.type.getType(parameters), tostring(parameters)
+                errHeader, vm.type.getType(parameters), tostring(parameters)
             );
         end
         -- Convert any simplified type declarations.
@@ -238,7 +238,7 @@ function API.auditMethodReturnsProperty(returnTypes, errHeader)
                 errorf(2,
                     '%s The property "returnTypes" is not an array of types, a class or interface.' ..
                     ' {type = %s, value = %s}',
-                    errHeader, VM.type.getType(returnTypes), dump(returnTypes)
+                    errHeader, vm.type.getType(returnTypes), dump(returnTypes)
                 );
             end
             types = { returnTypes };
@@ -246,7 +246,7 @@ function API.auditMethodReturnsProperty(returnTypes, errHeader)
             errorf(2,
                 '%s The property "returnTypes" is not an array of types, a class or interface.' ..
                 ' {type = %s, value = %s}',
-                errHeader, VM.type.getType(returnTypes), dump(returnTypes)
+                errHeader, vm.type.getType(returnTypes), dump(returnTypes)
             );
         end
         --- @cast returnTypes string[]

@@ -8,7 +8,7 @@ local debugf = PrintPlus.debugf;
 local DebugUtils = require 'cool/debug';
 
 --- @type VM
-local VM;
+local vm;
 
 --- @type VMStackModule
 local API = {
@@ -17,8 +17,8 @@ local API = {
 
     --- @param vm VM
     setVM = function(vm)
-        VM = vm;
-        VM.moduleCount = VM.moduleCount + 1;
+        vm = vm;
+        vm.moduleCount = vm.moduleCount + 1;
     end
 };
 
@@ -50,17 +50,17 @@ end
 --- @param context ContextArgs
 function API.pushContext(context)
     -- Muting context.
-    if VM.isInside() or VM.flags.ignorePushPopContext then return end
+    if vm.isInside() or vm.flags.ignorePushPopContext then return end
 
-    debugf(VM.debug.scope, '[SCOPE] :: line %i ContextStack[%i] pushContext(%s)', DebugUtils.getCurrentLine(3),
+    debugf(vm.debug.scope, '[SCOPE] :: line %i ContextStack[%i] pushContext(%s)', DebugUtils.getCurrentLine(3),
     #stack + 1,
         tostring(context));
 
     -- Prevent infinite loop.
-    VM.flags.ignorePushPopContext = true;
+    vm.flags.ignorePushPopContext = true;
     table.insert(
         stack,
-        VM.package.packages.lua.lang.StackTraceElement.new(
+        vm.package.packages.lua.lang.StackTraceElement.new(
             context.path,
             context.line,
             context.class,
@@ -68,14 +68,14 @@ function API.pushContext(context)
             context.element
         )
     );
-    VM.flags.ignorePushPopContext = false;
+    vm.flags.ignorePushPopContext = false;
 end
 
 function API.popContext()
     -- Muting context.
-    if VM.isInside() or VM.flags.ignorePushPopContext then return end
+    if vm.isInside() or vm.flags.ignorePushPopContext then return end
 
-    debugf(VM.debug.scope, '[SCOPE] :: line %i ContextStack[%i] popContext()', DebugUtils.getCurrentLine(3), #stack - 1);
+    debugf(vm.debug.scope, '[SCOPE] :: line %i ContextStack[%i] popContext()', DebugUtils.getCurrentLine(3), #stack - 1);
     local stackLen = #stack;
     if stackLen == 0 then
         error('The ContextStack is empty.', 2);
@@ -87,7 +87,7 @@ end
 function API.printStackTrace()
     local s = 'Class StackTrace:';
     for i = #stack, 1, -1 do
-        s = s .. '\n\t' .. tostring(VM.stack:getStack()[i]);
+        s = s .. '\n\t' .. tostring(vm.stack:getStack()[i]);
     end
     return s;
 end

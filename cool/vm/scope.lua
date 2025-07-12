@@ -10,7 +10,7 @@ local dump = require 'cool/dump'.any;
 local DebugUtils = require 'cool/debug';
 
 --- @type VM
-local VM;
+local vm;
 
 local API = {
 
@@ -18,8 +18,8 @@ local API = {
 
     --- @param vm VM
     setVM = function(vm)
-        VM = vm;
-        VM.moduleCount = VM.moduleCount + 1;
+        vm = vm;
+        vm.moduleCount = vm.moduleCount + 1;
     end
 };
 
@@ -29,11 +29,11 @@ function API.getScopeForCall(struct, callInfo)
     local value = 'public';
 
     -- Classes are locked to their package path and name.
-    local callStruct = VM.forNameDef(callInfo.path);
+    local callStruct = vm.forNameDef(callInfo.path);
 
 
     if callStruct then
-        local ed = VM.executable.getExecutableFromLine(struct, callInfo.path, callInfo.currentLine);
+        local ed = vm.executable.getExecutableFromLine(struct, callInfo.path, callInfo.currentLine);
         if ed then
             -- Inside struct definition. Can access everything in struct.
             value = 'private';
@@ -85,7 +85,7 @@ function API.getScopeForCall(struct, callInfo)
         -- end
     end
 
-    debugf(VM.debug.scope, '[SCOPE] :: getScopeCall(%s, %s) = %s',
+    debugf(vm.debug.scope, '[SCOPE] :: getScopeCall(%s, %s) = %s',
         struct.path, dump(callInfo), value
     );
 
@@ -109,7 +109,7 @@ end
 
 function API.getRelativePath()
     local level = 1;
-    local relPath = DebugUtils.getPath(level, VM.ROOT_PATH, true);
+    local relPath = DebugUtils.getPath(level, vm.ROOT_PATH, true);
 
     while
         relPath == '[C]' or
@@ -117,7 +117,7 @@ function API.getRelativePath()
         relPath:startsWith('cool.')
     do
         level = level + 1;
-        relPath = DebugUtils.getPath(level, VM.ROOT_PATH, true);
+        relPath = DebugUtils.getPath(level, vm.ROOT_PATH, true);
     end
 
     local testDot = string.find(relPath, '.', 1, true);

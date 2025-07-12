@@ -8,7 +8,7 @@ local errorf = PrintPlus.errorf;
 local isArray = require 'cool/vm/utils'.isArray;
 
 --- @type VM
-local VM;
+local vm;
 
 --- @type VMPrintModule
 local API = {
@@ -17,14 +17,14 @@ local API = {
 
     --- @param vm VM
     setVM = function(vm)
-        VM = vm;
-        VM.moduleCount = VM.moduleCount + 1;
+        vm = vm;
+        vm.moduleCount = vm.moduleCount + 1;
     end
 };
 
 function API.printGenericType(def)
     -- Make sure the def is valid.
-    VM.audit.auditGenericType(def);
+    vm.audit.auditGenericType(def);
 
     local name = def.name;
     local typesS = table.concat(def.types, '|');
@@ -68,7 +68,7 @@ function API.argsToString(args)
     end
     local s = '';
     for i = 1, argsLen do
-        local argS = string.format('%i: %s', i, VM.type.getType(args[i]));
+        local argS = string.format('%i: %s', i, vm.type.getType(args[i]));
         if s == '' then
             s = argS;
         else

@@ -11,7 +11,7 @@ local PrintPlus = require 'cool/print';
 local debugf = PrintPlus.debugf;
 
 --- @type VM
-local VM;
+local vm;
 
 local function predofile(...)
     local status, lib = pcall(dofile, ...)
@@ -71,7 +71,7 @@ debugf(debug.internal, '\n### VM INIT ###\n');
 
 local ROOT_PATH = getRootPath();
 
-VM = {
+vm = {
 
     __type__ = 'VM',
 
@@ -102,46 +102,46 @@ VM = {
     interface = require 'cool/vm/interface',
 
     isInside = function()
-        return VM.flags.internal ~= 0;
+        return vm.flags.internal ~= 0;
     end,
 
     isOutside = function()
-        return VM.flags.internal == 0;
+        return vm.flags.internal == 0;
     end,
 
     stepIn = function()
-        VM.flags.internal = VM.flags.internal + 1;
+        vm.flags.internal = vm.flags.internal + 1;
     end,
 
     stepOut = function()
-        if VM.isOutside() then
+        if vm.isOutside() then
             error('Cannot step out of internal VM. (Already outside)', 2);
         end
-        VM.flags.internal = VM.flags.internal - 1;
+        vm.flags.internal = vm.flags.internal - 1;
     end
 };
 
-utils.setVM(VM);
-VM.debug.setVM(VM);
-VM.enum.setVM(VM);
-VM.constants.setVM(VM);
-VM.flags.setVM(VM);
-VM.print.setVM(VM);
-VM.type.setVM(VM);
-VM.scope.setVM(VM);
-VM.audit.setVM(VM);
-VM.package.setVM(VM);
-VM.generic.setVM(VM);
-VM.stack.setVM(VM);
-VM.super.setVM(VM);
-VM.field.setVM(VM);
-VM.executable.setVM(VM);
-VM.class.setVM(VM);
-VM.struct.setVM(VM);
-VM.interface.setVM(VM);
+utils.setVM(vm);
+vm.debug.setVM(vm);
+vm.enum.setVM(vm);
+vm.constants.setVM(vm);
+vm.flags.setVM(vm);
+vm.print.setVM(vm);
+vm.type.setVM(vm);
+vm.scope.setVM(vm);
+vm.audit.setVM(vm);
+vm.package.setVM(vm);
+vm.generic.setVM(vm);
+vm.stack.setVM(vm);
+vm.super.setVM(vm);
+vm.field.setVM(vm);
+vm.executable.setVM(vm);
+vm.class.setVM(vm);
+vm.struct.setVM(vm);
+vm.interface.setVM(vm);
 
-function VM.import(path)
-    local def = VM.DEFINITIONS[path];
+function vm.import(path)
+    local def = vm.DEFINITIONS[path];
 
     if not def then
         pcall(function()
@@ -150,9 +150,9 @@ function VM.import(path)
     end
 
     if not def then
-        debugf(VM.debug.scope, '[SCOPE] :: Could not resolve struct: %s (Creating StructReference)');
-        def = VM.struct.newReference(path);
-        VM.DEFINITIONS[path] = def;
+        debugf(vm.debug.scope, '[SCOPE] :: Could not resolve struct: %s (Creating StructReference)');
+        def = vm.struct.newReference(path);
+        vm.DEFINITIONS[path] = def;
     end
 
     return def;
@@ -161,16 +161,16 @@ end
 --- @param path string
 ---
 --- @return StructDefinition|nil
-function VM.forNameDef(path)
-    return VM.DEFINITIONS[path];
+function vm.forNameDef(path)
+    return vm.DEFINITIONS[path];
 end
 
-function VM.forName(path)
+function vm.forName(path)
     --- @type Class?
-    local class = VM.CLASSES[path];
+    local class = vm.CLASSES[path];
 
     if not class then
-        local def = VM.DEFINITIONS[path];
+        local def = vm.DEFINITIONS[path];
         if def and (
                 def.__type__ == 'ClassStructDefinition' or
                 def.__type__ == 'InterfaceStructDefinition' or
@@ -178,33 +178,33 @@ function VM.forName(path)
             ) then
             --- @cast def ClassStructDefinition|InterfaceStructDefinition|EnumStructDefinition
 
-            VM.stepIn();
-            class = VM.package.packages.lua.lang.Class.new(def);
-            VM.stepOut();
+            vm.stepIn();
+            class = vm.package.packages.lua.lang.Class.new(def);
+            vm.stepOut();
 
-            VM.CLASSES[path] = class;
+            vm.CLASSES[path] = class;
         end
     end
 
     return class;
 end
 
-function VM.getPackage(path)
-    local pkg = VM.PACKAGES[path];
+function vm.getPackage(path)
+    local pkg = vm.PACKAGES[path];
     if not pkg then
-        local pkgTable = VM.package.getPackage(path);
+        local pkgTable = vm.package.getPackage(path);
         if not pkgTable then
             PrintPlus.errorf(2, 'Package doesn\'t exist: %s', path);
         end
-        pkg = VM.import 'lua.lang.Package'.new(path);
-        VM.PACKAGES[path] = pkg;
+        pkg = vm.import 'lua.lang.Package'.new(path);
+        vm.PACKAGES[path] = pkg;
     end
     return pkg;
 end
 
-debugf(VM.debug.internal, '[VM] :: Loaded %i Modules.', VM.moduleCount);
-debugf(VM.debug.internal, '[VM] :: ROOT_PATH = ' .. ROOT_PATH);
+debugf(vm.debug.internal, '[VM] :: Loaded %i Modules.', vm.moduleCount);
+debugf(vm.debug.internal, '[VM] :: ROOT_PATH = ' .. ROOT_PATH);
 
-debugf(VM.debug.internal, '\n### VM READY ###\n');
+debugf(vm.debug.internal, '\n### VM READY ###\n');
 
-return VM;
+return vm;

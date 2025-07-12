@@ -12,7 +12,7 @@ local utils = require 'cool/vm/utils';
 local readonly = utils.readonly;
 
 --- @type VM
-local VM;
+local vm;
 
 local API = {
 
@@ -21,8 +21,8 @@ local API = {
     -- Method(s)
     --- @param vm VM
     setVM = function(vm)
-        VM = vm;
-        VM.moduleCount = VM.moduleCount + 1;
+        vm = vm;
+        vm.moduleCount = vm.moduleCount + 1;
     end
 };
 
@@ -31,7 +31,7 @@ local function applyMetatable(self)
     local __properties = {};
     for k, v in pairs(self) do __properties[k] = v end
     -- mt.__metatable = false;
-    mt.__tostring = function() return VM.print.printInterface(self) end
+    mt.__tostring = function() return vm.print.printInterface(self) end
 
     local finalizing = false;
 
@@ -77,7 +77,7 @@ local function applyMetatable(self)
 
         -- Inner class invocation.
         if self.children[field] then
-            if VM.isOutside() then
+            if vm.isOutside() then
                 errorf(2, 'Cannot set inner struct explicitly. Use the API.');
             end
 
@@ -98,9 +98,9 @@ local function applyMetatable(self)
             return;
         end
 
-        local level, relPath = VM.scope.getRelativePath();
+        local level, relPath = vm.scope.getRelativePath();
 
-        VM.stack.pushContext({
+        vm.stack.pushContext({
             class = self,
             element = fd,
             context = 'field-set',
@@ -110,35 +110,35 @@ local function applyMetatable(self)
 
         local callInfo = DebugUtils.getCallInfo(level, nil, true);
         callInfo.path = relPath;
-        local scopeAllowed = VM.scope.getScopeForCall(fd.class, callInfo);
+        local scopeAllowed = vm.scope.getScopeForCall(fd.class, callInfo);
 
-        if not VM.scope.canAccessScope(fd.scope, scopeAllowed) then
+        if not vm.scope.canAccessScope(fd.scope, scopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
                 self.name, fd.name,
                 fd.scope, scopeAllowed,
-                VM.stack.printStackTrace()
+                vm.stack.printStackTrace()
             );
-            VM.stack.popContext();
+            vm.stack.popContext();
             print(errMsg);
             error('', 2);
             return;
         end
 
         -- (Just in-case)
-        if value == VM.constants.UNINITIALIZED_VALUE then
+        if value == vm.constants.UNINITIALIZED_VALUE then
             local errMsg = string.format('%s Cannot set %s as UNINITIALIZED_VALUE. (Internal Error)\n%s',
-                self.printHeader, field, VM.stack.printStackTrace()
+                self.printHeader, field, vm.stack.printStackTrace()
             );
-            VM.stack.popContext();
+            vm.stack.popContext();
             error(errMsg, 2);
             return;
         end
 
         if fd.final then
-            local ste = VM.stack.getContext();
+            local ste = vm.stack.getContext();
             if not ste then
-                VM.stack.popContext();
+                vm.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s outside of Class scope.', self.printHeader, field);
                 return;
             end
@@ -146,15 +146,15 @@ local function applyMetatable(self)
             local context = ste:getContext();
             local class = ste:getCallingClass();
             if class ~= self then
-                VM.stack.popContext();
+                vm.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s outside of Class scope.', self.printHeader, field);
                 return;
             elseif context ~= 'constructor' then
-                VM.stack.popContext();
+                vm.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s outside of constructor scope.', self.printHeader, field);
                 return;
             elseif fd.assignedOnce then
-                VM.stack.popContext();
+                vm.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s. (Already defined)', self.printHeader, field);
                 return;
             end
@@ -163,7 +163,7 @@ local function applyMetatable(self)
         -- Set the value.
         __properties[field] = value;
 
-        VM.stack.popContext();
+        vm.stack.popContext();
 
         -- Apply forward the value metrics.
         fd.assignedOnce = true;
@@ -188,11 +188,11 @@ function IAPI.addMethod(self, methodDefinition)
     local errHeader = string.format('InterfaceStructDefinition(%s):addMethod():', self.name);
 
     local body = methodDefinition.body;
-    local bodyInfo = VM.executable.getExecutableInfo(body);
+    local bodyInfo = vm.executable.getExecutableInfo(body);
 
-    local name = VM.audit.auditMethodParamName(methodDefinition.name, errHeader);
-    local types = VM.audit.auditMethodReturnsProperty(methodDefinition.returnTypes, errHeader);
-    local parameters = VM.audit.auditParameters(methodDefinition.parameters, errHeader);
+    local name = vm.audit.auditMethodParamName(methodDefinition.name, errHeader);
+    local types = vm.audit.auditMethodReturnsProperty(methodDefinition.returnTypes, errHeader);
+    local parameters = vm.audit.auditParameters(methodDefinition.parameters, errHeader);
 
     local md = {
 
@@ -226,7 +226,7 @@ function IAPI.addMethod(self, methodDefinition)
         abstract = false,
     };
 
-    md.signature = VM.executable.createSignature(md);
+    md.signature = vm.executable.createSignature(md);
 
     --- @cast md MethodDefinition
 
@@ -251,11 +251,11 @@ function IAPI.addStaticMethod(self, definition)
 
     local body = definition.body;
 
-    local scope = VM.audit.auditStructPropertyScope(self.scope, definition.scope, errHeader);
-    local name = VM.audit.auditMethodParamName(definition.name, errHeader);
-    local types = VM.audit.auditMethodReturnsProperty(definition.returnTypes, errHeader);
-    local parameters = VM.audit.auditParameters(definition.parameters, errHeader);
-    local bodyInfo = VM.executable.getExecutableInfo(body);
+    local scope = vm.audit.auditStructPropertyScope(self.scope, definition.scope, errHeader);
+    local name = vm.audit.auditMethodParamName(definition.name, errHeader);
+    local types = vm.audit.auditMethodReturnsProperty(definition.returnTypes, errHeader);
+    local parameters = vm.audit.auditParameters(definition.parameters, errHeader);
+    local bodyInfo = vm.executable.getExecutableInfo(body);
 
     local md = {
 
@@ -289,7 +289,7 @@ function IAPI.addStaticMethod(self, definition)
         abstract = false,
     };
 
-    md.signature = VM.executable.createSignature(md);
+    md.signature = vm.executable.createSignature(md);
 
     --- @cast md MethodDefinition
 
@@ -354,7 +354,7 @@ function IAPI.getDeclaredMethod(self, name, args)
                 for j = 1, #methodParams do
                     local arg = args[j];
                     local parameter = methodParams[j];
-                    if not VM.type.isAssignableFromType(arg, parameter.types) then
+                    if not vm.type.isAssignableFromType(arg, parameter.types) then
                         method = nil;
                         break;
                     end
@@ -459,7 +459,7 @@ function IAPI.addStaticField(self, fd)
         assignedOnce = false,
     };
 
-    VM.audit.auditField(self, args);
+    vm.audit.auditField(self, args);
 
     -- Ensure that all constants are defined.
     if not args.value then
@@ -488,11 +488,11 @@ function IAPI.finalize(self)
     end
 
     -- If any auto-methods are defined for fields (get, set), create them before compiling class methods.
-    VM.field.compileFieldAutoMethods(self);
+    vm.field.compileFieldAutoMethods(self);
 
     -- TODO: Audit everything.
 
-    VM.executable.compileMethods(self);
+    vm.executable.compileMethods(self);
 
     -- Change add methods.
     self.addMethod = function() errorf(2, '%s Cannot add methods. (Interface is final!)', errHeader) end
@@ -512,7 +512,7 @@ function IAPI.finalize(self)
             if md.override then
                 -- RULE: Cannot override method if super-method is final.
                 if md.super.final then
-                    local sMethod = VM.print.printMethod(md);
+                    local sMethod = vm.print.printMethod(md);
                     errorf(2, '%s Method cannot override final method in super-class: %s',
                         errHeader,
                         md.super.class.name,
@@ -520,8 +520,8 @@ function IAPI.finalize(self)
                     );
                     return self;
                     -- RULE: Cannot reduce scope of overrided super-method.
-                elseif not VM.scope.canAccessScope(md.scope, md.super.scope) then
-                    local sMethod = VM.print.printMethod(md);
+                elseif not vm.scope.canAccessScope(md.scope, md.super.scope) then
+                    local sMethod = vm.print.printMethod(md);
                     errorf(2, '%s Method cannot reduce scope of super-class: %s (super-scope = %s, scope = %s)',
                         errHeader,
                         sMethod, md.super.scope, md.scope
@@ -529,7 +529,7 @@ function IAPI.finalize(self)
                     return self;
                     -- RULE: override Methods must either be consistently static (or not) with their super-method(s).
                 elseif md.static ~= md.super.static then
-                    local sMethod = VM.print.printMethod(md);
+                    local sMethod = vm.print.printMethod(md);
                     errorf(2,
                         '%s All method(s) with identical signatures must either be static or not: %s (super.static = %s, static = %s)',
                         errHeader,
@@ -539,7 +539,7 @@ function IAPI.finalize(self)
                 end
             end
         end
-        self.__middleMethods[name] = VM.executable.createMiddleMethod(self, name, methods);
+        self.__middleMethods[name] = vm.executable.createMiddleMethod(self, name, methods);
     end
 
     -- Add static method references.
@@ -560,7 +560,7 @@ function IAPI.finalize(self)
     end
 
     self.__readonly__ = true;
-    VM.DEFINITIONS[self.path] = self;
+    vm.DEFINITIONS[self.path] = self;
 
     -- Set class as child.
     if self.super then
@@ -569,9 +569,9 @@ function IAPI.finalize(self)
 
     -- Add a reference for global package and static code to enclosing struct.
     if self.outer then
-        VM.stepIn();
+        vm.stepIn();
         self.outer[self.name] = self;
-        VM.stepOut();
+        vm.stepOut();
     end
 
     return self;
@@ -620,13 +620,13 @@ end
 
 function API.newInterface(definition, enclosingStruct)
     -- Grab path / package / name context.
-    local locInfo = VM.struct.calcPathNamePackage(definition, enclosingStruct);
+    local locInfo = vm.struct.calcPathNamePackage(definition, enclosingStruct);
     local path = locInfo.path;
     local name = locInfo.name;
     local pkg = locInfo.pkg;
 
     --- @type any
-    local id = VM.DEFINITIONS[path] or {};
+    local id = vm.DEFINITIONS[path] or {};
 
     -- * Internal Type * --
     id.__type__ = 'InterfaceStructDefinition';
@@ -667,10 +667,10 @@ function API.newInterface(definition, enclosingStruct)
 
     --- @cast id InterfaceStructDefinition
 
-    VM.DEFINITIONS[id.path] = id;
+    vm.DEFINITIONS[id.path] = id;
 
     -- Compile the generic parameters for the class.
-    id.generics = VM.generic.compileGenericTypesDefinition(id, definition.generics);
+    id.generics = vm.generic.compileGenericTypesDefinition(id, definition.generics);
 
     -- Enclosurable: Add the definition to the enclosing struct.
     if enclosingStruct then
@@ -678,9 +678,9 @@ function API.newInterface(definition, enclosingStruct)
     end
 
     --- Set the class to be accessable from a global package reference.
-    VM.stepIn();
-    VM.package.addToPackageStruct(id);
-    VM.stepOut();
+    vm.stepIn();
+    vm.package.addToPackageStruct(id);
+    vm.stepOut();
 
     -- MARK: - inner
 
@@ -702,7 +702,7 @@ function API.newInterface(definition, enclosingStruct)
             self.outer = nil;
         end
 
-        local locInfo = VM.struct.calcPathNamePackage(definition, outer);
+        local locInfo = vm.struct.calcPathNamePackage(definition, outer);
         self.path = locInfo.path;
         self.name = locInfo.name;
         self.pkg = locInfo.pkg;
@@ -730,11 +730,11 @@ function API.newInterface(definition, enclosingStruct)
     end
 
     function id:getMethod(name, args)
-        return VM.executable.resolveMethod(self, name, self.methods[name], args);
+        return vm.executable.resolveMethod(self, name, self.methods[name], args);
     end
 
     function id:getDeclaredMethod(name, args)
-        return VM.executable.resolveMethod(self, name, self.declaredMethods[name], args);
+        return vm.executable.resolveMethod(self, name, self.declaredMethods[name], args);
     end
 
     -- * Hierarchical API * --

@@ -15,7 +15,7 @@ local isArray = utils.isArray;
 local readonly = utils.readonly;
 
 --- @type VM
-local VM;
+local vm;
 
 local API = {
 
@@ -23,8 +23,8 @@ local API = {
 
     --- @param vm VM
     setVM = function(vm)
-        VM = vm;
-        VM.moduleCount = VM.moduleCount + 1;
+        vm = vm;
+        vm.moduleCount = vm.moduleCount + 1;
     end
 };
 
@@ -34,7 +34,7 @@ local function applyStructMetatable(cd)
     for k, v in pairs(cd) do __properties[k] = v end
     -- mt.__metatable = false;
     mt.__index = __properties;
-    mt.__tostring = function() return VM.print.printClass(cd) end
+    mt.__tostring = function() return vm.print.printClass(cd) end
 
     mt.__index = __properties;
 
@@ -56,7 +56,7 @@ local function applyStructMetatable(cd)
         local fd = cd:getField(field);
 
         -- Internal bypass for struct construction.
-        if VM.isInside() then
+        if vm.isInside() then
             -- Set the value.
             __properties[field] = value;
 
@@ -71,7 +71,7 @@ local function applyStructMetatable(cd)
 
         -- Inner class invocation.
         if cd.inner[field] then
-            if VM.isOutside() then
+            if vm.isOutside() then
                 errorf(2, 'Cannot set inner class explicitly. Use the API.');
             end
             __properties[field] = value;
@@ -90,9 +90,9 @@ local function applyStructMetatable(cd)
             return;
         end
 
-        local level, relPath = VM.scope.getRelativePath();
+        local level, relPath = vm.scope.getRelativePath();
 
-        VM.stack.pushContext({
+        vm.stack.pushContext({
             class = cd,
             element = fd,
             context = 'field-set',
@@ -102,35 +102,35 @@ local function applyStructMetatable(cd)
 
         local callInfo = DebugUtils.getCallInfo(level, nil, true);
         callInfo.path = relPath;
-        local scopeAllowed = VM.scope.getScopeForCall(fd.class, callInfo);
+        local scopeAllowed = vm.scope.getScopeForCall(fd.class, callInfo);
 
-        if not VM.scope.canAccessScope(fd.scope, scopeAllowed) then
+        if not vm.scope.canAccessScope(fd.scope, scopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
                 cd.name, fd.name,
                 fd.scope, scopeAllowed,
-                VM.stack.printStackTrace()
+                vm.stack.printStackTrace()
             );
-            VM.stack.popContext();
+            vm.stack.popContext();
             print(errMsg);
             error('', 2);
             return;
         end
 
         -- (Just in-case)
-        if value == VM.constants.UNINITIALIZED_VALUE then
+        if value == vm.constants.UNINITIALIZED_VALUE then
             local errMsg = string.format('%s Cannot set %s as UNINITIALIZED_VALUE. (Internal Error)\n%s',
-                cd.printHeader, field, VM.stack.printStackTrace()
+                cd.printHeader, field, vm.stack.printStackTrace()
             );
-            VM.stack.popContext();
+            vm.stack.popContext();
             error(errMsg, 2);
             return;
         end
 
         if fd.final then
-            local ste = VM.stack.getContext();
+            local ste = vm.stack.getContext();
             if not ste then
-                VM.stack.popContext();
+                vm.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
                 return;
             end
@@ -138,15 +138,15 @@ local function applyStructMetatable(cd)
             local context = ste:getContext();
             local class = ste:getCallingClass();
             if class ~= cd then
-                VM.stack.popContext();
+                vm.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
                 return;
             elseif context ~= 'constructor' then
-                VM.stack.popContext();
+                vm.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s outside of constructor scope.', cd.printHeader, field);
                 return;
             elseif fd.assignedOnce then
-                VM.stack.popContext();
+                vm.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s. (Already defined)', cd.printHeader, field);
                 return;
             end
@@ -155,7 +155,7 @@ local function applyStructMetatable(cd)
         -- Set the value.
         __properties[field] = value;
 
-        VM.stack.popContext();
+        vm.stack.popContext();
 
         -- Apply forward the value metrics.
         fd.assignedOnce = true;
@@ -194,7 +194,7 @@ end
 --- @param definition ClassStructDefinitionParameter|ChildClassStructDefinitionParameter
 --- @param outer StructDefinition?
 function API.newClass(definition, outer)
-    local locInfo = VM.struct.calcPathNamePackage(definition, outer);
+    local locInfo = vm.struct.calcPathNamePackage(definition, outer);
     local path = locInfo.path;
     local name = locInfo.name;
     local pkg = locInfo.pkg;
@@ -246,15 +246,15 @@ function API.newClass(definition, outer)
     end
 
     -- Here we check to see if anything has referenced the class prior to initialization. We graft to that reference.
-    local cd = VM.DEFINITIONS[path];
+    local cd = vm.DEFINITIONS[path];
 
     if not cd then
-        VM.DEFINITIONS[path] = cd;
+        vm.DEFINITIONS[path] = cd;
     end
 
     cd = setmetatable({}, {
         __tostring = function(self)
-            return VM.print.printClass(self);
+            return vm.print.printClass(self);
         end
     });
 
@@ -298,12 +298,12 @@ function API.newClass(definition, outer)
     cd.__readonly__ = false;
 
     -- Compile the generic parameters for the class.
-    cd.generics = VM.generic.compileGenericTypesDefinition(cd, definition.generics);
+    cd.generics = vm.generic.compileGenericTypesDefinition(cd, definition.generics);
 
-    cd.__middleConstructor = VM.executable.createMiddleConstructor(cd);
+    cd.__middleConstructor = vm.executable.createMiddleConstructor(cd);
 
     if not cd.super and cd.path ~= 'lua.lang.Object' then
-        cd.super = VM.forNameDef('lua.lang.Object');
+        cd.super = vm.forNameDef('lua.lang.Object');
         if not cd.super then
             errorf(2, '%s lua.lang.Object not defined!', cd.printHeader);
         end
@@ -317,9 +317,9 @@ function API.newClass(definition, outer)
     end
 
     --- Set the class to be accessable from a global package reference.
-    VM.stepIn();
-    VM.package.addToPackageStruct(cd);
-    VM.stepOut();
+    vm.stepIn();
+    vm.package.addToPackageStruct(cd);
+    vm.stepOut();
 
     --- @cast cd ClassStructDefinition
 
@@ -354,7 +354,7 @@ function API.newClass(definition, outer)
             self.outer = nil;
         end
 
-        local locInfo = VM.struct.calcPathNamePackage(definition, outer);
+        local locInfo = vm.struct.calcPathNamePackage(definition, outer);
         self.path = locInfo.path;
         self.name = locInfo.name;
         self.pkg = locInfo.pkg;
@@ -382,7 +382,7 @@ function API.newClass(definition, outer)
 
         local __class__;
         if cd.path ~= 'lua.lang.Class' then -- Prevent infinite loops.
-            __class__ = VM.forName(path);
+            __class__ = vm.forName(path);
         else
             __class__ = createPseudoClassInstance(cd);
         end
@@ -400,9 +400,9 @@ function API.newClass(definition, outer)
 
         o.getClass = function(self)
             if not self.__class__ then
-                VM.stepIn();
-                self.__class__ = VM.forName(cd.path);
-                VM.stepOut();
+                vm.stepIn();
+                self.__class__ = vm.forName(cd.path);
+                vm.stepOut();
             end
             return self.__class__;
         end
@@ -429,7 +429,7 @@ function API.newClass(definition, outer)
             end
         end
 
-        VM.struct.createInstanceMetatable(cd, o);
+        vm.struct.createInstanceMetatable(cd, o);
 
         -- Invoke constructor context.
         local args = { ... };
@@ -459,13 +459,13 @@ function API.newClass(definition, outer)
             scope = fd.scope or 'package',
             static = false,
             final = fd.final or false,
-            value = fd.value or VM.constants.UNINITIALIZED_VALUE,
+            value = fd.value or vm.constants.UNINITIALIZED_VALUE,
             get = fd.get,
             set = fd.set,
             assignedOnce = false,
         };
 
-        VM.audit.auditField(self, args);
+        vm.audit.auditField(self, args);
 
         self.declaredFields[args.name] = args;
 
@@ -484,13 +484,13 @@ function API.newClass(definition, outer)
             scope = fd.scope or 'package',
             static = true,
             final = fd.final or false,
-            value = fd.value or VM.constants.UNINITIALIZED_VALUE,
+            value = fd.value or vm.constants.UNINITIALIZED_VALUE,
             get = fd.get,
             set = fd.set,
             assignedOnce = false,
         };
 
-        VM.audit.auditField(self, args);
+        vm.audit.auditField(self, args);
 
         self.declaredFields[args.name] = args;
 
@@ -548,7 +548,7 @@ function API.newClass(definition, outer)
 
         -- If the super-call is not there, then write
         local _super = constructorDefinition.super;
-        if not _super then _super = VM.executable.defaultSuperFunc end
+        if not _super then _super = vm.executable.defaultSuperFunc end
 
         -- Friendly check for implementation.
         if not self or type(constructorDefinition) == 'function' then
@@ -570,7 +570,7 @@ function API.newClass(definition, outer)
             );
         end
 
-        local parameters = VM.executable.compile(constructorDefinition.parameters);
+        local parameters = vm.executable.compile(constructorDefinition.parameters);
 
         local args = {
 
@@ -583,12 +583,12 @@ function API.newClass(definition, outer)
 
             -- * Function properties * --
             body = body,
-            bodyInfo = VM.executable.getExecutableInfo(body),
+            bodyInfo = vm.executable.getExecutableInfo(body),
             super = _super,
-            superInfo = VM.executable.getExecutableInfo(_super),
+            superInfo = vm.executable.getExecutableInfo(_super),
         };
 
-        args.signature = VM.executable.createSignature(args);
+        args.signature = vm.executable.createSignature(args);
 
         --- @cast args ConstructorDefinition
 
@@ -600,13 +600,13 @@ function API.newClass(definition, outer)
                 string.format(
                     '%s property "func" provided is not a function. {type = %s, value = %s}',
                     errHeader,
-                    VM.type.getType(args.body),
+                    vm.type.getType(args.body),
                     tostring(args.body)
                 ), 2);
         end
 
-        if VM.debug.constructor then
-            debugf(VM.debug.constructor, '[CONSTRUCTOR] :: %s Adding class constructor: %s.%s', self.printHeader,
+        if vm.debug.constructor then
+            debugf(vm.debug.constructor, '[CONSTRUCTOR] :: %s Adding class constructor: %s.%s', self.printHeader,
                 self.name,
                 args.signature);
         end
@@ -631,8 +631,8 @@ function API.newClass(definition, outer)
     ---
     --- @return ConstructorDefinition|nil constructorDefinition
     function cd:getDeclaredConstructor(args)
-        args = args or VM.constants.EMPTY_TABLE;
-        return VM.executable.resolveConstructor(self.declaredConstructors, args);
+        args = args or vm.constants.EMPTY_TABLE;
+        return vm.executable.resolveConstructor(self.declaredConstructors, args);
     end
 
     -- MARK: - Method
@@ -641,12 +641,12 @@ function API.newClass(definition, outer)
         local errHeader = string.format('ClassStructDefinition(%s):addMethod():', cd.name);
 
         local body = methodDefinition.body;
-        local bodyInfo = VM.executable.getExecutableInfo(body);
+        local bodyInfo = vm.executable.getExecutableInfo(body);
 
-        local scope = VM.audit.auditStructPropertyScope(self.scope, methodDefinition.scope, errHeader);
-        local name = VM.audit.auditMethodParamName(methodDefinition.name, errHeader);
-        local types = VM.audit.auditMethodReturnsProperty(methodDefinition.returnTypes, errHeader);
-        local parameters = VM.audit.auditParameters(methodDefinition.parameters, errHeader);
+        local scope = vm.audit.auditStructPropertyScope(self.scope, methodDefinition.scope, errHeader);
+        local name = vm.audit.auditMethodParamName(methodDefinition.name, errHeader);
+        local types = vm.audit.auditMethodReturnsProperty(methodDefinition.returnTypes, errHeader);
+        local parameters = vm.audit.auditParameters(methodDefinition.parameters, errHeader);
 
         local md = {
 
@@ -676,14 +676,14 @@ function API.newClass(definition, outer)
             default = false,
         };
 
-        md.signature = VM.executable.createSignature(md);
+        md.signature = vm.executable.createSignature(md);
 
         --- @cast md MethodDefinition
 
-        if VM.debug.method then
+        if vm.debug.method then
             local callSyntax = ':';
             if md.static then callSyntax = '.' end
-            debugf(VM.debug.method, '[METHOD] :: %s Adding static method: %s%s%s',
+            debugf(vm.debug.method, '[METHOD] :: %s Adding static method: %s%s%s',
                 self.printHeader,
                 self.name, callSyntax, md.signature
             );
@@ -703,12 +703,12 @@ function API.newClass(definition, outer)
     function cd:addAbstractMethod(methodDefinition)
         local errHeader = string.format('ClassStructDefinition(%s):addAbstractMethod():', cd.name);
 
-        local bodyInfo = VM.executable.getExecutableInfo();
+        local bodyInfo = vm.executable.getExecutableInfo();
 
-        local scope = VM.audit.auditStructPropertyScope(self.scope, methodDefinition.scope, errHeader);
-        local name = VM.audit.auditMethodParamName(methodDefinition.name, errHeader);
-        local types = VM.audit.auditMethodReturnsProperty(methodDefinition.returnTypes, errHeader);
-        local parameters = VM.audit.auditParameters(methodDefinition.parameters, errHeader);
+        local scope = vm.audit.auditStructPropertyScope(self.scope, methodDefinition.scope, errHeader);
+        local name = vm.audit.auditMethodParamName(methodDefinition.name, errHeader);
+        local types = vm.audit.auditMethodReturnsProperty(methodDefinition.returnTypes, errHeader);
+        local parameters = vm.audit.auditParameters(methodDefinition.parameters, errHeader);
 
         local md = {
             __type__ = 'MethodDefinition',
@@ -737,14 +737,14 @@ function API.newClass(definition, outer)
             default = false,
         };
 
-        md.signature = VM.executable.createSignature(md);
+        md.signature = vm.executable.createSignature(md);
 
         --- @cast md MethodDefinition
 
-        if VM.debug.method then
+        if vm.debug.method then
             local callSyntax = ':';
             if md.static then callSyntax = '.' end
-            debugf(VM.debug.method, '[METHOD] :: %s Adding abstract method: %s%s%s',
+            debugf(vm.debug.method, '[METHOD] :: %s Adding abstract method: %s%s%s',
                 self.printHeader,
                 self.name, callSyntax, md.signature
             );
@@ -763,12 +763,12 @@ function API.newClass(definition, outer)
 
     function cd:addMethod(methodDefinition)
         local body = methodDefinition.body;
-        local bodyInfo = VM.executable.getExecutableInfo(body);
+        local bodyInfo = vm.executable.getExecutableInfo(body);
         local errHeader = string.format('ClassStructDefinition(%s):addMethod():', cd.name);
-        local scope = VM.audit.auditStructPropertyScope(self.scope, methodDefinition.scope, errHeader);
-        local name = VM.audit.auditMethodParamName(methodDefinition.name, errHeader);
-        local types = VM.audit.auditMethodReturnsProperty(methodDefinition.returnTypes, errHeader);
-        local parameters = VM.audit.auditParameters(methodDefinition.parameters, errHeader);
+        local scope = vm.audit.auditStructPropertyScope(self.scope, methodDefinition.scope, errHeader);
+        local name = vm.audit.auditMethodParamName(methodDefinition.name, errHeader);
+        local types = vm.audit.auditMethodReturnsProperty(methodDefinition.returnTypes, errHeader);
+        local parameters = vm.audit.auditParameters(methodDefinition.parameters, errHeader);
 
         local md = {
 
@@ -798,14 +798,14 @@ function API.newClass(definition, outer)
             default = false,
         };
 
-        md.signature = VM.executable.createSignature(md);
+        md.signature = vm.executable.createSignature(md);
 
         --- @cast md MethodDefinition
 
-        if VM.debug.method then
+        if vm.debug.method then
             local callSyntax = ':';
             if md.static then callSyntax = '.' end
-            debugf(VM.debug.method, '[METHOD] :: %s Adding instance method: %s%s%s',
+            debugf(vm.debug.method, '[METHOD] :: %s Adding instance method: %s%s%s',
                 self.printHeader,
                 self.name, callSyntax, md.signature
             );
@@ -837,7 +837,7 @@ function API.newClass(definition, outer)
     ---
     --- @return MethodDefinition|nil methodDefinition
     function cd:getMethod(name, args)
-        return VM.executable.resolveMethod(self, name, self.methods[name], args);
+        return vm.executable.resolveMethod(self, name, self.methods[name], args);
     end
 
     --- @param name string
@@ -845,7 +845,7 @@ function API.newClass(definition, outer)
     ---
     --- @return MethodDefinition|nil methodDefinition
     function cd:getDeclaredMethod(name, args)
-        return VM.executable.resolveMethod(self, name, self.declaredMethods[name], args);
+        return vm.executable.resolveMethod(self, name, self.declaredMethods[name], args);
     end
 
     -- MARK: - finalize()
@@ -871,12 +871,12 @@ function API.newClass(definition, outer)
         end
 
         -- If any auto-methods are defined for fields (get, set), create them before compiling class methods.
-        VM.field.compileFieldAutoMethods(self);
+        vm.field.compileFieldAutoMethods(self);
 
         -- TODO: Audit everything.
 
         --- @type table<string, MethodDefinition[]>
-        VM.executable.compileMethods(self);
+        vm.executable.compileMethods(self);
 
         -- If no constructors are provided, create a default, no-args public constructor.
         if #self.declaredConstructors == 0 then
@@ -904,8 +904,8 @@ function API.newClass(definition, outer)
             end
         end
 
-        self.__supertable__ = VM.super.createSuperTable(cd);
-        VM.executable.createMiddleMethods(self);
+        self.__supertable__ = vm.super.createSuperTable(cd);
+        vm.executable.createMiddleMethods(self);
         applyStructMetatable(self);
 
         for k, v in pairs(self.declaredFields) do
@@ -925,7 +925,7 @@ function API.newClass(definition, outer)
         end
 
         self.__readonly__ = true;
-        VM.DEFINITIONS[cd.path] = cd;
+        vm.DEFINITIONS[cd.path] = cd;
 
         -- Set class as child.
         if cd.super then
@@ -934,9 +934,9 @@ function API.newClass(definition, outer)
 
         -- Add a reference for global package and static code.
         if outer then
-            VM.stepIn();
+            vm.stepIn();
             outer[cd.name] = cd;
-            VM.stepOut();
+            vm.stepOut();
         end
 
         return cd;

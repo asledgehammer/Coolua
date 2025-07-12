@@ -11,7 +11,7 @@ local errorf = PrintPlus.errorf;
 local debugf = PrintPlus.debugf;
 
 --- @type VM
-local VM;
+local vm;
 
 local arrayContains = require 'cool/vm/utils'.arrayContains;
 
@@ -22,8 +22,8 @@ API = {
 
     --- @param vm VM
     setVM = function(vm)
-        VM = vm;
-        VM.moduleCount = VM.moduleCount + 1;
+        vm = vm;
+        vm.moduleCount = vm.moduleCount + 1;
         API.defaultSuperFuncInfo = API.getExecutableInfo(API.defaultSuperFunc);
     end
 };
@@ -32,7 +32,7 @@ function API.getExecutableInfo(func)
     if not func then
         return { start = -1, stop = -1, path = '' };
     end
-    local info = DebugUtils.getFuncInfo(func, VM.ROOT_PATH, true);
+    local info = DebugUtils.getFuncInfo(func, vm.ROOT_PATH, true);
     return { start = info.start, stop = info.stop, path = info.path };
 end
 
@@ -58,13 +58,13 @@ end
 function API.argsToTypes(args)
     local tArgs = {};
     for i = 1, #args do
-        table.insert(tArgs, VM.type.getType(args[i]));
+        table.insert(tArgs, vm.type.getType(args[i]));
     end
     return tArgs;
 end
 
 function API.resolveMethod(struct, name, methods, args)
-    local callSignature = VM.executable.createCallSignature(name, args);
+    local callSignature = vm.executable.createCallSignature(name, args);
 
     --- @type MethodDefinition|nil
     local md;
@@ -73,7 +73,7 @@ function API.resolveMethod(struct, name, methods, args)
     -- md = struct.methodCache[callSignature];
     -- if md then return md end
 
-    debugf(VM.debug.methodCache, '[METHOD_CACHE] :: %s No cache found for method %s call signature: %s',
+    debugf(vm.debug.methodCache, '[METHOD_CACHE] :: %s No cache found for method %s call signature: %s',
         struct.printHeader,
         name,
         callSignature
@@ -83,9 +83,9 @@ function API.resolveMethod(struct, name, methods, args)
     --- @type MethodDefinition?
     local md = methods[callSignature];
     if md then
-        debugf(VM.debug.methodCache, '[METHOD_CACHE] :: %s Caching exact method %s call signature: %s',
+        debugf(vm.debug.methodCache, '[METHOD_CACHE] :: %s Caching exact method %s call signature: %s',
             struct.printHeader,
-            VM.print.printMethod(md),
+            vm.print.printMethod(md),
             callSignature
         );
 
@@ -101,9 +101,9 @@ function API.resolveMethod(struct, name, methods, args)
     end
 
     if md then
-        debugf(VM.debug.methodCache, '[METHOD_CACHE] :: %s Caching method %s call signature: %s',
+        debugf(vm.debug.methodCache, '[METHOD_CACHE] :: %s Caching method %s call signature: %s',
             struct.printHeader,
-            VM.print.printMethod(md),
+            vm.print.printMethod(md),
             callSignature
         );
 
@@ -134,7 +134,7 @@ function API.resolveMethodDeep(methods, args)
             for p = 1, paramLen do
                 local arg = args[p];
                 local parameter = parameters[p];
-                if not VM.type.isAssignableFromType(arg, parameter.types) then
+                if not vm.type.isAssignableFromType(arg, parameter.types) then
                     md = nil;
                     break;
                 end
@@ -154,18 +154,18 @@ function API.resolveMethodDeep(methods, args)
             if paramLen ~= 0 then
                 local lastParameter = parameters[paramLen];
                 local lastType = lastParameter.types[i];
-                if not VM.executable.isVararg(lastType) then
+                if not vm.executable.isVararg(lastType) then
                     md = nil;
                     -- If the varArg range doesn't match.
                 elseif paramLen > argsLen then
                     md = nil;
                 else
-                    local varArgTypes = VM.executable.getVarargTypes(lastType);
+                    local varArgTypes = vm.executable.getVarargTypes(lastType);
                     -- Check normal parameters.
                     for p = 1, paramLen - 1 do
                         local arg = args[p];
                         local parameter = parameters[p];
-                        if not VM.type.isAssignableFromType(arg, parameter.types) then
+                        if not vm.type.isAssignableFromType(arg, parameter.types) then
                             md = nil;
                             break;
                         end
@@ -173,7 +173,7 @@ function API.resolveMethodDeep(methods, args)
                     -- Check vararg parameters.
                     for p = paramLen, argsLen do
                         local arg = args[p];
-                        if not VM.type.isAssignableFromType(arg, varArgTypes) then
+                        if not vm.type.isAssignableFromType(arg, varArgTypes) then
                             md = nil;
                             break;
                         end
@@ -195,7 +195,7 @@ function API.createMiddleMethods(struct)
             if md.override then
                 -- RULE: Cannot override method if super-method is final.
                 if md.super.final then
-                    local sMethod = VM.print.printMethod(md);
+                    local sMethod = vm.print.printMethod(md);
                     errorf(2, '%s Method cannot override final method in super-class: %s.%s',
                         struct.printHeader,
                         md.super.class.name,
@@ -204,8 +204,8 @@ function API.createMiddleMethods(struct)
                     );
                     return struct;
                     -- RULE: Cannot reduce scope of overrided super-method.
-                elseif not VM.scope.canAccessScope(md.scope, md.super.scope) then
-                    local sMethod = VM.print.printMethod(md);
+                elseif not vm.scope.canAccessScope(md.scope, md.super.scope) then
+                    local sMethod = vm.print.printMethod(md);
                     errorf(2, '%s Method cannot reduce scope of super-class: %s (super-scope = %s, struct-scope = %s)',
                         struct.printHeader,
                         sMethod, md.super.scope, md.scope
@@ -213,7 +213,7 @@ function API.createMiddleMethods(struct)
                     return struct;
                     -- RULE: override Methods must either be consistently static (or not) with their super-method(s).
                 elseif md.static ~= md.super.static then
-                    local sMethod = VM.print.printMethod(md);
+                    local sMethod = vm.print.printMethod(md);
                     errorf(2,
                         '%s All method(s) with identical signatures must either be static or not: %s (super.static = %s, struct.static = %s)',
                         struct.printHeader,
@@ -223,7 +223,7 @@ function API.createMiddleMethods(struct)
                 end
             end
         end
-        struct.__middleMethods[mName] = VM.executable.createMiddleMethod(struct, mName, methodCluster);
+        struct.__middleMethods[mName] = vm.executable.createMiddleMethod(struct, mName, methodCluster);
     end
 end
 
@@ -240,11 +240,11 @@ function API.createMiddleMethod(cd, name, methods)
         local errHeader = string.format('Class(%s):%s():', cd.name, name);
 
         if not md then
-            errorf(2, '%s No method signature exists: %s', errHeader, VM.print.argsToString(args));
+            errorf(2, '%s No method signature exists: %s', errHeader, vm.print.argsToString(args));
             return;
         end
 
-        VM.stack.pushContext({
+        vm.stack.pushContext({
             class = cd,
             element = md,
             context = 'method',
@@ -252,21 +252,21 @@ function API.createMiddleMethod(cd, name, methods)
             path = DebugUtils.getPath(3)
         });
 
-        local level, relPath = VM.scope.getRelativePath();
+        local level, relPath = vm.scope.getRelativePath();
 
-        local callInfo = DebugUtils.getCallInfo(level, VM.ROOT_PATH, true);
+        local callInfo = DebugUtils.getCallInfo(level, vm.ROOT_PATH, true);
         callInfo.path = relPath;
-        local scopeAllowed = VM.scope.getScopeForCall(md.class, callInfo);
+        local scopeAllowed = vm.scope.getScopeForCall(md.class, callInfo);
 
-        if not VM.scope.canAccessScope(md.scope, scopeAllowed) then
-            local sMethod = VM.print.printMethod(md);
+        if not vm.scope.canAccessScope(md.scope, scopeAllowed) then
+            local sMethod = vm.print.printMethod(md);
             local errMsg = string.format(
                 'IllegalAccessException: The method %s is set as "%s" access level. (Access Level from call: "%s")\n%s',
                 sMethod,
                 md.scope, scopeAllowed,
-                VM.stack.printStackTrace()
+                vm.stack.printStackTrace()
             );
-            VM.stack.popContext();
+            vm.stack.popContext();
             print(errMsg);
             error(errMsg, 2);
             return;
@@ -276,12 +276,12 @@ function API.createMiddleMethod(cd, name, methods)
         local lastSuper;
         if o then
             --- Apply super.
-            VM.stepIn();
+            vm.stepIn();
             lastSuper = o.super;
             o.super = cd.__supertable__;
             lastWho = o.super.__who__;
             o.super.__who__ = md;
-            VM.stepOut();
+            vm.stepOut();
         end
 
         local retVal = nil;
@@ -296,10 +296,10 @@ function API.createMiddleMethod(cd, name, methods)
 
         if o then
             --- Revert super.
-            VM.stepIn();
+            vm.stepIn();
             o.super.__who__ = lastWho;
             o.super = lastSuper;
-            VM.stepOut();
+            vm.stepOut();
         end
 
         -- Audit void type methods.
@@ -309,12 +309,12 @@ function API.createMiddleMethod(cd, name, methods)
                 tostring(retVal)
             );
             print(errMsg);
-            VM.stack.popContext();
+            vm.stack.popContext();
             error('', 2);
             return;
         end
 
-        VM.stack.popContext();
+        vm.stack.popContext();
 
         -- Throw the error after applying context.
         if not result then error(tostring(errMsg) or '') end
@@ -444,15 +444,15 @@ function API.combineAllMethods(def, name, comb)
                     for imSignature, imd in pairs(imCluster) do
                         -- Here we ignore re-applied interface methods since they're already applied.
                         if not combCluster[name] and not imd.default then
-                            debugf(VM.debug.method,
+                            debugf(vm.debug.method,
                                 '[METHOD] :: %s IGNORING re-applied interface method in hierarchy: %s',
                                 def.printHeader,
-                                VM.print.printMethod(imd)
+                                vm.print.printMethod(imd)
                             );
                         else
-                            debugf(VM.debug.method, '[METHOD] :: %s Applying interface method in hierarchy: %s',
+                            debugf(vm.debug.method, '[METHOD] :: %s Applying interface method in hierarchy: %s',
                                 def.printHeader,
-                                VM.print.printMethod(imd)
+                                vm.print.printMethod(imd)
                             );
                         end
                         combCluster[imSignature] = imd;
@@ -469,15 +469,15 @@ function API.combineAllMethods(def, name, comb)
         for decSig, decMethod in pairs(decCluster) do
             -- If signatures match, an override is detected.
             if combCluster[decSig] then
-                VM.stepIn();
+                vm.stepIn();
                 decMethod.override = true;
                 decMethod.super = combCluster[decSig];
-                VM.stepOut();
+                vm.stepOut();
 
-                debugf(VM.debug.method, '[METHOD] :: %s OVERRIDING class method %s in hierarchy: %s',
+                debugf(vm.debug.method, '[METHOD] :: %s OVERRIDING class method %s in hierarchy: %s',
                     def.printHeader,
-                    VM.print.printMethod(combCluster[decSig]),
-                    VM.print.printMethod(decMethod)
+                    vm.print.printMethod(combCluster[decSig]),
+                    vm.print.printMethod(decMethod)
                 );
             end
             -- Assign the top-most class method definition.
@@ -490,7 +490,7 @@ end
 
 --- @param self StructDefinition
 function API.compileMethods(self)
-    debugf(VM.debug.method, '[METHOD] :: %s Compiling method(s)..', self.printHeader);
+    debugf(vm.debug.method, '[METHOD] :: %s Compiling method(s)..', self.printHeader);
 
     self.methods = {};
 
@@ -513,13 +513,13 @@ function API.compileMethods(self)
                 -- Ignore constructors.
                 if method.abstract then
                     local errMsg = string.format('%s Abstract method not implemented: %s',
-                        self.printHeader, VM.print.printMethod(method)
+                        self.printHeader, vm.print.printMethod(method)
                     );
                     print(errMsg);
                     error(errMsg, 3);
                 elseif method.interface and not method.default then
                     local errMsg = string.format('%s Interface method not implemented: %s',
-                        self.printHeader, VM.print.printMethod(method)
+                        self.printHeader, vm.print.printMethod(method)
                     );
                     print(errMsg);
                     error(errMsg, 3);
@@ -529,7 +529,7 @@ function API.compileMethods(self)
         end
     end
 
-    debugf(VM.debug.method, '[METHOD] :: %s Compiled %i method(s).', self.printHeader, count);
+    debugf(vm.debug.method, '[METHOD] :: %s Compiled %i method(s).', self.printHeader, count);
 end
 
 --- @param self StructDefinition
@@ -557,7 +557,7 @@ function API.getExecutableFromLine(self, path, line)
     --- @type ExecutableDefinition|nil
     local ed = API.getDeclaredMethodFromLine(self, path, line);
     if not ed and self.__type__ == 'ClassStructDefinition' then
-        ed = VM.executable.getConstructorFromLine(self, path, line);
+        ed = vm.executable.getConstructorFromLine(self, path, line);
     end
     return ed;
 end
@@ -578,7 +578,7 @@ function API.resolveConstructor(cons, args)
             for p = 1, paramLen do
                 local arg = args[p];
                 local parameter = parameters[p];
-                if not VM.type.isAssignableFromType(arg, parameter.types) then
+                if not vm.type.isAssignableFromType(arg, parameter.types) then
                     consDef = nil;
                     break;
                 end
@@ -598,18 +598,18 @@ function API.resolveConstructor(cons, args)
             if paramLen ~= 0 then
                 local lastParameter = parameters[paramLen];
                 local lastType = lastParameter.types[i];
-                if not VM.executable.isVararg(lastType) then
+                if not vm.executable.isVararg(lastType) then
                     consDef = nil;
                     -- If the varArg range doesn't match.
                 elseif paramLen > argsLen then
                     consDef = nil;
                 else
-                    local varArgTypes = VM.executable.getVarargTypes(lastType);
+                    local varArgTypes = vm.executable.getVarargTypes(lastType);
                     -- Check normal parameters.
                     for p = 1, paramLen - 1 do
                         local arg = args[p];
                         local parameter = parameters[p];
-                        if not VM.type.isAssignableFromType(arg, parameter.types) then
+                        if not vm.type.isAssignableFromType(arg, parameter.types) then
                             consDef = nil;
                             break;
                         end
@@ -617,7 +617,7 @@ function API.resolveConstructor(cons, args)
                     -- Check vararg parameters.
                     for p = paramLen, argsLen do
                         local arg = args[p];
-                        if not VM.type.isAssignableFromType(arg, varArgTypes) then
+                        if not vm.type.isAssignableFromType(arg, varArgTypes) then
                             consDef = nil;
                             break;
                         end
@@ -640,16 +640,16 @@ function API.createMiddleConstructor(classDef)
 
         if not cons then
             local errMsg = string.format('%s No constructor signature exists: %s',
-                classDef.printHeader, VM.print.argsToString(args)
+                classDef.printHeader, vm.print.argsToString(args)
             );
             print(errMsg);
             error(errMsg, 2);
             return;
         end
 
-        local level, relPath = VM.scope.getRelativePath();
+        local level, relPath = vm.scope.getRelativePath();
 
-        VM.stack.pushContext({
+        vm.stack.pushContext({
             class = classDef,
             element = cons,
             context = 'constructor',
@@ -657,29 +657,29 @@ function API.createMiddleConstructor(classDef)
             path = DebugUtils.getPath(level)
         });
 
-        local callInfo = DebugUtils.getCallInfo(3, VM.ROOT_PATH, true);
+        local callInfo = DebugUtils.getCallInfo(3, vm.ROOT_PATH, true);
         callInfo.path = relPath;
-        local scopeAllowed = VM.scope.getScopeForCall(cons.class, callInfo);
+        local scopeAllowed = vm.scope.getScopeForCall(cons.class, callInfo);
 
-        if VM.isOutside() and not VM.scope.canAccessScope(cons.scope, scopeAllowed) then
+        if vm.isOutside() and not vm.scope.canAccessScope(cons.scope, scopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The constructor %s.new(%s) is set as "%s" access level.' ..
                 ' (Access Level from call: "%s")\n%s',
                 cons.class.name, dump(cons.parameters),
                 cons.scope, scopeAllowed,
-                VM.stack.printStackTrace()
+                vm.stack.printStackTrace()
             );
-            VM.stack.popContext();
+            vm.stack.popContext();
             print(errMsg);
             error(errMsg, 2);
             return;
         end
 
         --- Apply super.
-        VM.stepIn();
+        vm.stepIn();
         local lastSuper = o.super;
         o.super = classDef.__supertable__;
-        VM.stepOut();
+        vm.stepOut();
 
         local result, errMsg;
 
@@ -693,11 +693,11 @@ function API.createMiddleConstructor(classDef)
             result, errMsg = xpcall(function()
                 local retValue;
 
-                VM.stepIn();
+                vm.stepIn();
                 local currentSuperCount = o.super.__call_count__;
                 local lastWho = o.super.__who__;
                 o.super.__who__ = cons;
-                VM.stepOut();
+                vm.stepOut();
 
                 retValue = cons.super(o, unpack(args));
 
@@ -706,30 +706,30 @@ function API.createMiddleConstructor(classDef)
                     o.super.__call_count__ = currentSuperCount;
                 elseif o.super.__call_count__ > currentSuperCount + 1 then
                     o.super.__call_count__ = currentSuperCount;
-                    VM.stack.popContext();
+                    vm.stack.popContext();
                     errorf(2, '%s The super-block of the constructor called self:super() more than once.',
                         classDef.printHeader
                     );
                 else
                     o.super.__call_count__ = currentSuperCount;
-                    VM.stack.popContext();
+                    vm.stack.popContext();
                     errorf(2, '%s The super-block of the constructor did not call self:super().',
                         classDef.printHeader
                     );
                 end
 
                 -- Reset super-invoke flags.
-                VM.stepIn();
+                vm.stepIn();
                 cons.__super_flag__ = false;
                 o.super.__who__ = lastWho;
-                VM.stepOut();
+                vm.stepOut();
 
                 -- Make sure that constructors don't return anything.
                 if retValue ~= nil then
-                    VM.stack.popContext();
+                    vm.stack.popContext();
                     errorf(2, '%s Constructor super function returned non-nil value: {type = %s, value = %s}',
                         classDef.printHeader,
-                        VM.type.getType(retValue), tostring(retValue)
+                        vm.type.getType(retValue), tostring(retValue)
                     );
                     return;
                 end
@@ -737,7 +737,7 @@ function API.createMiddleConstructor(classDef)
 
             -- If the constructor super function fails.
             if not result then
-                VM.stack.popContext();
+                vm.stack.popContext();
                 error(errMsg, 2);
             end
         end
@@ -749,23 +749,23 @@ function API.createMiddleConstructor(classDef)
             if retValue ~= nil then
                 local errMsg = string.format('%s Constructor returned non-nil value: {type = %s, value = %s}',
                     classDef.printHeader,
-                    VM.type.getType(retValue), tostring(retValue)
+                    vm.type.getType(retValue), tostring(retValue)
                 );
-                VM.stack.popContext();
+                vm.stack.popContext();
                 error(errMsg, 2);
                 return;
             end
 
             -- Make sure that final fields are initialized post-constructor.
-            VM.audit.auditFinalFields(classDef, o);
+            vm.audit.auditFinalFields(classDef, o);
         end, debug.traceback);
 
         --- Revert super.
-        VM.stepIn();
+        vm.stepIn();
         o.super = lastSuper;
-        VM.stepOut();
+        vm.stepOut();
 
-        VM.stack.popContext();
+        vm.stack.popContext();
         if not result then error(errMsg) end
     end
 end
@@ -799,7 +799,7 @@ function API.areCompatible(paramsA, paramsB)
     for i = 1, #paramsA do
         local a = paramsA[i];
         local b = paramsB[i];
-        if not VM.type.anyCanCastToTypes(a.types, b.types) then
+        if not vm.type.anyCanCastToTypes(a.types, b.types) then
             return false;
         end
     end
@@ -843,7 +843,7 @@ function API.compile(defParams)
             end
 
             -- Validate parameter name.
-            if not param.name and not VM.executable.isVararg(param.types[1]) then
+            if not param.name and not vm.executable.isVararg(param.types[1]) then
                 errorf(2, 'Parameter #%i doesn\'t have a defined name string.', i);
             elseif param.name == '' then
                 errorf(2, 'Parameter #%i has an empty name string.', i);
