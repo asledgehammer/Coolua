@@ -932,7 +932,7 @@ end
 -- MARK: - Returns
 
 --- @param e ClassStructDefinition|Class|table|string
-local function returns(e)
+local function returnTypes(e)
     return {
         __type__ = 'ReturnsTable',
         value = processTypes(e)
@@ -954,7 +954,7 @@ local function processMethodArgs(self, args)
             end
 
             if arg.__type__ == 'ReturnsTable' then
-                self.returns = arg.value;
+                self.returnTypes = arg.value;
             elseif arg.__type__ == 'PropertiesTable' then
                 -- TODO: Implement method properties. - Jab
                 error('Properties block in methods is not supported.', 2);
@@ -981,8 +981,8 @@ local function processMethodArgs(self, args)
         self.parameters = {};
     end
 
-    if not self.returns then
-        self.returns = { void };
+    if not self.returnTypes then
+        self.returnTypes = { void };
     end
 
     return self;
@@ -1070,12 +1070,12 @@ local equals = createMethodTemplate('equals', { public }, {
     parameters {
         { name = 'other', type = 'any' }
     },
-    returns = 'boolean',
+    returnTypes = 'boolean',
 });
 
 local toString = createMethodTemplate('toString', { public }, {
     parameters = {},
-    returns = 'string',
+    returnTypes = 'string',
 });
 
 -- MARK: - constructor
@@ -1212,7 +1212,7 @@ return {
     method = method,
     properties = properties,
     parameters = parameters,
-    returns = returns,
+    returnTypes = returnTypes,
     get = get,
     set = set,
     createMethodTemplate = createMethodTemplate,

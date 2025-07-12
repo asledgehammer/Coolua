@@ -94,7 +94,7 @@ Class:addMethod({
     parameters = {
         { type = 'any...' }
     },
-    returns = 'lua.lang.Object',
+    returnTypes = 'lua.lang.Object',
     body = function(self, ...)
         return self.definition.new(...);
     end
@@ -106,7 +106,7 @@ Class:addMethod({
     parameters = {
         { name = 'other', type = 'lua.lang.Class' }
     },
-    returns = 'boolean',
+    returnTypes = 'boolean',
 
     --- @param self Class
     --- @param other Class|ClassStructDefinition
@@ -125,7 +125,7 @@ Class:addMethod({
     scope = 'public',
     final = true,
     name = 'isInterface',
-    returns = 'boolean',
+    returnTypes = 'boolean',
     body = function(self)
         return self.definition.__type__ == 'InterfaceStructDefinition';
     end
@@ -135,7 +135,7 @@ Class:addMethod({
     scope = 'public',
     final = true,
     name = 'isEnum',
-    returns = 'boolean',
+    returnTypes = 'boolean',
     body = function(self)
         return self.definition.__type__ == 'EnumStructDefinition';
     end

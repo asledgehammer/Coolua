@@ -41,7 +41,7 @@ Object:addMethod({
     parameters = {
         { name = 'class', type = 'lua.lang.Class' }
     },
-    returns = 'boolean',
+    returnTypes = 'boolean',
 
     --- @param self Object
     --- @param class Class
@@ -58,7 +58,7 @@ Object:addMethod({
     parameters = {
         { name = 'other', type = 'any' }
     },
-    returns = 'boolean',
+    returnTypes = 'boolean',
 
     --- @param self Object
     --- @param other Object
@@ -72,7 +72,7 @@ Object:addMethod({
 Object:addMethod({
     scope = 'public',
     name = 'toString',
-    returns = 'string',
+    returnTypes = 'string',
 
     --- @param self Object
     ---
@@ -86,7 +86,7 @@ Object:addMethod({
     scope = 'public',
     final = true,
     name = 'getClass',
-    returns = 'lua.lang.Class',
+    returnTypes = 'lua.lang.Class',
 
     --- @param self Object
     ---

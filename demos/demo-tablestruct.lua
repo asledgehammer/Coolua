@@ -86,7 +86,7 @@ local Rectangle = class {
     method {
         scope = 'public',
         name = 'toString',
-        returns = 'string',
+        returnTypes = 'string',
 
         --- @param self Rectangle
         body = function(self)

@@ -646,7 +646,7 @@ function API.newClass(definition, outer)
 
         local scope = VM.audit.auditStructPropertyScope(self.scope, methodDefinition.scope, errHeader);
         local name = VM.audit.auditMethodParamName(methodDefinition.name, errHeader);
-        local types = VM.audit.auditMethodReturnsProperty(methodDefinition.returns, errHeader);
+        local types = VM.audit.auditMethodReturnsProperty(methodDefinition.returnTypes, errHeader);
         local parameters = VM.audit.auditParameters(methodDefinition.parameters, errHeader);
 
         local md = {
@@ -656,7 +656,7 @@ function API.newClass(definition, outer)
             -- Base properties. --
             class = cd,
             name = name,
-            returns = types,
+            returnTypes = types,
             parameters = parameters,
             body = body,
             bodyInfo = bodyInfo,
@@ -708,7 +708,7 @@ function API.newClass(definition, outer)
 
         local scope = VM.audit.auditStructPropertyScope(self.scope, methodDefinition.scope, errHeader);
         local name = VM.audit.auditMethodParamName(methodDefinition.name, errHeader);
-        local types = VM.audit.auditMethodReturnsProperty(methodDefinition.returns, errHeader);
+        local types = VM.audit.auditMethodReturnsProperty(methodDefinition.returnTypes, errHeader);
         local parameters = VM.audit.auditParameters(methodDefinition.parameters, errHeader);
 
         local md = {
@@ -717,7 +717,7 @@ function API.newClass(definition, outer)
             -- Base properties. --
             class = cd,
             name = name,
-            returns = types,
+            returnTypes = types,
             parameters = parameters,
             body = nil,
             bodyInfo = bodyInfo,
@@ -768,7 +768,7 @@ function API.newClass(definition, outer)
         local errHeader = string.format('ClassStructDefinition(%s):addMethod():', cd.name);
         local scope = VM.audit.auditStructPropertyScope(self.scope, methodDefinition.scope, errHeader);
         local name = VM.audit.auditMethodParamName(methodDefinition.name, errHeader);
-        local types = VM.audit.auditMethodReturnsProperty(methodDefinition.returns, errHeader);
+        local types = VM.audit.auditMethodReturnsProperty(methodDefinition.returnTypes, errHeader);
         local parameters = VM.audit.auditParameters(methodDefinition.parameters, errHeader);
 
         local md = {
@@ -778,7 +778,7 @@ function API.newClass(definition, outer)
             -- Base properties. --
             class = cd,
             name = name,
-            returns = types,
+            returnTypes = types,
             parameters = parameters,
             body = body,
             bodyInfo = bodyInfo,

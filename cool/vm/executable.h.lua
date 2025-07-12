@@ -22,7 +22,7 @@
 --- @field super MethodDefinition? (Internally assigned. If none, this is nil)
 --- @field generics GenericsTypesDefinition?
 --- @field parameters ParameterDefinition[]
---- @field returns string[]
+--- @field returnTypes string[]
 ---
 --- * General Flags *
 --- @field static boolean
@@ -44,7 +44,7 @@
 --- @field name string
 --- @field generics GenericsTypesDefinitionParameter?
 --- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
---- @field returns (string[]|string)? (Default: void)
+--- @field returnTypes (string[]|string)? (Default: void)
 
 --- @class (exact) ConstructorDefinition: ExecutableDefinition
 --- @field __type__ 'ConstructorDefinition'

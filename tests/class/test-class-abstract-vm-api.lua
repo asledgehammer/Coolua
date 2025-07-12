@@ -14,7 +14,7 @@ local AbstractClass = newClass {
 AbstractClass:addAbstractMethod {
     scope = 'public',
     name = 'aMethod',
-    returns = 'void'
+    returnTypes = 'void'
 };
 
 AbstractClass:finalize();
@@ -29,7 +29,7 @@ local ImplAbstractClass = newClass {
 ImplAbstractClass:addMethod {
     scope = 'public',
     name = 'aMethod',
-    returns = 'void',
+    returnTypes = 'void',
 
     body = function()
         print('Running from implemented abstract class!');

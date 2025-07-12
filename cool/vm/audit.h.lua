@@ -30,11 +30,11 @@ function API.auditMethodParamName(name, errHeader) end
 --- @return ClassScope
 function API.auditStructPropertyScope(structScope, propertyScope, errHeader) end
 
---- @param returns any[]|any
+--- @param returnTypes any[]|any
 --- @param errHeader string
 ---
 --- @return string[]
-function API.auditMethodReturnsProperty(returns, errHeader) end
+function API.auditMethodReturnsProperty(returnTypes, errHeader) end
 
 --- @param genDef GenericTypeDefinition
 function API.auditGenericType(genDef) end

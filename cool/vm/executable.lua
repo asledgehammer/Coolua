@@ -303,7 +303,7 @@ function API.createMiddleMethod(cd, name, methods)
         end
 
         -- Audit void type methods.
-        if retVal ~= nil and md.returns == 'void' then
+        if retVal ~= nil and md.returnTypes == 'void' then
             local errMsg = string.format('Invoked Method is void and returned value: {type = %s, value = %s}',
                 type(retVal),
                 tostring(retVal)

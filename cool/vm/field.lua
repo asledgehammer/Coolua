@@ -47,7 +47,7 @@ function API.compileFieldAutoMethods(self)
             local mGetDef = {
                 name = name,
                 scope = fieldDef.scope,
-                returns = fieldDef.types
+                returnTypes = fieldDef.types
             };
 
             if tGet == 'boolean' then

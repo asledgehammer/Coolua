@@ -29,7 +29,7 @@ Stack:addMethod({
     parameters = {
         { name = 'item', type = 'E' }
     },
-    returns = 'E',
+    returnTypes = 'E',
 
     --- @generic E: any
     ---
@@ -46,7 +46,7 @@ Stack:addMethod({
 Stack:addMethod({
     scope = 'public',
     name = 'peek',
-    returns = 'E',
+    returnTypes = 'E',
 
     --- @param self Stack
     body = function(self)
@@ -59,7 +59,7 @@ Stack:addMethod({
     scope = 'public',
     name = 'pop',
     parameters = {},
-    returns = 'E',
+    returnTypes = 'E',
     --- @param self Stack
     body = function(self)
         local stack = self.stack;
@@ -71,7 +71,7 @@ Stack:addMethod({
     scope = 'public',
     name = 'isEmpty',
     parameters = {},
-    returns = 'boolean',
+    returnTypes = 'boolean',
 
     --- @param self Stack
     body = function(self)
@@ -85,7 +85,7 @@ Stack:addMethod({
     parameters = {
         { name = 'item', type = 'E' }
     },
-    returns = 'number',
+    returnTypes = 'number',
 
     --- @param self Stack
     --- @param item E

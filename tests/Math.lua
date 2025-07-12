@@ -23,7 +23,7 @@ Math:addStaticMethod({
     scope = 'public',
     final = true,
     name = 'getPI',
-    returns = 'number',
+    returnTypes = 'number',
 
     body = function()
         return Math.PI;

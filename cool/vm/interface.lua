@@ -191,7 +191,7 @@ function IAPI.addMethod(self, methodDefinition)
     local bodyInfo = VM.executable.getExecutableInfo(body);
 
     local name = VM.audit.auditMethodParamName(methodDefinition.name, errHeader);
-    local types = VM.audit.auditMethodReturnsProperty(methodDefinition.returns, errHeader);
+    local types = VM.audit.auditMethodReturnsProperty(methodDefinition.returnTypes, errHeader);
     local parameters = VM.audit.auditParameters(methodDefinition.parameters, errHeader);
 
     local md = {
@@ -201,7 +201,7 @@ function IAPI.addMethod(self, methodDefinition)
         -- Base properties. --
         class = self,
         name = name,
-        returns = types,
+        returnTypes = types,
         parameters = parameters,
         body = body,
 
@@ -253,7 +253,7 @@ function IAPI.addStaticMethod(self, definition)
 
     local scope = VM.audit.auditStructPropertyScope(self.scope, definition.scope, errHeader);
     local name = VM.audit.auditMethodParamName(definition.name, errHeader);
-    local types = VM.audit.auditMethodReturnsProperty(definition.returns, errHeader);
+    local types = VM.audit.auditMethodReturnsProperty(definition.returnTypes, errHeader);
     local parameters = VM.audit.auditParameters(definition.parameters, errHeader);
     local bodyInfo = VM.executable.getExecutableInfo(body);
 
@@ -264,7 +264,7 @@ function IAPI.addStaticMethod(self, definition)
         -- Base properties. --
         class = self,
         name = name,
-        returns = types,
+        returnTypes = types,
         parameters = parameters,
         body = body,
         bodyInfo = bodyInfo,

@@ -226,23 +226,23 @@ function API.auditParameters(parameters, errHeader)
     return parameters;
 end
 
-function API.auditMethodReturnsProperty(returns, errHeader)
+function API.auditMethodReturnsProperty(returnTypes, errHeader)
     local types = {};
     -- Validate parameter type(s).
-    if not returns then
+    if not returnTypes then
         types = { 'void' };
-    elseif type(returns) == 'table' then
-        --- @cast returns table
-        if not isArray(returns) then
-            errorf(2, '%s The property "returns" is not a any or any[]. {type = %s, value = %s}',
-                errHeader, VM.type.getType(returns), tostring(returns)
+    elseif type(returnTypes) == 'table' then
+        --- @cast returnTypes table
+        if not isArray(returnTypes) then
+            errorf(2, '%s The property "returnTypes" is not a any or any[]. {type = %s, value = %s}',
+                errHeader, VM.type.getType(returnTypes), tostring(returnTypes)
             );
         end
-        --- @cast returns string[]
-        types = returns;
-    elseif type(returns) == 'string' then
-        --- @cast returns string
-        types = { returns };
+        --- @cast returnTypes string[]
+        types = returnTypes;
+    elseif type(returnTypes) == 'string' then
+        --- @cast returnTypes string
+        types = { returnTypes };
     end
     return types;
 end
