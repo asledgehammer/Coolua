@@ -2,10 +2,10 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local dump      = require 'cool/dump';
+local dump = require 'cool/dump';
 local PrintPlus = require 'cool/print';
-local errorf    = PrintPlus.errorf;
-local debugf    = PrintPlus.debugf;
+local errorf = PrintPlus.errorf;
+local debugf = PrintPlus.debugf;
 
 --- Converts the first character to upper. (Used for get-set shorthand)
 ---
