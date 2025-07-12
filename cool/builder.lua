@@ -906,7 +906,7 @@ local function parameters(...)
 
                     if types and type then
                         errorf(2, 'Parameter #%i cannot define both "type" and "types".', j);
-                    elseif not type and types then
+                    elseif not type and not types then
                         errorf(2, 'Parameter #%i has no defined types.', j);
                     elseif type then
                         types = { type };
