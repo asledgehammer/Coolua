@@ -16,9 +16,9 @@ local API = {
 
     __type__ = 'VMModule',
 
-    --- @param vm VM
-    setVM = function(vm)
-        vm = vm;
+    --- @param _vm VM
+    setVM = function(_vm)
+        vm = _vm;
         vm.moduleCount = vm.moduleCount + 1;
     end
 };
