@@ -4,7 +4,6 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-
 --- @class PrintPlus
 local API = {};
 

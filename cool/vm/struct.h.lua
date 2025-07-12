@@ -94,3 +94,7 @@ function API.calcPathNamePackage(definition, outer) end
 --- 
 --- @return StructReference
 function API.newReference(path) end
+
+--- @param classDef ClassStructDefinition
+--- @param o Object
+function API.createInstanceMetatable(classDef, o) end

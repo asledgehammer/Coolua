@@ -92,7 +92,6 @@ VM = {
     audit = require 'cool/vm/audit',
     package = require 'cool/vm/package',
     generic = require 'cool/vm/generic',
-    meta = require 'cool/vm/meta',
     stack = require 'cool/vm/stack',
     super = require 'cool/vm/super',
     field = require 'cool/vm/field',
@@ -132,7 +131,6 @@ VM.scope.setVM(VM);
 VM.audit.setVM(VM);
 VM.package.setVM(VM);
 VM.generic.setVM(VM);
-VM.meta.setVM(VM);
 VM.stack.setVM(VM);
 VM.super.setVM(VM);
 VM.field.setVM(VM);

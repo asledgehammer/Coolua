@@ -430,7 +430,7 @@ function API.newClass(definition, outer)
             end
         end
 
-        VM.meta.createInstanceMetatable(cd, o);
+        VM.struct.createInstanceMetatable(cd, o);
 
         -- Invoke constructor context.
         local args = { ... };

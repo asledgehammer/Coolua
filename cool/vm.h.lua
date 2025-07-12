@@ -38,7 +38,6 @@ function VMModule.setVM(vm) end
 --- @field audit VMAuditModule
 --- @field package VMPackageModule
 --- @field generic VMGenericModule
---- @field meta VMMetaModule
 --- @field stack VMStackModule
 --- @field super VMSuperModule
 --- @field field VMFieldModule
