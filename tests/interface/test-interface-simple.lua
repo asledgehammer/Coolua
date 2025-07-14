@@ -22,13 +22,15 @@ local parameters = builder.parameters;
 local public = builder.public;
 -- ------------------------------------ --
 
+-- NOTE: To make things a lot easier on implementing classes, create a template of the method that only requires a 
+--       function-body.
 local aMethod = methodTemplate('aMethod', { public }, {
     parameters { 'string' }
 });
 
 --- Java example:
 --- ```java
---- package tests;
+--- package tests.interface;
 ---
 --- public interface SimpleInterface {
 ---
