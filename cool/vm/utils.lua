@@ -14,37 +14,73 @@ local API = {
 
 --- @cast API VMUtils
 
+-- In order for indexing to work on read-only tables, we'll need to override
+-- the pairs/ipairs global functions. (Lua 5.1 compatability)
+
+-- Store the original pairs and ipairs to call via proxy in read-only tables.
+local originalPairs = pairs;
+local originalIPairs = ipairs;
+
+_G.pairs = function(tbl)
+    -- Catch read-only tables and print their weapped tables.
+    if tbl.__readonly__ and tbl.__pairs__ then
+        return tbl.__pairs__(tbl);
+    end
+
+    -- Normal behavior.
+    return originalPairs(tbl);
+end
+
+_G.ipairs = function(tbl)
+    -- Catch read-only tables and print their weapped tables.
+    if tbl.__readonly__ and tbl.__ipairs__ then
+        return tbl.__ipairs__(tbl);
+    end
+
+    -- Normal behavior.
+    return originalIPairs(tbl);
+end
+
 local meta;
 function API.readonly(table)
+    local __newindex = function(_, field, value)
+        -- VM bypass.
+        if vm.isInside() then
+            table[field] = value;
+            return;
+        end
+        error('Attempt to modify read-only object.', 2);
+    end
+
+    local __pairs = function()
+        return pairs(table);
+    end
+
+    table.__pairs__ = function()
+        return originalPairs(table);
+    end
+    table.__ipairs__ = function()
+        return originalIPairs(table);
+    end
+
+    -- A general flag to make sure that anything implementing this utility can identify and handle.
     table.__readonly__ = true;
 
     meta = getmetatable(table) or {};
 
-    local __newindex = function(_, field, value)
-        if vm.isOutside() then
-            error('Attempt to modify read-only object.', 2);
-        end
-
-        table[field] = value;
+    local mt = {};
+    for key, value in pairs(meta) do
+        mt[key] = value;
     end
 
-    return setmetatable({}, {
-        __index     = table,
-        __newindex  = __newindex,
-        __metatable = false,
-        __add       = meta.__add,
-        __sub       = meta.__sub,
-        __mul       = meta.__mul,
-        __div       = meta.__div,
-        __mod       = meta.__mod,
-        __pow       = meta.__pow,
-        __eq        = meta.__eq,
-        __lt        = meta.__lt,
-        __le        = meta.__le,
-        __concat    = meta.__concat,
-        __call      = meta.__call,
-        __tostring  = meta.__tostring
-    });
+    mt.__newindex = __newindex;
+    mt.__pairs = __pairs;
+    mt.__index = table;
+
+    -- IMPORTANT: This is how to make sure tampering isn't possible.
+    mt.metatable = false;
+
+    return setmetatable({}, mt);
 end
 
 function API.typeValueString(o)
