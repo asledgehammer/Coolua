@@ -27,7 +27,11 @@ local DEFAULT_CONFIGURATION = {
 ---
 --- @return boolean result
 local function isArray(t)
-    if type(t) ~= 'table' then return false end
+    if type(t) ~= 'table' then
+        return false;
+    elseif t.__type__ then
+        return false;
+    end
     local i = 0;
     for _ in pairs(t) do
         i = i + 1;
@@ -170,8 +174,6 @@ function dump.table(t, cfg, metadata)
         end
     end
 
-
-
     -- Sort keys.
     local keys = {};
     for key, _ in pairs(t) do
@@ -183,28 +185,36 @@ function dump.table(t, cfg, metadata)
 
     for i = 1, #keys do
         local key = keys[i];
+        --- @type any
         local value = t[key];
 
-        if not cfg.ignoreEmptyTableArrays or not isArray(value) or #value ~= 0 then
-            if not cfg.ignoreTableFunctions or type(value) ~= 'function' then
-                if not cfg.label or (key ~= cfg.labelField and key ~= '__readonly__') then
-                    local sKey = key;
-                    if type(key) == 'number' then
-                        sKey = '[' .. key .. ']'
-                    end
-                    metadata.level = metadata.level + 1;
-                    local e = string.format('%s = %s', tostring(sKey), dump.any(value, cfg, metadata));
-                    metadata.level = metadata.level - 1;
-                    if s == '' then
-                        s = indent1 .. e;
-                    else
-                        s = s .. ',' .. newline .. indent1 .. e;
-                    end
-                end
+        local shouldPrint = true;
+
+        if cfg.ignoreEmptyTableArrays and isArray(value) and #value == 0 then
+            shouldPrint = false;
+        elseif cfg.ignoreTableFunctions and type(value) == 'function' then
+            shouldPrint = false;
+        elseif cfg.label and key == cfg.labelField then
+            shouldPrint = false;
+        elseif key == '__readonly__' then
+            shouldPrint = false;
+        end
+
+        if shouldPrint then
+            local sKey = key;
+            if type(key) == 'number' then
+                sKey = '[' .. key .. ']'
+            end
+            metadata.level = metadata.level + 1;
+            local e = string.format('%s = %s', tostring(sKey), dump.any(value, cfg, metadata));
+            metadata.level = metadata.level - 1;
+            if s == '' then
+                s = indent1 .. e;
+            else
+                s = s .. ',' .. newline .. indent1 .. e;
             end
         end
     end
-
     if s == '' then
         return label .. '{}';
     end
@@ -226,8 +236,12 @@ function dump.any(e, cfg, metadata)
 
     local t = type(e);
     if t == 'table' then
-        if e.__type__ and e.__type__ == 'ClassStructDefinition' then
-            return dump.class(e);
+        if e.__type__ then
+            if e.__type__ == 'ClassStructDefinition' then
+                return dump.class(e);
+            else
+                return dump.table(e, cfg, metadata);
+            end
         elseif isArray(e) then
             return dump.array(e, cfg, metadata);
         else
