@@ -1061,12 +1061,9 @@ local function createMethodTemplate(name, flags, properties)
             __type__ = 'MethodTable',
             name = name,
             flags = flags,
-            body = getPresetMethodBody(name, t),
-            parameters = properties.parameters,
-            returnTypes = properties.returnTypes
+            body = getPresetMethodBody(name, t)
         };
-
-        -- processMethodArgs(t2, properties);
+        processMethodArgs(t2, properties);
         return setmetatable(t2, mt_method_preset);
     end
 end
