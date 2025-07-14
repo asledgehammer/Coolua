@@ -33,4 +33,4 @@ local ins = EnclosingClass.new();
 
 print(ins);
 print(ins.EnclosedClass);
-print(EnclosingClass.EnclosedClass);
+-- print(EnclosingClass.EnclosedClass); (error)
