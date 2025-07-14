@@ -19,8 +19,8 @@ local API = {
     constructor = false,
     super = false,
     builder = true,
-    executable = true,
-    executableCache = true,
+    executable = false,
+    executableCache = false,
 
     -- Method(s)
     --- @param _vm VM

@@ -366,12 +366,12 @@ local function processTypes(e)
         table.insert(types, e);
     elseif te == 'table' then
         if e.__type__ then
-            if e.__type__ == 'ClassStructDefinition' then
+            if e.__type__ == 'ClassStructDefinition' or e.__type__ == 'InterfaceStructDefinition' then
                 --- @cast e ClassStructDefinition
-                table.insert(types, e.path);
+                table.insert(types, e);
             elseif e.getDefinition then
                 -- Convert clas to its VM definition and grab its path.
-                table.insert(types, e:getDefinition().path);
+                table.insert(types, e:getDefinition());
             end
             -- Cannot use dictionaries to define types.
         elseif not isArray(e) then
@@ -807,7 +807,8 @@ local function isFlag(str)
         str == 'final' or
         str == 'abstract' or
         str == 'static' or
-        str == 'default';
+        str == 'default' or
+        str == 'vararg';
 end
 
 --- @param ... string|table Flags
@@ -1060,9 +1061,12 @@ local function createMethodTemplate(name, flags, properties)
             __type__ = 'MethodTable',
             name = name,
             flags = flags,
-            body = getPresetMethodBody(name, t)
+            body = getPresetMethodBody(name, t),
+            parameters = properties.parameters,
+            returnTypes = properties.returnTypes
         };
-        processMethodArgs(t2, properties);
+
+        -- processMethodArgs(t2, properties);
         return setmetatable(t2, mt_method_preset);
     end
 end

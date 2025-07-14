@@ -178,7 +178,6 @@ end
 function API.createMiddleMethod(cd, name, methods)
     --- @param o ClassInstance
     return function(o, ...)
-
         if not cd.__readonly__ then
             cd:finalize();
         end
@@ -264,22 +263,36 @@ function API.createMiddleMethod(cd, name, methods)
             vm.stepOut();
         end
 
+        -- Throw the error after applying context.
+        if not result then error(tostring(errMsg) or '', 2) end
+
         -- Audit void type methods.
         if retVal ~= nil and md.returnTypes == 'void' then
-            local errMsg = string.format('Invoked Method is void and returned value: {type = %s, value = %s}',
+            errMsg = string.format('Invoked Method is void and returned value: {type = %s, value = %s}',
                 type(retVal),
                 tostring(retVal)
             );
             print(errMsg);
             vm.stack.popContext();
-            error('', 2);
+            error(errMsg, 2);
+            return;
+        end
+
+        -- Audit return-type methods.
+        if not vm.type.isAssignableFromType(retVal, md.returnTypes) then
+            errMsg = string.format('%s: Invalid type for returned value: {type = %s, value = %s} (Allowed type(s): %s)',
+                md.signature,
+                type(retVal),
+                tostring(retVal),
+                dump(md.returnTypes)
+            );
+            print(errMsg);
+            vm.stack.popContext();
+            error(errMsg, 2);
             return;
         end
 
         vm.stack.popContext();
-
-        -- Throw the error after applying context.
-        if not result then error(tostring(errMsg) or '') end
 
         return retVal;
     end;

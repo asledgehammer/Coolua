@@ -63,7 +63,7 @@ Object:addMethod({
     ---
     --- @return boolean
     body = function(self, other)
-        return self == other;
+        return other and self.__table_id__ == other.__table_id__;
     end
 });
 

@@ -43,7 +43,7 @@ local function applyStructMetatable(cd)
         vm.stepIn();
 
         local fd = cd:getField(field);
-        
+
         local callInfo = vm.scope.getRelativeCall();
 
         vm.stack.pushContext({
@@ -579,6 +579,10 @@ function API.newClass(definition, outer)
             __type__ = 'ClassInstance',
             __class__ = __class__,
         };
+
+        -- For native Lua table identity. Helps prevent infinite loops when checking self literally.
+        o.__table_id__ = tostring(o);
+
 
         --- Assign the middle-functions to the object.
         for name, func in pairs(cd.__middleMethods) do
