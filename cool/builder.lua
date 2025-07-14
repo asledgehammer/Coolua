@@ -26,6 +26,7 @@ local abstract = 'abstract';
 local final = 'final';
 --- @type VoidType
 local void = 'void';
+local vararg = 'vararg';
 
 -- MARK: - build
 
@@ -1228,4 +1229,5 @@ return {
     public = public,
     final = final,
     abstract = abstract,
+    vararg = vararg,
 };

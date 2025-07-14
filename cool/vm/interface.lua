@@ -98,7 +98,7 @@ local function applyMetatable(self)
             return;
         end
 
-            local callInfo = vm.scope.getRelativeCall();
+        local callInfo = vm.scope.getRelativeCall();
 
         vm.stack.pushContext({
             class = self,
@@ -495,7 +495,6 @@ end
 ---
 --- @return InterfaceStructDefinition interfaceDef
 function IAPI.finalize(self)
-
     local errHeader = string.format('Interface(%s):finalize():', self.path);
 
     if self.__readonly__ then
@@ -564,17 +563,22 @@ function IAPI.finalize(self)
         self[name] = self.__middleMethods[name];
     end
 
-
+    local declaredFields = {};
     for k, v in pairs(self.declaredFields) do
         --- @params T: FieldDefinition
-        self.declaredFields[k] = readonly(v);
+        declaredFields[k] = readonly(v);
     end
-    for _, v in pairs(self.declaredMethods) do
+    self.declaredFields = declaredFields;
+
+    local declaredMethods = {};
+    for mName, v in pairs(self.declaredMethods) do
+        declaredMethods[mName] = {};
         for sig, method in pairs(v) do
             --- @params T: MethodDefinition
-            v[sig] = readonly(method);
+            declaredMethods[mName][sig] = readonly(method);
         end
     end
+    self.declaredMethods = declaredMethods;
 
     self.__readonly__ = true;
     vm.DEFINITIONS[self.path] = self;

@@ -60,8 +60,6 @@ function API.createInstanceMetatable(cd, o)
             cd:finalize();
         end
 
-
-
         if instancedStructs[field] then
             return instancedStructs[field];
         end

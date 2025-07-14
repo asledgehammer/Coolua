@@ -19,6 +19,7 @@ local returnTypes = builder.returnTypes;
 local public = builder.public;
 local private = builder.private;
 local final = builder.final;
+local vararg = builder.vararg;
 -- ------------------------------------ --
 
 local Object = import 'lua.lang.Object';
@@ -84,8 +85,8 @@ Class = class 'Class' (public, final) {
         end
     },
 
-    method 'new' (public, final) {
-        parameters({ type = 'any...' }),
+    method 'new' (public, final, vararg) {
+        parameters({ type = 'any' }),
         returnTypes(Object),
         function(self, ...)
             return self.definition.new(...);

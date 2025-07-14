@@ -55,12 +55,12 @@ local function applyStructMetatable(cd)
         });
 
         if not fd then
-            errorf(2, 'FieldNotFoundException: Cannot set new field or method: %s.%s',
+            errorf(2, 'FieldNotFoundException: Cannot access field, method, or struct: %s.%s',
                 cd.path, field
             );
             return;
         elseif not fd.static then
-            errorf(2, 'StaticFieldException: Assigning non-static field in static context: %s.%s',
+            errorf(2, 'StaticFieldException: Accessing non-static field, method, or struct in static context: %s.%s',
                 cd.path, field
             );
             return;
@@ -758,7 +758,7 @@ function API.newClass(definition, outer)
             );
         end
 
-        local parameters = vm.executable.compile(constructorDefinition.parameters);
+        local parameters = vm.executable.compile(constructorDefinition);
 
         local args = {
 

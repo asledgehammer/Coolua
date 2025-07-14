@@ -73,7 +73,7 @@ function API.resolveMethod(struct, name, methods, args)
     -- md = struct.methodCache[callSignature];
     -- if md then return md end
 
-    debugf(vm.debug.methodCache, '[METHOD_CACHE] :: %s No cache found for method %s call signature: %s',
+    debugf(vm.debug.executableCache, '[EXECUTABLE_CACHE] :: %s No cache found for method %s call signature: %s',
         struct.printHeader,
         name,
         callSignature
@@ -81,9 +81,9 @@ function API.resolveMethod(struct, name, methods, args)
 
     -- Attempt to resolve the method using exact method signature checks.
     --- @type MethodDefinition?
-    local md = methods[callSignature];
+    md = methods[callSignature];
     if md then
-        debugf(vm.debug.methodCache, '[METHOD_CACHE] :: %s Caching exact method %s call signature: %s',
+        debugf(vm.debug.executableCache, '[EXECUTABLE_CACHE] :: %s Caching exact method %s call signature: %s',
             struct.printHeader,
             vm.print.printMethod(md),
             callSignature
@@ -101,7 +101,7 @@ function API.resolveMethod(struct, name, methods, args)
     end
 
     if md then
-        debugf(vm.debug.methodCache, '[METHOD_CACHE] :: %s Caching method %s call signature: %s',
+        debugf(vm.debug.executableCache, '[EXECUTABLE_CACHE] :: %s Caching method %s call signature: %s',
             struct.printHeader,
             vm.print.printMethod(md),
             callSignature
@@ -119,69 +119,17 @@ end
 ---
 --- @return MethodDefinition|nil
 function API.resolveMethodDeep(methods, args)
-    local argsLen = #args;
-
     --- @type MethodDefinition?
     local md = nil;
 
     -- Try to find the method without varargs first.
     for _, method in pairs(methods) do
-        if md then break end
-        md = method;
-        local parameters = md.parameters or {};
-        local paramLen = #parameters;
-        if argsLen == paramLen then
-            for p = 1, paramLen do
-                local arg = args[p];
-                local parameter = parameters[p];
-                if not vm.type.isAssignableFromType(arg, parameter.types) then
-                    md = nil;
-                    break;
-                end
-            end
-        else
-            md = nil;
+        if API.checkArguments(method, args) then
+            md = method;
+            break;
         end
     end
 
-    -- Check and see if a vararg method exists.
-    if not md then
-        for _, method in pairs(methods) do
-            if md then break end
-            md = method;
-            local parameters = md.parameters or {};
-            local paramLen = #parameters;
-            if paramLen ~= 0 then
-                local lastParameter = parameters[paramLen];
-                local lastType = lastParameter.types[i];
-                if not vm.executable.isVararg(lastType) then
-                    md = nil;
-                    -- If the varArg range doesn't match.
-                elseif paramLen > argsLen then
-                    md = nil;
-                else
-                    local varArgTypes = vm.executable.getVarargTypes(lastType);
-                    -- Check normal parameters.
-                    for p = 1, paramLen - 1 do
-                        local arg = args[p];
-                        local parameter = parameters[p];
-                        if not vm.type.isAssignableFromType(arg, parameter.types) then
-                            md = nil;
-                            break;
-                        end
-                    end
-                    -- Check vararg parameters.
-                    for p = paramLen, argsLen do
-                        local arg = args[p];
-                        if not vm.type.isAssignableFromType(arg, varArgTypes) then
-                            md = nil;
-                            break;
-                        end
-                    end
-                end
-            end
-        end
-    end
     return md;
 end
 
@@ -230,6 +178,7 @@ end
 function API.createMiddleMethod(cd, name, methods)
     --- @param o ClassInstance
     return function(o, ...)
+
         if not cd.__readonly__ then
             cd:finalize();
         end
@@ -416,7 +365,7 @@ function API.getMethodNames(classDef, methodNames)
             end
         end
     end
-    
+
     vm.stepOut();
 
     -- Get struct-specific declarations.
@@ -838,20 +787,21 @@ function API.areCompatible(paramsA, paramsB)
     return true;
 end
 
-function API.getVarargTypes(arg)
-    if not API.isVararg(arg) then
-        errorf(2, 'Type is not vararg: %s', arg);
-    end
-    return arg:sub(1, #arg - 3):split('|');
-end
+-- function API.getVarargTypes(arg)
+--     if not API.isVararg(arg) then
+--         errorf(2, 'Type is not vararg: %s', arg);
+--     end
+--     return arg:sub(1, #arg - 3):split('|');
+-- end
 
-function API.isVararg(arg)
-    local len = #arg;
-    if len < 3 then return false end
-    return string.sub(arg, len - 2, len) == '...';
-end
+-- function API.isVararg(arg)
+--     local len = #arg;
+--     if len < 3 then return false end
+--     return string.sub(arg, len - 2, len) == '...';
+-- end
 
-function API.compile(defParams)
+function API.compile(def)
+    local defParams = def.parameters;
     if not defParams then return {} end
 
     -- Convert any simplified type declarations.
@@ -874,10 +824,10 @@ function API.compile(defParams)
             end
 
             -- Validate parameter name.
-            if not param.name and not vm.executable.isVararg(param.types[1]) then
-                errorf(2, 'Parameter #%i doesn\'t have a defined name string.', i);
-            elseif param.name == '' then
+            if param.name == '' then
                 errorf(2, 'Parameter #%i has an empty name string.', i);
+            elseif not param.name then
+                param.name = 'arg_' .. tostring(i);
             end
         end
     end
@@ -888,6 +838,102 @@ end
 --- @param self Object
 function API.defaultSuperFunc(self)
     self:super();
+end
+
+--- @param ed ExecutableDefinition
+--- @param args any[]
+---
+--- @return boolean matches
+function API.checkArguments(ed, args)
+    local argsLen = #args;
+    local valid = true;
+
+    -- Try to find the method without varargs first.
+    local parameters = ed.parameters;
+    local paramLen = #parameters;
+    local parameter;
+    local arg;
+
+    if ed.vararg then
+        local lastParameter;
+        local varArgTypes;
+
+        parameters = ed.parameters;
+        paramLen = #parameters;
+        if paramLen ~= 0 then
+            lastParameter = parameters[paramLen];
+            -- Subtract 1 because varargs can be empty.
+            if paramLen - 1 > argsLen then
+                valid = false;
+            else
+                varArgTypes = lastParameter.types;
+
+                -- Check normal parameters.
+                for p = 1, paramLen - 1 do
+                    arg = args[p];
+                    parameter = parameters[p];
+                    if not vm.type.isAssignableFromType(arg, parameter.types) then
+                        valid = false;
+                        break;
+                    end
+                end
+
+                -- Check vararg parameters.
+                if valid then
+                    for p = paramLen, argsLen do
+                        arg = args[p];
+                        if not vm.type.isAssignableFromType(arg, varArgTypes) then
+                            valid = false;
+                            break;
+                        end
+                    end
+                end
+            end
+        end
+    else
+        if argsLen == paramLen then
+            for p = 1, paramLen do
+                arg = args[p];
+                parameter = parameters[p];
+                if not vm.type.isAssignableFromType(arg, parameter.types) then
+                    valid = false;
+                    break;
+                end
+            end
+        else
+            valid = false;
+        end
+    end
+
+    if vm.debug.executable then
+        vm.stepIn();
+        -- All this does is compile useful debug arguments array as a string.
+        local argsS = '';
+        for i = 1, argsLen do
+            arg = args[i];
+            local argS;
+            if arg.__class__ then
+                argS = '<ClassInstance:' .. arg.__class__.definition.path .. '>';
+            elseif arg.__type__ then
+                argS = '<' .. arg.__type__ .. ':' .. arg.__type__ .. '>';
+            else
+                argS = tostring(arg);
+            end
+            if argsS == '' then
+                argsS = argS;
+            else
+                argsS = argsS .. ', ' .. argS;
+            end
+        end
+        argsS = '[' .. argsS .. ']';
+        vm.stepOut();
+        debugf(vm.debug.executable, '[EXECUTABLE] :: executable.checkArguments(%s, %s) = %s',
+            vm.print.printExecutable(ed), argsS, tostring(valid)
+        );
+    end
+
+
+    return valid;
 end
 
 return API;

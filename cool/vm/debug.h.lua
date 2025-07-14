@@ -8,7 +8,6 @@
 --- 
 --- @field internal boolean
 --- @field method boolean
---- @field methodCache boolean
 --- @field scope boolean
 --- @field compile boolean
 --- @field pkg boolean
@@ -16,4 +15,6 @@
 --- @field constructor boolean
 --- @field super boolean
 --- @field builder boolean
+--- @field executable boolean
+--- @field executableCache boolean
 local API = {};

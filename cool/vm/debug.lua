@@ -12,7 +12,6 @@ local API = {
     -- Field(s)
     internal = true,
     method = false,
-    methodCache = false,
     scope = false,
     compile = false,
     pkg = false,
@@ -20,6 +19,8 @@ local API = {
     constructor = false,
     super = false,
     builder = true,
+    executable = true,
+    executableCache = true,
 
     -- Method(s)
     --- @param _vm VM

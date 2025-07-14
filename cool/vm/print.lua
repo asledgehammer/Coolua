@@ -78,6 +78,16 @@ function API.argsToString(args)
     return string.format('{\n\t%s\n}', s);
 end
 
+function API.printExecutable(def)
+    if def.__type__ == 'MethodDefinition' then
+        return API.printMethod(def);
+    elseif def.__type__ == 'ConstructorDefinition' then
+        return API.printConstructor(def);
+    else
+        errorf(2, 'Unknown ExecutableDefinition type: %s', def.__type__);
+    end
+end
+
 function API.printMethod(def)
     local sStatic = '';
     if def.static then sStatic = 'static ' end
@@ -98,6 +108,10 @@ function API.printMethod(def)
     end
 
     return string.format('%s%s%s%s%s%s', sStatic, sFinal, sGenerics, def.class.name, callSyntax, def.signature);
+end
+
+function API.printConstructor(def)
+    return string.format('%s:%s', def.class.name, def.signature);
 end
 
 function API.printInterface(def)

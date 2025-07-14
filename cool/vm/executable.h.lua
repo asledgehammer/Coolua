@@ -6,17 +6,30 @@
 
 -- MARK: - Definition
 
---- @class (exact) ExecutableDefinition (interface)
+--- @class (exact) Parameterable
+--- 
+--- @field parameters ParameterDefinition[]
+--- @field vararg boolean If true, the executable's last paramater is a vararg.
+
+--- @class (exact) ParameterableInput
+--- 
+--- @field parameters ParameterDefinition[]? (Default: No parameters)
+--- @field vararg boolean? (Default: false) If true, the executable's last paramater is a vararg.
+
+--- @class (exact) ExecutableDefinition: Parameterable
+--- 
 --- @field __type__ string
+--- 
 --- @field signature string The identity of the method. used for comparison.
 --- @field audited boolean If true, the struct is audited and verified to be valid.
---- @field parameters ParameterDefinition[]
 --- @field body function?
 --- @field bodyInfo FunctionInfo The function's information. (line-range and path)
 --- @field scope ClassScope
 
 --- @class (exact) MethodDefinition: ExecutableDefinition
+--- 
 --- @field __type__ 'MethodDefinition'
+--- 
 --- @field class StructDefinition
 --- @field name string
 --- @field super MethodDefinition? (Internally assigned. If none, this is nil)
@@ -36,18 +49,19 @@
 --- @field interface boolean (Default: false) If the method belongs to an interface.
 --- @field default boolean (Default: false) If true, `interface` is true and the method is also defined in the interface.
 
---- @class (exact) MethodDefinitionParameter
+--- @class (exact) MethodDefinitionParameter: ParameterableInput
 ---
 --- @field scope ClassScope? (Default: public)
 --- @field static boolean? (Default: false)
 --- @field final boolean? (Default: false)
 --- @field name string
 --- @field generics GenericsTypesDefinitionParameter?
---- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
 --- @field returnTypes (string[]|string)? (Default: void)
 
 --- @class (exact) ConstructorDefinition: ExecutableDefinition
+--- 
 --- @field __type__ 'ConstructorDefinition'
+--- 
 --- @field __super_flag__ boolean Used internally to track calls to super while invoked.
 --- @field class ClassStructDefinition
 --- @field parameters ParameterDefinition[]
@@ -55,14 +69,15 @@
 --- @field superInfo FunctionInfo The super function's information. (line-range and path)
 --- @field body fun(o: any, ...) TODO: Rename as `body`.
 
---- @class (exact) ConstructorDefinitionParameter
+--- @class (exact) ConstructorDefinitionParameter: ParameterableInput
 --- @field scope ClassScope? (Default: "package")
---- @field parameters ParameterDefinitionParameter[]?
 --- @field super fun(super: SuperTable, ...)? This function is called prior to the body function. If not defined, an attempt at `super()` is called. If not exists, an error occurs.
 --- @field body fun(o: any, ...)? TODO: Rename as `body`.
 
 --- @class (exact) ParameterDefinition
+--- 
 --- @field __type__ 'ParameterDefinition'
+--- 
 --- @field audited boolean If true, the struct is audited and verified to be valid.
 --- @field class ClassStructDefinition
 --- @field name string
@@ -186,22 +201,16 @@ function API.getConstructorFromLine(self, path, line) end
 --- @return boolean
 function API.areCompatible(paramsA, paramsB) end
 
---- @param arg string
+--- @param def ParameterableInput
 ---
---- @return string[] argTypes
-function API.getVarargTypes(arg) end
-
---- @param arg string
----
---- @return boolean isVararg
-function API.isVararg(arg) end
-
---- @param defParams ParameterDefinition
----
---- @return ParameterDefinition
-function API.compile(defParams) end
+--- @return ParameterDefinition[]
+function API.compile(def) end
 
 --- Used to fill-in for missing super function blocks for constructors.
 ---
 --- @param super SuperTable
 function API.defaultSuperFunc(super) end
+
+--- @param struct ExecutableDefinition
+--- @param args any[]
+function API.checkArguments(struct, args) end
