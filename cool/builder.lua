@@ -944,40 +944,49 @@ end
 
 -- MARK: - Method
 
+local function processMethodArg(self, arg)
+    local targ = type(arg);
+    if targ == 'table' then
+        if not arg.__type__ then
+            errorf(2, 'Property in method is not a struct. {value = %s}',
+                dump(arg)
+            );
+        end
+        if arg.__type__ == 'ReturnsTable' then
+            self.returnTypes = arg.value;
+        elseif arg.__type__ == 'PropertiesTable' then
+            -- TODO: Implement method properties. - Jab
+            error('Properties block in methods is not supported.', 2);
+        elseif arg.__type__ == 'ParametersTable' then
+            self.parameters = arg.value;
+        else
+            errorf(2, 'Property is an unknown struct: %s {type = %s, value = %s}',
+                arg.__type__, dump(arg)
+            );
+        end
+    elseif targ == 'function' then
+        if self.body then
+            error('Cannot define method body more than once.', 2);
+        end
+        self.body = arg;
+    end
+end
+
 local function processMethodArgs(self, args)
     for i = 1, #args do
-        local arg = args[i];
-        local targ = type(arg);
+        processMethodArg(self, args[i]);
+    end
 
-        if targ == 'table' then
-            if not arg.__type__ then
-                errorf(2, 'Property #%i in method is not a struct. {value = %s}',
-                    i, dump(arg)
-                );
-            end
-
-            if arg.__type__ == 'ReturnsTable' then
-                self.returnTypes = arg.value;
-            elseif arg.__type__ == 'PropertiesTable' then
-                -- TODO: Implement method properties. - Jab
-                error('Properties block in methods is not supported.', 2);
-            elseif arg.__type__ == 'ParametersTable' then
-                self.parameters = arg.value;
+    for name, arg in pairs(args) do
+        if type(name) ~= 'number' then
+            if name == 'returnTypes' then
+                self.returnTypes = arg;
+            elseif name == 'parameters' then
+                self.parameters = arg;
             else
-                errorf(2, 'Property #%i is an unknown struct: %s {type = %s, value = %s}',
-                    i, arg.__type__, dump(arg)
-                );
+                errorf(2, 'Unknown method property: %s', name);
             end
-        elseif targ == 'function' then
-            if self.body then
-                error('Cannot define method body more than once.', 2);
-            end
-            self.body = arg;
         end
-
-        -- for _, v2 in pairs(arg) do
-        --     table.insert(self.body, v2);
-        -- end
     end
 
     if not self.parameters then

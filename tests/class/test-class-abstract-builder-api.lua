@@ -19,14 +19,10 @@ local abstract = builder.abstract;
 
 -- Create a method template for the abstract method that'll be implemented.
 local aMethod = createMethodTemplate('aMethod', { public }, {
-    parameters {},
-    returnTypes 'void'
 });
 
 local AbstractClass = class 'AbstractClass' (abstract) {
-    method 'aMethod' (public, abstract) {
-        returnTypes 'void'
-    }
+    method 'aMethod' (public, abstract) {}
 };
 
 local ImplementedClass = class 'ImplementedClass' (abstract) {

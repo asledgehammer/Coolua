@@ -24,14 +24,22 @@ function API.isAssignableFromType(value, typeOrTypes)
         --- @cast typeOrTypes string[]
         if isArray(typeOrTypes) then
             for i = 1, #typeOrTypes do
-                if typeOrTypes[i] == 'any' or typeOrTypes[i] == API.getType(value) then
+                local type = typeOrTypes[i];
+                if type == 'void' and value == nil then return true end
+                if type == 'any' or type == API.getType(value) then
                     return true;
                 end
             end
             return false;
         end
     end
+
     --- @cast typeOrTypes string
+
+    if value == nil and typeOrTypes == 'void' then
+        return true;
+    end
+
     return API.getType(value) == typeOrTypes;
 end
 
