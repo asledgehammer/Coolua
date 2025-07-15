@@ -194,7 +194,7 @@ local function buildInterface(self, outerStruct)
         errorf(2, 'Interface doesn\'t have a name!');
     end
 
-    --- @type InterfaceStructParameter
+    --- @type InterfaceStructInput
     local intArgs = {
         name = self.name,
         extends = self.extends,

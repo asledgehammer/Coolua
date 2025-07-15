@@ -298,7 +298,7 @@ local function createPseudoClassInstance(def)
     return __class__;
 end
 
---- @param definition ClassStructParameter|ChildClassStructParameter
+--- @param definition ClassStructInput|ChildClassStructInput
 --- @param outer Struct?
 function API.newClass(definition, outer)
     local locInfo = vm.struct.calcPathNamePackage(definition, outer);
@@ -730,7 +730,7 @@ function API.newClass(definition, outer)
 
     -- MARK: - Constructor
 
-    --- @param ConstructorStruct ConstructorStructParameter
+    --- @param ConstructorStruct ConstructorStructInput
     ---
     --- @return ConstructorStruct
     function cd:addConstructor(ConstructorStruct)

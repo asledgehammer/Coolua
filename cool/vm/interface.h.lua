@@ -28,12 +28,12 @@ local InterfaceInstance = {};
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body function?
 
---- @class InterfaceStructParameter: StructParameter
+--- @class InterfaceStructInput: StructInput
 ---
 --- @field extends InterfaceStruct?
 --- @field static boolean?
 --- @field scope ClassScope? (Default: package)
-local InterfaceStructParameter = {};
+local InterfaceStructInput = {};
 
 --- @class InterfaceStruct: HierarchicalStruct, Fieldable
 --- @field __type__ 'InterfaceStruct'
@@ -132,7 +132,7 @@ function InterfaceStruct:setOuterStruct(outer) end
 --- @class VMInterfaceModule: VMModule
 local API = {};
 
---- @param definition InterfaceStructParameter
+--- @param definition InterfaceStructInput
 --- @param enclosingStruct Struct?
 ---
 --- @return InterfaceStruct

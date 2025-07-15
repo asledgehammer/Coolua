@@ -78,7 +78,7 @@ function Struct:isFinalized() end
 
 --- @class HierarchicalStruct: Struct, Hierarchical
 
---- @class StructParameter
+--- @class StructInput
 ---
 --- @field pkg string?
 --- @field name string?
@@ -86,7 +86,7 @@ function Struct:isFinalized() end
 --- @class VMStructModule: VMModule
 local API = {};
 
---- @param definition Struct|StructParameter
+--- @param definition Struct|StructInput
 --- @param outer Struct?
 ---
 --- @return {path: string, name: string, pkg: string}

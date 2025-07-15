@@ -33,7 +33,7 @@
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body nil
 
---- @class (exact) ClassStructParameter: StructParameter
+--- @class (exact) ClassStructInput: StructInput
 --- @field final boolean? (Default: false)
 --- @field scope ClassScope? (Default: package)
 --- @field extends ClassStruct? (Default: nil)
@@ -42,7 +42,7 @@
 --- @field abstract boolean? (Default: false)
 --- @field implements InterfaceStruct|InterfaceStruct[]?
 
---- @class (exact) ChildClassStructParameter: StructParameter
+--- @class (exact) ChildClassStructInput: StructInput
 --- @field final boolean? (Default: false)
 --- @field scope ClassScope? (Default: package)
 --- @field extends ClassStruct? (Default: nil)
@@ -95,7 +95,7 @@ function ClassStruct:getFields() end
 --- @return FieldStruct? FieldStruct
 function ClassStruct:getDeclaredField(name) end
 
---- @param ConstructorStruct ConstructorStructParameter
+--- @param ConstructorStruct ConstructorStructInput
 ---
 --- @return ConstructorStruct
 function ClassStruct:addConstructor(ConstructorStruct) end
@@ -202,12 +202,12 @@ local API = {};
 --- @return boolean result
 function API.equals(a, b) end
 
---- @param defParams ClassStructParameter
+--- @param defParams ClassStructInput
 ---
 --- @return ClassStruct
 function API.newClass(defParams) end
 
---- @param defParams ChildClassStructParameter
+--- @param defParams ChildClassStructInput
 --- @param outer Struct
 ---
 --- @return ClassStruct

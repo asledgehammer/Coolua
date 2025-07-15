@@ -6,8 +6,8 @@
 
 -- MARK: - Definition
 
---- @class EnumStructParameter: StructParameter
-local EnumStructParameter = {};
+--- @class EnumStructInput: StructInput
+local EnumStructInput = {};
 
 --- @class EnumStruct: Struct
 local EnumStruct = {};
@@ -33,7 +33,7 @@ function EnumStruct:getField(name) end
 --- @return FieldStruct? FieldStruct
 function EnumStruct:getDeclaredField(name) end
 
---- @param ConstructorStruct ConstructorStructParameter
+--- @param ConstructorStruct ConstructorStructInput
 ---
 --- @return ConstructorStruct
 function EnumStruct:addConstructor(ConstructorStruct) end
@@ -90,7 +90,7 @@ function EnumStruct:finalize() end
 --- @class VMEnumModule: VMModule
 local API = {};
 
---- @param enumDef EnumStructParameter
+--- @param enumDef EnumStructInput
 ---
 --- @return EnumStruct
 function API.newEnum(enumDef) end

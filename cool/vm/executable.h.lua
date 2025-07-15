@@ -69,7 +69,7 @@
 --- @field superInfo FunctionInfo The super function's information. (line-range and path)
 --- @field body fun(o: any, ...) TODO: Rename as `body`.
 
---- @class (exact) ConstructorStructParameter: ParameterableInput
+--- @class (exact) ConstructorStructInput: ParameterableInput
 --- @field scope ClassScope? (Default: "package")
 --- @field super fun(super: SuperTable, ...)? This function is called prior to the body function. If not defined, an attempt at `super()` is called. If not exists, an error occurs.
 --- @field body fun(o: any, ...)? TODO: Rename as `body`.
