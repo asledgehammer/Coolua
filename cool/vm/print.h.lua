@@ -17,7 +17,7 @@ function API.argsToString(args) end
 --- @return string
 function API.printStruct(def) end
 
---- @param def ExecutableDefinition
+--- @param def ExecutableStruct
 ---
 --- @return string
 function API.printExecutable(def) end

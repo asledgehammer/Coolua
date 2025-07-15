@@ -532,9 +532,9 @@ end
 --- @param path string
 --- @param line number
 ---
---- @return ExecutableDefinition|nil
+--- @return ExecutableStruct|nil
 function API.getExecutableFromLine(self, path, line)
-    --- @type ExecutableDefinition|nil
+    --- @type ExecutableStruct|nil
     local ed = API.getDeclaredMethodFromLine(self, path, line);
     if not ed and self.__type__ == 'ClassStruct' then
         ed = vm.executable.getConstructorFromLine(self, path, line);
@@ -853,7 +853,7 @@ function API.defaultSuperFunc(self)
     self:super();
 end
 
---- @param ed ExecutableDefinition
+--- @param ed ExecutableStruct
 --- @param args any[]
 ---
 --- @return boolean matches

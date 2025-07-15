@@ -16,7 +16,7 @@
 --- @field parameters ParameterDefinition[]? (Default: No parameters)
 --- @field vararg boolean? (Default: false) If true, the executable's last paramater is a vararg.
 
---- @class (exact) ExecutableDefinition: Parameterable
+--- @class (exact) ExecutableStruct: Parameterable
 ---
 --- @field __type__ string
 ---
@@ -26,7 +26,7 @@
 --- @field bodyInfo FunctionInfo The function's information. (line-range and path)
 --- @field scope ClassScope
 
---- @class (exact) MethodStruct: ExecutableDefinition
+--- @class (exact) MethodStruct: ExecutableStruct
 ---
 --- @field __type__ 'MethodStruct'
 ---
@@ -58,7 +58,7 @@
 --- @field generics GenericsTypesDefinitionParameter?
 --- @field returnTypes (string[]|string)? (Default: void)
 
---- @class (exact) ConstructorStruct: ExecutableDefinition
+--- @class (exact) ConstructorStruct: ExecutableStruct
 ---
 --- @field __type__ 'ConstructorStruct'
 ---
@@ -166,7 +166,7 @@ function API.getDeclaredMethodFromLine(self, path, line) end
 --- @param path string
 --- @param line number
 ---
---- @return ExecutableDefinition
+--- @return ExecutableStruct
 function API.getExecutableFromLine(self, path, line) end
 
 --- @param func function?
@@ -211,6 +211,6 @@ function API.compile(def) end
 --- @param super SuperTable
 function API.defaultSuperFunc(super) end
 
---- @param struct ExecutableDefinition
+--- @param struct ExecutableStruct
 --- @param args any[]
 function API.checkArguments(struct, args) end
