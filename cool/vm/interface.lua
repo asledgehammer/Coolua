@@ -199,7 +199,7 @@ local IAPI = {};
 --- @cast API VMInterfaceModule
 
 --- @param self InterfaceStruct
---- @param MethodStruct InterfaceMethodStructParameter
+--- @param MethodStruct InterfaceMethodStructInput
 ---
 --- @return MethodStruct
 function IAPI.addMethod(self, MethodStruct)
@@ -261,7 +261,7 @@ end
 --- @cast API VMInterfaceModule
 
 --- @param self InterfaceStruct
---- @param definition InterfaceStaticMethodStructParameter
+--- @param definition InterfaceStaticMethodStructInput
 ---
 --- @return MethodStruct
 function IAPI.addStaticMethod(self, definition)

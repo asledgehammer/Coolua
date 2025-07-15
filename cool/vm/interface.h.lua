@@ -9,7 +9,7 @@
 --- @class InterfaceInstance
 local InterfaceInstance = {};
 
---- @class (exact) InterfaceMethodStructParameter
+--- @class (exact) InterfaceMethodStructInput
 ---
 --- NOTE: All instanced interface methods are public.
 --- @field name string
@@ -19,7 +19,7 @@ local InterfaceInstance = {};
 --- @field body function?
 --- NOTE: The `default` flag is automatically true if a function body is provided at the time of adding the method.
 
---- @class (exact) InterfaceStaticMethodStructParameter
+--- @class (exact) InterfaceStaticMethodStructInput
 ---
 --- @field scope ClassScope? (Default: package)
 --- @field name string
@@ -67,12 +67,12 @@ function InterfaceStruct:getField(name) end
 --- @return FieldStruct? FieldStruct
 function InterfaceStruct:getDeclaredField(name) end
 
---- @param definition InterfaceMethodStructParameter
+--- @param definition InterfaceMethodStructInput
 ---
 --- @return MethodStruct
 function InterfaceStruct:addMethod(definition) end
 
---- @param definition InterfaceStaticMethodStructParameter
+--- @param definition InterfaceStaticMethodStructInput
 ---
 --- @return MethodStruct
 function InterfaceStruct:addStaticMethod(definition) end

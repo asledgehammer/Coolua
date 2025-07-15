@@ -48,7 +48,7 @@ function EnumStructDefinition:getConstructor(args) end
 --- @return ConstructorStruct|nil ConstructorStruct
 function EnumStructDefinition:getDeclaredConstructor(args) end
 
---- @param definition MethodStructParameter
+--- @param definition MethodStructInput
 --- @param func function?
 ---
 --- @return MethodStruct

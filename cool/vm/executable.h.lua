@@ -49,7 +49,7 @@
 --- @field interface boolean (Default: false) If the method belongs to an interface.
 --- @field default boolean (Default: false) If true, `interface` is true and the method is also defined in the interface.
 
---- @class (exact) MethodStructParameter: ParameterableInput
+--- @class (exact) MethodStructInput: ParameterableInput
 ---
 --- @field scope ClassScope? (Default: public)
 --- @field static boolean? (Default: false)

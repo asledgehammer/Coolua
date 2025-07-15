@@ -6,7 +6,7 @@
 
 -- MARK: - Definition
 
---- @class (exact) ClassMethodStructParameter
+--- @class (exact) ClassMethodStructInput
 --- @field scope ClassScope? (Default: public)
 --- @field final boolean? (Default: false)
 --- @field name string
@@ -15,7 +15,7 @@
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body function
 
---- @class (exact) ClassStaticMethodStructParameter
+--- @class (exact) ClassStaticMethodStructInput
 --- @field scope ClassScope? (Default: public)
 --- @field final boolean? (Default: false)
 --- @field name string
@@ -24,7 +24,7 @@
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body function
 
---- @class (exact) ClassAbstractMethodStructParameter
+--- @class (exact) ClassAbstractMethodStructInput
 --- @field scope ClassScope? (Default: public)
 --- @field final boolean? (Default: false)
 --- @field name string
@@ -110,17 +110,17 @@ function ClassStruct:getConstructor(args) end
 --- @return ConstructorStruct|nil ConstructorStruct
 function ClassStruct:getDeclaredConstructor(args) end
 
---- @param definition ClassMethodStructParameter
+--- @param definition ClassMethodStructInput
 ---
 --- @return MethodStruct
 function ClassStruct:addMethod(definition) end
 
---- @param definition ClassAbstractMethodStructParameter
+--- @param definition ClassAbstractMethodStructInput
 ---
 --- @return MethodStruct
 function ClassStruct:addAbstractMethod(definition) end
 
---- @param definition ClassStaticMethodStructParameter
+--- @param definition ClassStaticMethodStructInput
 ---
 --- @return MethodStruct
 function ClassStruct:addStaticMethod(definition) end
