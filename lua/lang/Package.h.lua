@@ -4,11 +4,11 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
---- @class PackageDefinition: ClassStruct
-local PackageDefinition = {};
+--- @class PackageStruct: ClassStruct
+local PackageStruct = {};
 
 --- @param path string
-function PackageDefinition.new(path) end
+function PackageStruct.new(path) end
 
 --- @class Package: Object
 local Package = {};

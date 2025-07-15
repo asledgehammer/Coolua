@@ -24,7 +24,7 @@ API = {
         vm = _vm;
         vm.moduleCount = vm.moduleCount + 1;
         API.packages = readonly({
-            __type__ = 'PackageDefinition',
+            __type__ = 'PackageStruct',
             path = '(Default Package)'
         });
     end
@@ -39,7 +39,7 @@ function API.addToPackageStruct(def)
         if not pkgCurr[pkgNext] then
             local subPath = table.concat(split, '.', 1, i);
             pkgCurr[pkgNext] = readonly({
-                __type__ = 'PackageDefinition',
+                __type__ = 'PackageStruct',
                 path = subPath
             });
             debugf(vm.debug.pkg, '[PACKAGE] :: CREATE package: %s', pkgNext);
