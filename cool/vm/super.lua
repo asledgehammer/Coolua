@@ -151,7 +151,7 @@ function API.createSuperTable(cd)
             debugf(vm.debug.super, '[SUPER] :: %s Entering super method context', cd.printHeader);
         end
 
-        --- @type MethodDefinition|nil
+        --- @type MethodStruct|nil
         local md = superClass:getMethod(name, args);
 
         if not md then
@@ -233,7 +233,7 @@ function API.createSuperTable(cd)
                 vm.stepOut();
 
                 return __callConstructor(o, args);
-            elseif who.__type__ == 'MethodDefinition' then
+            elseif who.__type__ == 'MethodStruct' then
                 return __callMethod(o, who.name, args);
             end
         end

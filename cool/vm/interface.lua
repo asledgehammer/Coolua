@@ -199,22 +199,22 @@ local IAPI = {};
 --- @cast API VMInterfaceModule
 
 --- @param self InterfaceStruct
---- @param methodDefinition InterfaceMethodDefinitionParameter
+--- @param MethodStruct InterfaceMethodStructParameter
 ---
---- @return MethodDefinition
-function IAPI.addMethod(self, methodDefinition)
+--- @return MethodStruct
+function IAPI.addMethod(self, MethodStruct)
     local errHeader = string.format('InterfaceStruct(%s):addMethod():', self.name);
 
-    local body = methodDefinition.body;
+    local body = MethodStruct.body;
     local bodyInfo = vm.executable.getExecutableInfo(body);
 
-    local name = vm.audit.auditMethodParamName(methodDefinition.name, errHeader);
-    local types = vm.audit.auditMethodReturnsProperty(methodDefinition.returnTypes, errHeader);
-    local parameters = vm.audit.auditParameters(methodDefinition.parameters, errHeader);
+    local name = vm.audit.auditMethodParamName(MethodStruct.name, errHeader);
+    local types = vm.audit.auditMethodReturnsProperty(MethodStruct.returnTypes, errHeader);
+    local parameters = vm.audit.auditParameters(MethodStruct.parameters, errHeader);
 
     local md = {
 
-        __type__ = 'MethodDefinition',
+        __type__ = 'MethodStruct',
 
         -- Base properties. --
         class = self,
@@ -246,7 +246,7 @@ function IAPI.addMethod(self, methodDefinition)
 
     md.signature = vm.executable.createSignature(md);
 
-    --- @cast md MethodDefinition
+    --- @cast md MethodStruct
 
     local methodCluster = self.declaredMethods[md.name];
     if not methodCluster then
@@ -261,9 +261,9 @@ end
 --- @cast API VMInterfaceModule
 
 --- @param self InterfaceStruct
---- @param definition InterfaceStaticMethodDefinitionParameter
+--- @param definition InterfaceStaticMethodStructParameter
 ---
---- @return MethodDefinition
+--- @return MethodStruct
 function IAPI.addStaticMethod(self, definition)
     local errHeader = string.format('InterfaceStruct(%s):addStaticMethod():', self.name);
 
@@ -277,7 +277,7 @@ function IAPI.addStaticMethod(self, definition)
 
     local md = {
 
-        __type__ = 'MethodDefinition',
+        __type__ = 'MethodStruct',
 
         -- Base properties. --
         class = self,
@@ -309,7 +309,7 @@ function IAPI.addStaticMethod(self, definition)
 
     md.signature = vm.executable.createSignature(md);
 
-    --- @cast md MethodDefinition
+    --- @cast md MethodStruct
 
     local methodCluster = self.declaredMethods[md.name];
     if not methodCluster then
@@ -321,13 +321,13 @@ function IAPI.addStaticMethod(self, definition)
     return md;
 end
 
---- Attempts to resolve a MethodDefinition in the StructDefinition. If the method isn't defined in the interface,
+--- Attempts to resolve a MethodStruct in the StructDefinition. If the method isn't defined in the interface,
 --- `nil` is returned.
 ---
 --- @param self InterfaceStruct
 --- @param name string
 ---
---- @return MethodDefinition[]? methods
+--- @return MethodStruct[]? methods
 function IAPI.getDeclaredMethods(self, name)
     return self.declaredMethods[name];
 end
@@ -336,7 +336,7 @@ end
 --- @param name string
 --- @param args any[]
 ---
---- @return MethodDefinition|nil methodDefinition
+--- @return MethodStruct|nil MethodStruct
 function IAPI.getMethod(self, name, args)
     local method = self:getDeclaredMethod(name, args);
     if not method and self.super then
@@ -349,7 +349,7 @@ end
 --- @param name string
 --- @param args any[]
 ---
---- @return MethodDefinition|nil methodDefinition
+--- @return MethodStruct|nil MethodStruct
 function IAPI.getDeclaredMethod(self, name, args)
     local argsLen = #args;
     local methods = self.declaredMethods[name];
@@ -387,9 +387,9 @@ end
 --- @param self InterfaceStruct
 --- @param line integer
 ---
---- @return MethodDefinition|nil method
+--- @return MethodStruct|nil method
 function IAPI.getMethodFromLine(self, line)
-    --- @type MethodDefinition
+    --- @type MethodStruct
     local md;
     for _, mdc in pairs(self.declaredMethods) do
         for i = 1, #mdc do
@@ -574,7 +574,7 @@ function IAPI.finalize(self)
     for mName, v in pairs(self.declaredMethods) do
         declaredMethods[mName] = {};
         for sig, method in pairs(v) do
-            --- @params T: MethodDefinition
+            --- @params T: MethodStruct
             declaredMethods[mName][sig] = readonly(method);
         end
     end

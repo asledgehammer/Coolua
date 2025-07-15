@@ -43,7 +43,7 @@ end
 --- @field line number
 --- @field class StructDefinition
 --- @field context string
---- @field element FieldDefinition|ConstructorDefinition|MethodDefinition
+--- @field element FieldDefinition|ConstructorDefinition|MethodStruct
 
 --- Adds a context to the stack. This happens when constructors or methods are invoked.
 ---

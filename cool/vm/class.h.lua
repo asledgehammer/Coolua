@@ -6,7 +6,7 @@
 
 -- MARK: - Definition
 
---- @class (exact) ClassMethodDefinitionParameter
+--- @class (exact) ClassMethodStructParameter
 --- @field scope ClassScope? (Default: public)
 --- @field final boolean? (Default: false)
 --- @field name string
@@ -15,7 +15,7 @@
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body function
 
---- @class (exact) ClassStaticMethodDefinitionParameter
+--- @class (exact) ClassStaticMethodStructParameter
 --- @field scope ClassScope? (Default: public)
 --- @field final boolean? (Default: false)
 --- @field name string
@@ -24,7 +24,7 @@
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body function
 
---- @class (exact) ClassAbstractMethodDefinitionParameter
+--- @class (exact) ClassAbstractMethodStructParameter
 --- @field scope ClassScope? (Default: public)
 --- @field final boolean? (Default: false)
 --- @field name string
@@ -110,47 +110,47 @@ function ClassStruct:getConstructor(args) end
 --- @return ConstructorDefinition|nil constructorDefinition
 function ClassStruct:getDeclaredConstructor(args) end
 
---- @param definition ClassMethodDefinitionParameter
+--- @param definition ClassMethodStructParameter
 ---
---- @return MethodDefinition
+--- @return MethodStruct
 function ClassStruct:addMethod(definition) end
 
---- @param definition ClassAbstractMethodDefinitionParameter
+--- @param definition ClassAbstractMethodStructParameter
 ---
---- @return MethodDefinition
+--- @return MethodStruct
 function ClassStruct:addAbstractMethod(definition) end
 
---- @param definition ClassStaticMethodDefinitionParameter
+--- @param definition ClassStaticMethodStructParameter
 ---
---- @return MethodDefinition
+--- @return MethodStruct
 function ClassStruct:addStaticMethod(definition) end
 
---- Attempts to resolve a MethodDefinition in the ClassStruct. If the method isn't declared for the class level, the
+--- Attempts to resolve a MethodStruct in the ClassStruct. If the method isn't declared for the class level, the
 --- super-class(es) are checked.
 ---
 --- @param name string
 ---
---- @return MethodDefinition[]? methods
+--- @return MethodStruct[]? methods
 function ClassStruct:getMethods(name) end
 
 --- @param name string
 --- @param args any[]
 ---
---- @return MethodDefinition|nil methodDefinition
+--- @return MethodStruct|nil MethodStruct
 function ClassStruct:getMethod(name, args) end
 
---- Attempts to resolve a MethodDefinition in the ClassStruct. If the method isn't defined in the class, nil
+--- Attempts to resolve a MethodStruct in the ClassStruct. If the method isn't defined in the class, nil
 --- is returned.
 ---
 --- @param name string
 ---
---- @return MethodDefinition[]? methods
+--- @return MethodStruct[]? methods
 function ClassStruct:getDeclaredMethods(name) end
 
 --- @param name string
 --- @param args any[]
 ---
---- @return MethodDefinition|nil methodDefinition
+--- @return MethodStruct|nil MethodStruct
 function ClassStruct:getDeclaredMethod(name, args) end
 
 --- @return ClassStruct

@@ -829,20 +829,20 @@ function API.newClass(definition, outer)
 
     -- MARK: - Method
 
-    function cd:addStaticMethod(methodDefinition)
+    function cd:addStaticMethod(MethodStruct)
         local errHeader = string.format('ClassStruct(%s):addMethod():', cd.name);
 
-        local body = methodDefinition.body;
+        local body = MethodStruct.body;
         local bodyInfo = vm.executable.getExecutableInfo(body);
 
-        local scope = vm.audit.auditStructPropertyScope(self.scope, methodDefinition.scope, errHeader);
-        local name = vm.audit.auditMethodParamName(methodDefinition.name, errHeader);
-        local types = vm.audit.auditMethodReturnsProperty(methodDefinition.returnTypes, errHeader);
-        local parameters = vm.audit.auditParameters(methodDefinition.parameters, errHeader);
+        local scope = vm.audit.auditStructPropertyScope(self.scope, MethodStruct.scope, errHeader);
+        local name = vm.audit.auditMethodParamName(MethodStruct.name, errHeader);
+        local types = vm.audit.auditMethodReturnsProperty(MethodStruct.returnTypes, errHeader);
+        local parameters = vm.audit.auditParameters(MethodStruct.parameters, errHeader);
 
         local md = {
 
-            __type__ = 'MethodDefinition',
+            __type__ = 'MethodStruct',
 
             -- Base properties. --
             class = cd,
@@ -870,7 +870,7 @@ function API.newClass(definition, outer)
 
         md.signature = vm.executable.createSignature(md);
 
-        --- @cast md MethodDefinition
+        --- @cast md MethodStruct
 
         if vm.debug.method then
             local callSyntax = ':';
@@ -892,18 +892,18 @@ function API.newClass(definition, outer)
         return md;
     end
 
-    function cd:addAbstractMethod(methodDefinition)
+    function cd:addAbstractMethod(MethodStruct)
         local errHeader = string.format('ClassStruct(%s):addAbstractMethod():', cd.name);
 
         local bodyInfo = vm.executable.getExecutableInfo();
 
-        local scope = vm.audit.auditStructPropertyScope(self.scope, methodDefinition.scope, errHeader);
-        local name = vm.audit.auditMethodParamName(methodDefinition.name, errHeader);
-        local types = vm.audit.auditMethodReturnsProperty(methodDefinition.returnTypes, errHeader);
-        local parameters = vm.audit.auditParameters(methodDefinition.parameters, errHeader);
+        local scope = vm.audit.auditStructPropertyScope(self.scope, MethodStruct.scope, errHeader);
+        local name = vm.audit.auditMethodParamName(MethodStruct.name, errHeader);
+        local types = vm.audit.auditMethodReturnsProperty(MethodStruct.returnTypes, errHeader);
+        local parameters = vm.audit.auditParameters(MethodStruct.parameters, errHeader);
 
         local md = {
-            __type__ = 'MethodDefinition',
+            __type__ = 'MethodStruct',
 
             -- Base properties. --
             class = cd,
@@ -931,7 +931,7 @@ function API.newClass(definition, outer)
 
         md.signature = vm.executable.createSignature(md);
 
-        --- @cast md MethodDefinition
+        --- @cast md MethodStruct
 
         if vm.debug.method then
             local callSyntax = ':';
@@ -953,18 +953,18 @@ function API.newClass(definition, outer)
         return md;
     end
 
-    function cd:addMethod(methodDefinition)
-        local body = methodDefinition.body;
+    function cd:addMethod(MethodStruct)
+        local body = MethodStruct.body;
         local bodyInfo = vm.executable.getExecutableInfo(body);
         local errHeader = string.format('ClassStruct(%s):addMethod():', cd.name);
-        local scope = vm.audit.auditStructPropertyScope(self.scope, methodDefinition.scope, errHeader);
-        local name = vm.audit.auditMethodParamName(methodDefinition.name, errHeader);
-        local types = vm.audit.auditMethodReturnsProperty(methodDefinition.returnTypes, errHeader);
-        local parameters = vm.audit.auditParameters(methodDefinition.parameters, errHeader);
+        local scope = vm.audit.auditStructPropertyScope(self.scope, MethodStruct.scope, errHeader);
+        local name = vm.audit.auditMethodParamName(MethodStruct.name, errHeader);
+        local types = vm.audit.auditMethodReturnsProperty(MethodStruct.returnTypes, errHeader);
+        local parameters = vm.audit.auditParameters(MethodStruct.parameters, errHeader);
 
         local md = {
 
-            __type__ = 'MethodDefinition',
+            __type__ = 'MethodStruct',
 
             -- Base properties. --
             class = cd,
@@ -977,7 +977,7 @@ function API.newClass(definition, outer)
 
             -- General method flags --
             static = false,
-            final = methodDefinition.final or false,
+            final = MethodStruct.final or false,
             abstract = false,
 
             -- Compiled method flags --
@@ -992,7 +992,7 @@ function API.newClass(definition, outer)
 
         md.signature = vm.executable.createSignature(md);
 
-        --- @cast md MethodDefinition
+        --- @cast md MethodStruct
 
         if vm.debug.method then
             local callSyntax = ':';
@@ -1014,12 +1014,12 @@ function API.newClass(definition, outer)
         return md;
     end
 
-    --- Attempts to resolve a MethodDefinition in the ClassStruct. If the method isn't defined in the class,
+    --- Attempts to resolve a MethodStruct in the ClassStruct. If the method isn't defined in the class,
     --- `nil` is returned.
     ---
     --- @param name string
     ---
-    --- @return MethodDefinition[]? methods
+    --- @return MethodStruct[]? methods
     function cd:getDeclaredMethods(name)
         return cd.declaredMethods[name];
     end
@@ -1027,7 +1027,7 @@ function API.newClass(definition, outer)
     --- @param name string
     --- @param args any[]
     ---
-    --- @return MethodDefinition|nil methodDefinition
+    --- @return MethodStruct|nil MethodStruct
     function cd:getMethod(name, args)
         return vm.executable.resolveMethod(self, name, self.methods[name], args);
     end
@@ -1035,7 +1035,7 @@ function API.newClass(definition, outer)
     --- @param name string
     --- @param args any[]
     ---
-    --- @return MethodDefinition|nil methodDefinition
+    --- @return MethodStruct|nil MethodStruct
     function cd:getDeclaredMethod(name, args)
         return vm.executable.resolveMethod(self, name, self.declaredMethods[name], args);
     end
@@ -1067,7 +1067,7 @@ function API.newClass(definition, outer)
 
         -- TODO: Audit everything.
 
-        --- @type table<string, MethodDefinition[]>
+        --- @type table<string, MethodStruct[]>
         vm.executable.compileMethods(self);
 
         -- If no constructors are provided, create a default, no-args public constructor.
@@ -1106,7 +1106,7 @@ function API.newClass(definition, outer)
         end
         for _, v in pairs(self.declaredMethods) do
             for sig, method in pairs(v) do
-                --- @params T: MethodDefinition
+                --- @params T: MethodStruct
                 v[sig] = readonly(method);
             end
         end

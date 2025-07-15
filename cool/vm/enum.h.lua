@@ -48,38 +48,38 @@ function EnumStructDefinition:getConstructor(args) end
 --- @return ConstructorDefinition|nil constructorDefinition
 function EnumStructDefinition:getDeclaredConstructor(args) end
 
---- @param definition MethodDefinitionParameter
+--- @param definition MethodStructParameter
 --- @param func function?
 ---
---- @return MethodDefinition
+--- @return MethodStruct
 function EnumStructDefinition:addMethod(definition, func) end
 
---- Attempts to resolve a MethodDefinition in the EnumStructDefinition. If the method isn't declared for the class
+--- Attempts to resolve a MethodStruct in the EnumStructDefinition. If the method isn't declared for the class
 --- level, the super-class(es) are checked.
 ---
 --- @param name string
 ---
---- @return MethodDefinition[]? methods
+--- @return MethodStruct[]? methods
 function EnumStructDefinition:getMethods(name) end
 
 --- @param name string
 --- @param args any[]
 ---
---- @return MethodDefinition|nil methodDefinition
+--- @return MethodStruct|nil MethodStruct
 function EnumStructDefinition:getMethod(name, args) end
 
---- Attempts to resolve a MethodDefinition in the EnumStructDefinition. If the method isn't defined in the class, `nil`
+--- Attempts to resolve a MethodStruct in the EnumStructDefinition. If the method isn't defined in the class, `nil`
 --- is returned.
 ---
 --- @param name string
 ---
---- @return MethodDefinition[]? methods
+--- @return MethodStruct[]? methods
 function EnumStructDefinition:getDeclaredMethods(name) end
 
 --- @param name string
 --- @param args any[]
 ---
---- @return MethodDefinition|nil methodDefinition
+--- @return MethodStruct|nil MethodStruct
 function EnumStructDefinition:getDeclaredMethod(name, args) end
 
 --- @returns ClassStruct

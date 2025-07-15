@@ -73,7 +73,7 @@ local StackTraceElement = class 'StackTraceElement' (public) {
         --- @param line number
         --- @param class any
         --- @param context string
-        --- @param element FieldDefinition|ConstructorDefinition|MethodDefinition
+        --- @param element FieldDefinition|ConstructorDefinition|MethodStruct
         body = function(self, path, line, class, context, element)
             self.path = path;
             self.line = line;
@@ -87,7 +87,7 @@ local StackTraceElement = class 'StackTraceElement' (public) {
         function(self)
             local path, line, context, element = self.path, self.line, self.context, self.element;
             if element then
-                if element.__type__ == 'MethodDefinition' then
+                if element.__type__ == 'MethodStruct' then
                     local callSyntax;
                     if element.static then
                         callSyntax = '.';

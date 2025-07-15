@@ -79,7 +79,7 @@ function API.argsToString(args)
 end
 
 function API.printExecutable(def)
-    if def.__type__ == 'MethodDefinition' then
+    if def.__type__ == 'MethodStruct' then
         return API.printMethod(def);
     elseif def.__type__ == 'ConstructorDefinition' then
         return API.printConstructor(def);

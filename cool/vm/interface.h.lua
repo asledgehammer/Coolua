@@ -9,7 +9,7 @@
 --- @class InterfaceInstance
 local InterfaceInstance = {};
 
---- @class (exact) InterfaceMethodDefinitionParameter
+--- @class (exact) InterfaceMethodStructParameter
 ---
 --- NOTE: All instanced interface methods are public.
 --- @field name string
@@ -19,7 +19,7 @@ local InterfaceInstance = {};
 --- @field body function?
 --- NOTE: The `default` flag is automatically true if a function body is provided at the time of adding the method.
 
---- @class (exact) InterfaceStaticMethodDefinitionParameter
+--- @class (exact) InterfaceStaticMethodStructParameter
 ---
 --- @field scope ClassScope? (Default: package)
 --- @field name string
@@ -67,42 +67,42 @@ function InterfaceStruct:getField(name) end
 --- @return FieldDefinition? fieldDefinition
 function InterfaceStruct:getDeclaredField(name) end
 
---- @param definition InterfaceMethodDefinitionParameter
+--- @param definition InterfaceMethodStructParameter
 ---
---- @return MethodDefinition
+--- @return MethodStruct
 function InterfaceStruct:addMethod(definition) end
 
---- @param definition InterfaceStaticMethodDefinitionParameter
+--- @param definition InterfaceStaticMethodStructParameter
 ---
---- @return MethodDefinition
+--- @return MethodStruct
 function InterfaceStruct:addStaticMethod(definition) end
 
---- Attempts to resolve a MethodDefinition in the InterfaceStruct. If the method isn't declared for the class
+--- Attempts to resolve a MethodStruct in the InterfaceStruct. If the method isn't declared for the class
 --- level, the super-class(es) are checked.
 ---
 --- @param name string
 ---
---- @return MethodDefinition[]? methods
+--- @return MethodStruct[]? methods
 function InterfaceStruct:getMethods(name) end
 
 --- @param name string
 --- @param args any[]
 ---
---- @return MethodDefinition|nil methodDefinition
+--- @return MethodStruct|nil MethodStruct
 function InterfaceStruct:getMethod(name, args) end
 
---- Attempts to resolve a MethodDefinition in the InterfaceStruct. If the method isn't defined in the class, `nil`
+--- Attempts to resolve a MethodStruct in the InterfaceStruct. If the method isn't defined in the class, `nil`
 --- is returned.
 ---
 --- @param name string
 ---
---- @return MethodDefinition[]? methods
+--- @return MethodStruct[]? methods
 function InterfaceStruct:getDeclaredMethods(name) end
 
 --- @param name string
 --- @param args any[]
 ---
---- @return MethodDefinition|nil methodDefinition
+--- @return MethodStruct|nil MethodStruct
 function InterfaceStruct:getDeclaredMethod(name, args) end
 
 --- @return InterfaceStruct

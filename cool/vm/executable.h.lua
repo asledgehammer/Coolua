@@ -26,13 +26,13 @@
 --- @field bodyInfo FunctionInfo The function's information. (line-range and path)
 --- @field scope ClassScope
 
---- @class (exact) MethodDefinition: ExecutableDefinition
+--- @class (exact) MethodStruct: ExecutableDefinition
 ---
---- @field __type__ 'MethodDefinition'
+--- @field __type__ 'MethodStruct'
 ---
 --- @field class StructDefinition
 --- @field name string
---- @field super MethodDefinition? (Internally assigned. If none, this is nil)
+--- @field super MethodStruct? (Internally assigned. If none, this is nil)
 --- @field generics GenericsTypesDefinition?
 --- @field parameters ParameterDefinition[]
 --- @field returnTypes AllowedType[]|AllowedType
@@ -49,7 +49,7 @@
 --- @field interface boolean (Default: false) If the method belongs to an interface.
 --- @field default boolean (Default: false) If true, `interface` is true and the method is also defined in the interface.
 
---- @class (exact) MethodDefinitionParameter: ParameterableInput
+--- @class (exact) MethodStructParameter: ParameterableInput
 ---
 --- @field scope ClassScope? (Default: public)
 --- @field static boolean? (Default: false)
@@ -99,7 +99,7 @@ function API.createMiddleMethods(struct) end
 
 --- @param classDef StructDefinition
 --- @param name string
---- @param methods table<string, MethodDefinition>
+--- @param methods table<string, MethodStruct>
 ---
 --- @return fun(o: ClassInstance, ...): (any?)
 function API.createMiddleMethod(classDef, name, methods) end
@@ -115,17 +115,17 @@ function API.getDeclaredMethodNames(classDef, array) end
 --- @return string[] methodNames
 function API.getMethodNames(classDef, methodNames) end
 
---- @param definition MethodDefinition
+--- @param definition MethodStruct
 ---
 --- @return string
 function API.createSignature(definition) end
 
 --- @param struct StructDefinition Used to cache results at class-level.
 --- @param name string
---- @param methods table<string, MethodDefinition>
+--- @param methods table<string, MethodStruct>
 --- @param args any[]
 ---
---- @return MethodDefinition|nil
+--- @return MethodStruct|nil
 function API.resolveMethod(struct, name, methods, args) end
 
 --- @param name string
@@ -139,17 +139,17 @@ function API.createCallSignature(name, args) end
 --- @return string[] argsAsTypes
 function API.argsToTypes(args) end
 
---- @param methods table<string, MethodDefinition>
+--- @param methods table<string, MethodStruct>
 --- @param args any[]
 ---
---- @return MethodDefinition|nil
+--- @return MethodStruct|nil
 function API.resolveMethodDeep(methods, args) end
 
 --- @param self StructDefinition
 --- @param name string
---- @param comb table<string, table<MethodDefinition>>
+--- @param comb table<string, table<MethodStruct>>
 ---
---- @return table<string, table<string, MethodDefinition>>
+--- @return table<string, table<string, MethodStruct>>
 function API.combineAllMethods(self, name, comb) end
 
 --- @param self ClassStruct|InterfaceStruct
@@ -159,7 +159,7 @@ function API.compileMethods(self) end
 --- @param path string
 --- @param line integer
 ---
---- @return MethodDefinition|nil method
+--- @return MethodStruct|nil method
 function API.getDeclaredMethodFromLine(self, path, line) end
 
 --- @param self ClassStruct|InterfaceStruct

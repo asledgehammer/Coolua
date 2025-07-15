@@ -66,7 +66,7 @@ end
 function API.resolveMethod(struct, name, methods, args)
     local callSignature = vm.executable.createCallSignature(name, args);
 
-    --- @type MethodDefinition|nil
+    --- @type MethodStruct|nil
     local md;
 
     -- Check the cache.
@@ -80,7 +80,7 @@ function API.resolveMethod(struct, name, methods, args)
     );
 
     -- Attempt to resolve the method using exact method signature checks.
-    --- @type MethodDefinition?
+    --- @type MethodStruct?
     md = methods[callSignature];
     if md then
         debugf(vm.debug.executableCache, '[EXECUTABLE_CACHE] :: %s Caching exact method %s call signature: %s',
@@ -114,12 +114,12 @@ function API.resolveMethod(struct, name, methods, args)
     return md;
 end
 
---- @param methods table<string, MethodDefinition>
+--- @param methods table<string, MethodStruct>
 --- @param args any[]
 ---
---- @return MethodDefinition|nil
+--- @return MethodStruct|nil
 function API.resolveMethodDeep(methods, args)
-    --- @type MethodDefinition?
+    --- @type MethodStruct?
     local md = nil;
 
     -- Try to find the method without varargs first.
@@ -389,7 +389,7 @@ end
 
 --- @param def StructDefinition
 --- @param name string
---- @param comb table<string, table<MethodDefinition>>
+--- @param comb table<string, table<MethodStruct>>
 function API.combineAllMethods(def, name, comb)
     comb = comb or {};
 
@@ -516,7 +516,7 @@ end
 --- @param path string
 --- @param line integer
 ---
---- @return MethodDefinition|nil method
+--- @return MethodStruct|nil method
 function API.getDeclaredMethodFromLine(self, path, line)
     for _, mCluster in pairs(self.declaredMethods) do
         for _, md in pairs(mCluster) do

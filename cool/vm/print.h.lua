@@ -27,7 +27,7 @@ function API.printExecutable(def) end
 --- @return string
 function API.printConstructor(def) end
 
---- @param def MethodDefinition
+--- @param def MethodStruct
 ---
 --- @return string
 function API.printMethod(def) end
