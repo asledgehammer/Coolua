@@ -12,9 +12,6 @@
 --- @class (exact) Staticable Any struct that supports static modes.
 --- @field static boolean (Default: false) If true, the struct is considered static.
 
---- @class (exact) Genericable
---- @field generics GenericsTypesDefinition? If the struct supports generics, this is where its defined.
-
 --- @class (exact) Abstractable
 --- @field abstract boolean (Default: false)
 

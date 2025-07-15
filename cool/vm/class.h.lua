@@ -10,7 +10,6 @@
 --- @field scope ClassScope? (Default: public)
 --- @field final boolean? (Default: false)
 --- @field name string
---- @field generics GenericsTypesDefinitionParameter?
 --- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body function
@@ -19,7 +18,6 @@
 --- @field scope ClassScope? (Default: public)
 --- @field final boolean? (Default: false)
 --- @field name string
---- @field generics GenericsTypesDefinitionParameter?
 --- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body function
@@ -28,7 +26,6 @@
 --- @field scope ClassScope? (Default: public)
 --- @field final boolean? (Default: false)
 --- @field name string
---- @field generics GenericsTypesDefinitionParameter?
 --- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body nil
@@ -37,7 +34,6 @@
 --- @field final boolean? (Default: false)
 --- @field scope ClassScope? (Default: package)
 --- @field extends ClassStruct? (Default: nil)
---- @field generics GenericsTypesDefinitionParameter? Any generic parameter definitions.
 --- @field static boolean? If the class is defined as static.
 --- @field abstract boolean? (Default: false)
 --- @field implements InterfaceStruct|InterfaceStruct[]?
@@ -46,7 +42,6 @@
 --- @field final boolean? (Default: false)
 --- @field scope ClassScope? (Default: package)
 --- @field extends ClassStruct? (Default: nil)
---- @field generics GenericsTypesDefinitionParameter? Any generic parameter definitions.
 --- @field abstract boolean? (Default: false)
 --- @field implements InterfaceStruct|InterfaceStruct[]?
 

@@ -7,9 +7,6 @@ local newClass = cool.newClass;
 
 local Stack = newClass({
     scope = 'public',
-    generics = {
-        E = 'any'
-    }
 });
 
 Stack:addField({
@@ -27,16 +24,14 @@ Stack:addMethod({
     scope = 'public',
     name = 'push',
     parameters = {
-        { name = 'item', type = 'E' }
+        { name = 'item', type = 'any' }
     },
-    returnTypes = 'E',
+    returnTypes = 'any',
 
-    --- @generic E: any
+    --- @param self Stack<any>
+    --- @param item any
     ---
-    --- @param self Stack<E>
-    --- @param item E
-    ---
-    --- @return E
+    --- @return any
     body = function(self, item)
         table.insert(self.stack, item);
         return item;
@@ -46,7 +41,7 @@ Stack:addMethod({
 Stack:addMethod({
     scope = 'public',
     name = 'peek',
-    returnTypes = 'E',
+    returnTypes = 'any',
 
     --- @param self Stack
     body = function(self)
@@ -59,7 +54,7 @@ Stack:addMethod({
     scope = 'public',
     name = 'pop',
     parameters = {},
-    returnTypes = 'E',
+    returnTypes = 'any',
     --- @param self Stack
     body = function(self)
         local stack = self.stack;
@@ -83,12 +78,12 @@ Stack:addMethod({
     scope = 'public',
     name = 'search',
     parameters = {
-        { name = 'item', type = 'E' }
+        { name = 'item', type = 'any' }
     },
     returnTypes = 'number',
 
     --- @param self Stack
-    --- @param item E
+    --- @param item any
     body = function(self, item)
         local stack = self.stack;
         local stackLen = #stack;

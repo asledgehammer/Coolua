@@ -429,9 +429,6 @@ function API.newClass(definition, outer)
     cd.declaredConstructors = {};
     cd.__readonly__ = false;
 
-    -- Compile the generic parameters for the class.
-    cd.generics = vm.generic.compileGenericTypesDefinition(cd, definition.generics);
-
     cd.__middleConstructor = vm.executable.createMiddleConstructor(cd);
 
     if not cd.super and cd.path ~= 'lua.lang.Object' then

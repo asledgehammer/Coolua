@@ -33,7 +33,6 @@
 --- @field class Struct
 --- @field name string
 --- @field super MethodStruct? (Internally assigned. If none, this is nil)
---- @field generics GenericsTypesDefinition?
 --- @field parameters ParameterDefinition[]
 --- @field returnTypes AllowedType[]|AllowedType
 ---
@@ -55,7 +54,6 @@
 --- @field static boolean? (Default: false)
 --- @field final boolean? (Default: false)
 --- @field name string
---- @field generics GenericsTypesDefinitionParameter?
 --- @field returnTypes (string[]|string)? (Default: void)
 
 --- @class (exact) ConstructorStruct: ExecutableStruct

@@ -104,8 +104,6 @@ function API.createInstanceMetatable(cd, o)
             return;
         end
 
-        -- TODO: Implement generic type-cast checks.
-
         vm.stack.popContext();
 
         -- Get the value.
@@ -218,8 +216,6 @@ function API.createInstanceMetatable(cd, o)
                 return;
             end
         end
-
-        -- TODO: Implement generic type-cast checks.
 
         -- Set the value.
         if fd.static then

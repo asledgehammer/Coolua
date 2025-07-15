@@ -13,7 +13,6 @@ local InterfaceInstance = {};
 ---
 --- NOTE: All instanced interface methods are public.
 --- @field name string
---- @field generics GenericsTypesDefinitionParameter?
 --- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body function?
@@ -23,7 +22,6 @@ local InterfaceInstance = {};
 ---
 --- @field scope ClassScope? (Default: package)
 --- @field name string
---- @field generics GenericsTypesDefinitionParameter?
 --- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body function?

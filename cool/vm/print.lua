@@ -94,11 +94,6 @@ function API.printMethod(def)
     local sFinal = '';
     if def.final then sFinal = 'final ' end
 
-    local sGenerics = '';
-    if def.generics then
-        -- TODO: Implement printing generics.
-        sGenerics = API.printGenericTypes(def.generics);
-    end
 
     local callSyntax;
     if def.static then
@@ -107,7 +102,7 @@ function API.printMethod(def)
         callSyntax = ':';
     end
 
-    return string.format('%s%s%s%s%s%s', sStatic, sFinal, sGenerics, def.class.name, callSyntax, def.signature);
+    return string.format('%s%s%s%s%s', sStatic, sFinal, def.class.name, callSyntax, def.signature);
 end
 
 function API.printConstructor(def)

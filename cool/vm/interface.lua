@@ -698,9 +698,6 @@ function API.newInterface(definition, enclosingStruct)
 
     vm.DEFINITIONS[id.path] = id;
 
-    -- Compile the generic parameters for the class.
-    id.generics = vm.generic.compileGenericTypesDefinition(id, definition.generics);
-
     -- Enclosurable: Add the definition to the enclosing struct.
     if enclosingStruct then
         enclosingStruct.inner[id.name] = id;
