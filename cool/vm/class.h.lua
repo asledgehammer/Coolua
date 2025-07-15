@@ -61,15 +61,15 @@ local ClassStruct = {};
 --- @return ClassInstance
 function ClassStruct:new(...) end
 
---- @param definition FieldStructInput
+--- @param input FieldStructInput
 ---
 --- @return FieldStruct
-function ClassStruct:addField(definition) end
+function ClassStruct:addField(input) end
 
---- @param definition StaticFieldStructInput
+--- @param input StaticFieldStructInput
 ---
 --- @return FieldStruct
-function ClassStruct:addStaticField(definition) end
+function ClassStruct:addStaticField(input) end
 
 --- Attempts to resolve a FieldStruct in the ClassStruct. If the field isn't declared for the class level, the
 --- super-class(es) are checked.
@@ -90,10 +90,10 @@ function ClassStruct:getFields() end
 --- @return FieldStruct? FieldStruct
 function ClassStruct:getDeclaredField(name) end
 
---- @param ConstructorStruct ConstructorStructInput
+--- @param input ConstructorStructInput
 ---
 --- @return ConstructorStruct
-function ClassStruct:addConstructor(ConstructorStruct) end
+function ClassStruct:addConstructor(input) end
 
 --- @param args any[]
 ---
@@ -105,20 +105,20 @@ function ClassStruct:getConstructor(args) end
 --- @return ConstructorStruct|nil ConstructorStruct
 function ClassStruct:getDeclaredConstructor(args) end
 
---- @param definition ClassMethodStructInput
+--- @param input ClassMethodStructInput
 ---
 --- @return MethodStruct
-function ClassStruct:addMethod(definition) end
+function ClassStruct:addMethod(input) end
 
---- @param definition ClassAbstractMethodStructInput
+--- @param input ClassAbstractMethodStructInput
 ---
 --- @return MethodStruct
-function ClassStruct:addAbstractMethod(definition) end
+function ClassStruct:addAbstractMethod(input) end
 
---- @param definition ClassStaticMethodStructInput
+--- @param input ClassStaticMethodStructInput
 ---
 --- @return MethodStruct
-function ClassStruct:addStaticMethod(definition) end
+function ClassStruct:addStaticMethod(input) end
 
 --- Attempts to resolve a MethodStruct in the ClassStruct. If the method isn't declared for the class level, the
 --- super-class(es) are checked.
@@ -174,11 +174,11 @@ function ClassStruct:isSubClass(class) end
 --- @return boolean
 function ClassStruct:isSuperInterface(superInterface) end
 
---- @param clsDef Struct
-function ClassStruct:addStaticStruct(clsDef) end
+--- @param struct Struct
+function ClassStruct:addStaticStruct(struct) end
 
---- @param clsDef Struct
-function ClassStruct:addInstanceStruct(clsDef) end
+--- @param struct Struct
+function ClassStruct:addInstanceStruct(struct) end
 
 --- @param outer Struct
 function ClassStruct:setOuterStruct(outer) end
@@ -197,13 +197,13 @@ local API = {};
 --- @return boolean result
 function API.equals(a, b) end
 
---- @param defParams ClassStructInput
+--- @param input ClassStructInput
 ---
 --- @return ClassStruct
-function API.newClass(defParams) end
+function API.newClass(input) end
 
---- @param defParams ChildClassStructInput
+--- @param input ChildClassStructInput
 --- @param outer Struct
 ---
 --- @return ClassStruct
-function API.newClass(defParams, outer) end
+function API.newClass(input, outer) end
