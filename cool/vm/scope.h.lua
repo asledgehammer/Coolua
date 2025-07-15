@@ -15,9 +15,9 @@
 --- @class VMScopeModule: VMModule
 local API = {};
 
---- @param class StructDefinition The class called.
+--- @param class Struct The class called.
 --- @param callInfo DetailedCallInfo
---- @param callStruct StructDefinition? (Optional) For calls within struct construction.
+--- @param callStruct Struct? (Optional) For calls within struct construction.
 ---
 --- @return ClassScope
 function API.getScopeForCall(class, callInfo, callStruct) end

@@ -160,7 +160,7 @@ end
 
 --- @param path string
 ---
---- @return StructDefinition|nil
+--- @return Struct|nil
 function vm.forNameDef(path)
     return vm.DEFINITIONS[path];
 end
@@ -174,9 +174,9 @@ function vm.forName(path)
         if def and (
                 def.__type__ == 'ClassStruct' or
                 def.__type__ == 'InterfaceStruct' or
-                def.__type__ == 'EnumStructDefinition'
+                def.__type__ == 'EnumStruct'
             ) then
-            --- @cast def ClassStruct|InterfaceStruct|EnumStructDefinition
+            --- @cast def ClassStruct|InterfaceStruct|EnumStruct
 
             vm.stepIn();
             class = vm.package.packages.lua.lang.Class.new(def);

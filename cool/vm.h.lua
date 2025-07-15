@@ -22,9 +22,9 @@ function VMModule.setVM(vm) end
 ---
 --- * Constants
 --- @field ROOT_PATH string The root path of the running source code.
---- @field DEFINITIONS table<string, StructDefinition> Key = `StructDefinition.path`
---- @field CLASSES table<string, Class> Key = `StructDefinition.path`
---- @field PACKAGES table<string, Package> Key = `StructDefinition.path`
+--- @field DEFINITIONS table<string, Struct> Key = `Struct.path`
+--- @field CLASSES table<string, Class> Key = `Struct.path`
+--- @field PACKAGES table<string, Package> Key = `Struct.path`
 ---
 --- @field moduleCount number
 ---
@@ -68,7 +68,7 @@ function vm.forNameDef(path) end
 --- @return Class|nil classObj The class object. If no definition exists with the path then nil is returned.
 function vm.forName(path) end
 
---- @generic T: StructDefinition|StructReference
+--- @generic T: Struct|StructReference
 --- @param path string
 ---
 --- @return T

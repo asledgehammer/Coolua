@@ -321,7 +321,7 @@ function IAPI.addStaticMethod(self, definition)
     return md;
 end
 
---- Attempts to resolve a MethodStruct in the StructDefinition. If the method isn't defined in the interface,
+--- Attempts to resolve a MethodStruct in the Struct. If the method isn't defined in the interface,
 --- `nil` is returned.
 ---
 --- @param self InterfaceStruct
@@ -432,7 +432,7 @@ function IAPI:isSubInterface(self, interface)
 end
 
 --- @param self InterfaceStruct
---- @param struct StructDefinition
+--- @param struct Struct
 ---
 --- @return boolean
 function IAPI.isAssignableFromType(self, struct)

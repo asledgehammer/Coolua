@@ -133,7 +133,7 @@ function API.resolveMethodDeep(methods, args)
     return md;
 end
 
---- @param struct StructDefinition
+--- @param struct Struct
 function API.createMiddleMethods(struct)
     struct.__middleMethods = {};
 
@@ -318,7 +318,7 @@ function API.createSignature(definition)
                 local next = parameter.types[i];
                 local sNext;
                 if type(next) == 'table' then
-                    --- @cast next StructDefinition
+                    --- @cast next Struct
                     sNext = next.path;
                 elseif type(next) == 'string' then
                     sNext = next;
@@ -370,7 +370,7 @@ function API.getMethodNames(classDef, methodNames)
 
     -- Grab any interface declarations.
     if classDef['interfaces'] then
-        --- @cast classDef ClassStruct|EnumStructDefinition
+        --- @cast classDef ClassStruct|EnumStruct
         local interfaceLen = #classDef.interfaces;
         if interfaceLen ~= 0 then
             for i = 1, interfaceLen do
@@ -387,7 +387,7 @@ function API.getMethodNames(classDef, methodNames)
     return methodNames;
 end
 
---- @param def StructDefinition
+--- @param def Struct
 --- @param name string
 --- @param comb table<string, table<MethodStruct>>
 function API.combineAllMethods(def, name, comb)
@@ -407,7 +407,7 @@ function API.combineAllMethods(def, name, comb)
     end
 
     if def['interfaces'] then
-        --- @cast def ClassStruct|EnumStructDefinition
+        --- @cast def ClassStruct|EnumStruct
         -- Copy any interface method array.
         local interfaceLen = #def.interfaces;
         if interfaceLen ~= 0 then
@@ -468,7 +468,7 @@ function API.combineAllMethods(def, name, comb)
     return comb;
 end
 
---- @param self StructDefinition
+--- @param self Struct
 function API.compileMethods(self)
     debugf(vm.debug.method, '[METHOD] :: %s Compiling method(s)..', self.printHeader);
 
@@ -512,7 +512,7 @@ function API.compileMethods(self)
     debugf(vm.debug.method, '[METHOD] :: %s Compiled %i method(s).', self.printHeader, count);
 end
 
---- @param self StructDefinition
+--- @param self Struct
 --- @param path string
 --- @param line integer
 ---

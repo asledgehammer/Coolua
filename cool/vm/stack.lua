@@ -41,7 +41,7 @@ end
 --- @class (exact) ContextArgs
 --- @field path string
 --- @field line number
---- @field class StructDefinition
+--- @field class Struct
 --- @field context string
 --- @field element FieldStruct|ConstructorStruct|MethodStruct
 

@@ -142,7 +142,7 @@ function API.printStruct(def)
         return API.printInterface(def);
     end
 
-    errorf(2, 'Unknown StructDefinition type: %s', def.__type__);
+    errorf(2, 'Unknown Struct type: %s', def.__type__);
     return nil;
 end
 

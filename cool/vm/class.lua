@@ -299,7 +299,7 @@ local function createPseudoClassInstance(def)
 end
 
 --- @param definition ClassStructParameter|ChildClassStructParameter
---- @param outer StructDefinition?
+--- @param outer Struct?
 function API.newClass(definition, outer)
     local locInfo = vm.struct.calcPathNamePackage(definition, outer);
     local _, file, folder = vm.scope.getRelativeFile();
@@ -1189,7 +1189,7 @@ function API.newClass(definition, outer)
     function cd:isAssignableFromType(superStruct)
         -- Enum super-structs fail on assignable check.
         if not superStruct or
-            superStruct.__type__ == 'EnumStructDefinition' then
+            superStruct.__type__ == 'EnumStruct' then
             return false;
         end
 

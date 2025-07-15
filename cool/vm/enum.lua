@@ -25,7 +25,7 @@ function API.newEnum(definition, enclosingStruct)
 
     local ed = {
         -- Internal Type --
-        __type__ = 'EnumStructDefinition',
+        __type__ = 'EnumStruct',
 
         path = path,
         name = name,

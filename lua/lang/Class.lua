@@ -63,7 +63,7 @@ Class = class 'Class' (public, final) {
             types = {
                 'ClassStruct',
                 'InterfaceStruct',
-                'EnumStructDefinition'
+                'EnumStruct'
             }
         },
         get(public) {}
@@ -73,7 +73,7 @@ Class = class 'Class' (public, final) {
         parameters {
             {
                 name = 'def',
-                types = { 'ClassStruct', 'InterfaceStruct', 'EnumStructDefinition' }
+                types = { 'ClassStruct', 'InterfaceStruct', 'EnumStruct' }
             }
         },
         --- @param self Class
@@ -119,7 +119,7 @@ Class = class 'Class' (public, final) {
     method 'isEnum' (public, final) {
         returnTypes('boolean'),
         function(self)
-            return self.definition.__type__ == 'EnumStructDefinition';
+            return self.definition.__type__ == 'EnumStruct';
         end
     }
 };

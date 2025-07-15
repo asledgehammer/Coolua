@@ -34,7 +34,7 @@ local vararg = 'vararg';
 local buildClass, buildInterface, buildFlags;
 
 --- @param self table
---- @param enclosingStruct StructDefinition?
+--- @param enclosingStruct Struct?
 ---
 --- @return ClassStruct
 buildClass = function(self, enclosingStruct)
@@ -186,7 +186,7 @@ buildClass = function(self, enclosingStruct)
 end
 
 --- @param self table
---- @param outerStruct StructDefinition
+--- @param outerStruct Struct
 ---
 --- @return InterfaceStruct interfaceDef, any table
 local function buildInterface(self, outerStruct)
@@ -1183,7 +1183,7 @@ end
 
 -- MARK: - Extends
 
---- @param cls StructDefinition|StructReference|Class|string
+--- @param cls Struct|StructReference|Class|string
 local function extends(cls)
     return {
         __type__ = 'ExtendsTable',
@@ -1193,7 +1193,7 @@ end
 
 -- MARK: - Implements
 
---- @param ... StructDefinition|StructReference
+--- @param ... Struct|StructReference
 local function implements(...)
     return {
         __type__ = 'ImplementsTable',

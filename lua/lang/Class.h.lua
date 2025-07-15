@@ -7,7 +7,7 @@
 --- @class ClassDefinition: ClassStruct
 local ClassDefinition = {};
 
---- @param def ClassStruct|InterfaceStruct|EnumStructDefinition
+--- @param def ClassStruct|InterfaceStruct|EnumStruct
 function ClassDefinition.new(def) end
 
 --- @return Class
@@ -16,7 +16,7 @@ function ClassDefinition:create() end
 --- @class Class: Object
 --- @field pkg string
 --- @field name string
---- @field definition ClassStruct|InterfaceStruct|EnumStructDefinition
+--- @field definition ClassStruct|InterfaceStruct|EnumStruct
 ---
 --- @generic T: ObjectDefinition
 local Class = {};
@@ -26,7 +26,7 @@ local Class = {};
 --- @return boolean isAssignable
 function Class:isAssignableFromType(other) end
 
---- @return ClassStruct|InterfaceStruct|EnumStructDefinition
+--- @return ClassStruct|InterfaceStruct|EnumStruct
 function Class:getDefinition() end
 
 --- @return boolean

@@ -4,7 +4,7 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
---- @alias PackageTable { [string]: (PackageTable | StructDefinition) }
+--- @alias PackageTable { [string]: (PackageTable | Struct) }
 
 --- @class VMPackageModule: VMModule
 --- @field packages PackageTable
@@ -19,7 +19,7 @@ function API.newPackageStruct(path) end
 
 --- Adds a Class to the _G package struct tree. (Used to call from global scope)
 ---
---- @param def StructDefinition
+--- @param def Struct
 function API.addToPackageStruct(def) end
 
 --- @return PackageTable|nil

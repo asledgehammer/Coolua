@@ -28,14 +28,14 @@ local InterfaceInstance = {};
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body function?
 
---- @class InterfaceStructParameter: StructDefinitionParameter
+--- @class InterfaceStructParameter: StructParameter
 ---
 --- @field extends InterfaceStruct?
 --- @field static boolean?
 --- @field scope ClassScope? (Default: package)
 local InterfaceStructParameter = {};
 
---- @class InterfaceStruct: HierarchicalStructDefinition, Fieldable
+--- @class InterfaceStruct: HierarchicalStruct, Fieldable
 --- @field __type__ 'InterfaceStruct'
 --- @field __readonly__ boolean
 ---
@@ -121,10 +121,10 @@ function InterfaceStruct:isSuperInterface(interface) end
 --- @return boolean
 function InterfaceStruct:isSubInterface(interface) end
 
---- @param clsDef StructDefinition
+--- @param clsDef Struct
 function InterfaceStruct:addStaticStruct(clsDef) end
 
---- @param outer StructDefinition
+--- @param outer Struct
 function InterfaceStruct:setOuterStruct(outer) end
 
 -- MARK: - Module
@@ -133,7 +133,7 @@ function InterfaceStruct:setOuterStruct(outer) end
 local API = {};
 
 --- @param definition InterfaceStructParameter
---- @param enclosingStruct StructDefinition?
+--- @param enclosingStruct Struct?
 ---
 --- @return InterfaceStruct
 function API.newInterface(definition, enclosingStruct) end

@@ -33,7 +33,7 @@
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body nil
 
---- @class (exact) ClassStructParameter: StructDefinitionParameter
+--- @class (exact) ClassStructParameter: StructParameter
 --- @field final boolean? (Default: false)
 --- @field scope ClassScope? (Default: package)
 --- @field extends ClassStruct? (Default: nil)
@@ -42,7 +42,7 @@
 --- @field abstract boolean? (Default: false)
 --- @field implements InterfaceStruct|InterfaceStruct[]?
 
---- @class (exact) ChildClassStructParameter: StructDefinitionParameter
+--- @class (exact) ChildClassStructParameter: StructParameter
 --- @field final boolean? (Default: false)
 --- @field scope ClassScope? (Default: package)
 --- @field extends ClassStruct? (Default: nil)
@@ -50,7 +50,7 @@
 --- @field abstract boolean? (Default: false)
 --- @field implements InterfaceStruct|InterfaceStruct[]?
 
---- @class (exact) ClassStruct: HierarchicalStructDefinition, Genericable, Constructable, Fieldable, Staticable, Abstractable, Auditable
+--- @class (exact) ClassStruct: HierarchicalStruct, Genericable, Constructable, Fieldable, Staticable, Abstractable, Auditable
 --- @field __type__ 'ClassStruct'
 --- @field __readonly__ boolean
 --- @field __supertable__ SuperTable
@@ -179,13 +179,13 @@ function ClassStruct:isSubClass(class) end
 --- @return boolean
 function ClassStruct:isSuperInterface(superInterface) end
 
---- @param clsDef StructDefinition
+--- @param clsDef Struct
 function ClassStruct:addStaticStruct(clsDef) end
 
---- @param clsDef StructDefinition
+--- @param clsDef Struct
 function ClassStruct:addInstanceStruct(clsDef) end
 
---- @param outer StructDefinition
+--- @param outer Struct
 function ClassStruct:setOuterStruct(outer) end
 
 -- MARK: - Module
@@ -208,7 +208,7 @@ function API.equals(a, b) end
 function API.newClass(defParams) end
 
 --- @param defParams ChildClassStructParameter
---- @param outer StructDefinition
+--- @param outer Struct
 ---
 --- @return ClassStruct
 function API.newClass(defParams, outer) end

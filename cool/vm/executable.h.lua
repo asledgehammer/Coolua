@@ -30,7 +30,7 @@
 ---
 --- @field __type__ 'MethodStruct'
 ---
---- @field class StructDefinition
+--- @field class Struct
 --- @field name string
 --- @field super MethodStruct? (Internally assigned. If none, this is nil)
 --- @field generics GenericsTypesDefinition?
@@ -94,10 +94,10 @@
 --- @field defaultSuperFuncInfo FunctionInfo
 local API = {};
 
---- @param struct StructDefinition
+--- @param struct Struct
 function API.createMiddleMethods(struct) end
 
---- @param classDef StructDefinition
+--- @param classDef Struct
 --- @param name string
 --- @param methods table<string, MethodStruct>
 ---
@@ -109,7 +109,7 @@ function API.createMiddleMethod(classDef, name, methods) end
 --- @return string[] methodNames
 function API.getDeclaredMethodNames(classDef, array) end
 
---- @param classDef StructDefinition
+--- @param classDef Struct
 --- @param methodNames string[]?
 ---
 --- @return string[] methodNames
@@ -120,7 +120,7 @@ function API.getMethodNames(classDef, methodNames) end
 --- @return string
 function API.createSignature(definition) end
 
---- @param struct StructDefinition Used to cache results at class-level.
+--- @param struct Struct Used to cache results at class-level.
 --- @param name string
 --- @param methods table<string, MethodStruct>
 --- @param args any[]
@@ -145,7 +145,7 @@ function API.argsToTypes(args) end
 --- @return MethodStruct|nil
 function API.resolveMethodDeep(methods, args) end
 
---- @param self StructDefinition
+--- @param self Struct
 --- @param name string
 --- @param comb table<string, table<MethodStruct>>
 ---
@@ -155,7 +155,7 @@ function API.combineAllMethods(self, name, comb) end
 --- @param self ClassStruct|InterfaceStruct
 function API.compileMethods(self) end
 
---- @param self StructDefinition
+--- @param self Struct
 --- @param path string
 --- @param line integer
 ---

@@ -45,7 +45,7 @@
 --- @field __type__ 'StructReference'
 --- @field path string The file/package path to the definition.
 
---- @class StructDefinition: Methodable
+--- @class Struct: Methodable
 --- @field __type__ string The internal type. Used for evaluation for several components inside the VM.
 --- @field __readonly__ boolean
 --- @field __supertable__ SuperTable
@@ -59,26 +59,26 @@
 --- @field static boolean
 ---
 --- * Enclosure Properties *
---- @field outer StructDefinition
---- @field inner table<string, StructDefinition>
-local StructDefinition = {};
+--- @field outer Struct
+--- @field inner table<string, Struct>
+local Struct = {};
 
---- @param struct StructDefinition
-function StructDefinition:setOuterStruct(struct) end
+--- @param struct Struct
+function Struct:setOuterStruct(struct) end
 
---- @param struct StructDefinition
+--- @param struct Struct
 ---
 --- @return boolean
-function StructDefinition:isAssignableFromType(struct) end
+function Struct:isAssignableFromType(struct) end
 
-function StructDefinition:finalize() end
+function Struct:finalize() end
 
 --- @return boolean
-function StructDefinition:isFinalized() end
+function Struct:isFinalized() end
 
---- @class HierarchicalStructDefinition: StructDefinition, Hierarchical
+--- @class HierarchicalStruct: Struct, Hierarchical
 
---- @class StructDefinitionParameter
+--- @class StructParameter
 ---
 --- @field pkg string?
 --- @field name string?
@@ -86,8 +86,8 @@ function StructDefinition:isFinalized() end
 --- @class VMStructModule: VMModule
 local API = {};
 
---- @param definition StructDefinition|StructDefinitionParameter
---- @param outer StructDefinition?
+--- @param definition Struct|StructParameter
+--- @param outer Struct?
 ---
 --- @return {path: string, name: string, pkg: string}
 function API.calcPathNamePackage(definition, outer) end

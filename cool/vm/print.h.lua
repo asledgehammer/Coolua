@@ -12,7 +12,7 @@ local API = {};
 --- @return string explodedArgsString
 function API.argsToString(args) end
 
---- @param def StructDefinition
+--- @param def Struct
 ---
 --- @return string
 function API.printStruct(def) end
