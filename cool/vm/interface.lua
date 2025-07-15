@@ -581,7 +581,7 @@ function IAPI.finalize(self)
     self.declaredMethods = declaredMethods;
 
     self.__readonly__ = true;
-    vm.DEFINITIONS[self.path] = self;
+    vm.STRUCTS[self.path] = self;
 
     -- Set class as child.
     if self.super then
@@ -651,7 +651,7 @@ function API.newInterface(definition, enclosingStruct)
     print('folder: ', folder);
 
     --- @type any
-    local id = vm.DEFINITIONS[path] or {};
+    local id = vm.STRUCTS[path] or {};
 
     local extends = definition.extends;
 
@@ -696,7 +696,7 @@ function API.newInterface(definition, enclosingStruct)
 
     --- @cast id InterfaceStruct
 
-    vm.DEFINITIONS[id.path] = id;
+    vm.STRUCTS[id.path] = id;
 
     -- Enclosurable: Add the definition to the enclosing struct.
     if enclosingStruct then

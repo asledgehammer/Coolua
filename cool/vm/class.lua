@@ -376,10 +376,10 @@ function API.newClass(definition, outer)
     end
 
     -- Here we check to see if anything has referenced the class prior to initialization. We graft to that reference.
-    local cd = vm.DEFINITIONS[path];
+    local cd = vm.STRUCTS[path];
 
     if not cd then
-        vm.DEFINITIONS[path] = cd;
+        vm.STRUCTS[path] = cd;
     end
 
     cd = setmetatable({}, {
@@ -1114,7 +1114,7 @@ function API.newClass(definition, outer)
         end
 
         self.__readonly__ = true;
-        vm.DEFINITIONS[cd.path] = cd;
+        vm.STRUCTS[cd.path] = cd;
 
         -- Set class as child.
         if cd.super then

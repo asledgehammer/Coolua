@@ -29,7 +29,7 @@ function API.getScopeForCall(struct, callInfo, callStruct)
     local value = 'public';
 
     -- Classes are locked to their package path and name.
-    callStruct = callStruct or vm.DEFINITIONS[callInfo.path];
+    callStruct = callStruct or vm.STRUCTS[callInfo.path];
 
     if callStruct then
         local ed = vm.executable.getExecutableFromLine(struct, callInfo.path, callInfo.currentLine);

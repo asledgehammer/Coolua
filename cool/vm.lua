@@ -79,7 +79,7 @@ vm = {
 
     ROOT_PATH = ROOT_PATH,
 
-    DEFINITIONS = {},
+    STRUCTS = {},
     CLASSES = {},
     PACKAGES = {},
 
@@ -139,7 +139,7 @@ vm.struct.setVM(vm);
 vm.interface.setVM(vm);
 
 function vm.import(path)
-    local def = vm.DEFINITIONS[path];
+    local def = vm.STRUCTS[path];
 
     if not def then
         pcall(function()
@@ -150,7 +150,7 @@ function vm.import(path)
     if not def then
         debugf(vm.debug.scope, '[SCOPE] :: Could not resolve struct: %s (Creating StructReference)', path);
         def = vm.struct.newReference(path);
-        vm.DEFINITIONS[path] = def;
+        vm.STRUCTS[path] = def;
     end
 
     return def;
@@ -160,7 +160,7 @@ end
 ---
 --- @return Struct|nil
 function vm.forNameDef(path)
-    return vm.DEFINITIONS[path];
+    return vm.STRUCTS[path];
 end
 
 function vm.forName(path)
@@ -168,7 +168,7 @@ function vm.forName(path)
     local class = vm.CLASSES[path];
 
     if not class then
-        local def = vm.DEFINITIONS[path];
+        local def = vm.STRUCTS[path];
         if def and (
                 def.__type__ == 'ClassStruct' or
                 def.__type__ == 'InterfaceStruct' or

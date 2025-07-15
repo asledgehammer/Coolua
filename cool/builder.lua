@@ -96,7 +96,7 @@ buildClass = function(self, enclosingStruct)
                     );
                 end
 
-                -- Static definition outside of static block check.
+                -- Static struct outside of static block check.
                 if field.static then
                     errorf(2, 'Cannot define static field outside of static block: %s',
                         name
@@ -112,7 +112,7 @@ buildClass = function(self, enclosingStruct)
             for name, method in pairs(self.instanced.methods) do
                 buildFlags(method, method);
 
-                -- Static definition outside of static block check.
+                -- Static struct outside of static block check.
                 if method.static then
                     errorf(2, 'Cannot define static method outside of static block: %s',
                         name
@@ -362,7 +362,7 @@ local function processTypes(e)
 
     local te = type(e);
     if te == 'string' then
-        -- This is a one-type definition.
+        -- This is a one-type struct.
         table.insert(types, e);
     elseif te == 'table' then
         if e.__type__ then
@@ -370,7 +370,7 @@ local function processTypes(e)
                 --- @cast e ClassStruct
                 table.insert(types, e);
             elseif e.getStruct then
-                -- Convert clas to its VM definition and grab its path.
+                -- Convert clas to its VM struct and grab its path.
                 table.insert(types, e:getStruct());
             end
             -- Cannot use dictionaries to define types.
@@ -1050,13 +1050,13 @@ end
 --- @return function
 local function getPresetMethodBody(funcName, t)
     if not isArray(t) then
-        errorf(3, 'The %s definition isn\'t a function[] array.', funcName);
+        errorf(3, 'The %s struct isn\'t a function[] array.', funcName);
     else
         local tLen = #t;
         if tLen == 0 then
-            errorf(2, 'The %s definition has no function.', funcName);
+            errorf(2, 'The %s struct has no function.', funcName);
         elseif tLen > 1 then
-            errorf(2, 'The %s definition has two or more functions.', funcName);
+            errorf(2, 'The %s struct has two or more functions.', funcName);
         end
     end
 

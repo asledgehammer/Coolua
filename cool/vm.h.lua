@@ -22,7 +22,7 @@ function VMModule.setVM(vm) end
 ---
 --- * Constants
 --- @field ROOT_PATH string The root path of the running source code.
---- @field DEFINITIONS table<string, Struct> Key = `Struct.path`
+--- @field STRUCTS table<string, Struct> Key = `Struct.path`
 --- @field CLASSES table<string, Class> Key = `Struct.path`
 --- @field PACKAGES table<string, Package> Key = `Struct.path`
 ---
