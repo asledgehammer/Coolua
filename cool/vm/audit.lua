@@ -183,7 +183,7 @@ end
 function API.auditParameters(parameters, errHeader)
     if parameters then
         if not parameters or type(parameters) ~= 'table' or not isArray(parameters) then
-            errorf(2, '%s property "parameters" is not a ParameterDefinition[]. {type=%s, value=%s}',
+            errorf(2, '%s property "parameters" is not a ParameterStruct[]. {type=%s, value=%s}',
                 errHeader, vm.type.getType(parameters), tostring(parameters)
             );
         end

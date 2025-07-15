@@ -13,7 +13,7 @@ local InterfaceInstance = {};
 ---
 --- NOTE: All instanced interface methods are public.
 --- @field name string
---- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
+--- @field parameters ParameterStructParameter[]? (Default: no parameters)
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body function?
 --- NOTE: The `default` flag is automatically true if a function body is provided at the time of adding the method.
@@ -22,7 +22,7 @@ local InterfaceInstance = {};
 ---
 --- @field scope ClassScope? (Default: package)
 --- @field name string
---- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
+--- @field parameters ParameterStructParameter[]? (Default: no parameters)
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body function?
 

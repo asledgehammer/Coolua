@@ -10,7 +10,7 @@
 --- @field scope ClassScope? (Default: public)
 --- @field final boolean? (Default: false)
 --- @field name string
---- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
+--- @field parameters ParameterStructParameter[]? (Default: no parameters)
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body function
 
@@ -18,7 +18,7 @@
 --- @field scope ClassScope? (Default: public)
 --- @field final boolean? (Default: false)
 --- @field name string
---- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
+--- @field parameters ParameterStructParameter[]? (Default: no parameters)
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body function
 
@@ -26,7 +26,7 @@
 --- @field scope ClassScope? (Default: public)
 --- @field final boolean? (Default: false)
 --- @field name string
---- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
+--- @field parameters ParameterStructParameter[]? (Default: no parameters)
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body nil
 

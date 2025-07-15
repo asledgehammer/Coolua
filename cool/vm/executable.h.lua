@@ -8,12 +8,12 @@
 
 --- @class (exact) Parameterable
 ---
---- @field parameters ParameterDefinition[]
+--- @field parameters ParameterStruct[]
 --- @field vararg boolean If true, the executable's last paramater is a vararg.
 
 --- @class (exact) ParameterableInput
 ---
---- @field parameters ParameterDefinition[]? (Default: No parameters)
+--- @field parameters ParameterStruct[]? (Default: No parameters)
 --- @field vararg boolean? (Default: false) If true, the executable's last paramater is a vararg.
 
 --- @class (exact) ExecutableStruct: Parameterable
@@ -33,7 +33,7 @@
 --- @field class Struct
 --- @field name string
 --- @field super MethodStruct? (Internally assigned. If none, this is nil)
---- @field parameters ParameterDefinition[]
+--- @field parameters ParameterStruct[]
 --- @field returnTypes AllowedType[]|AllowedType
 ---
 --- * General Flags *
@@ -62,7 +62,7 @@
 ---
 --- @field __super_flag__ boolean Used internally to track calls to super while invoked.
 --- @field class ClassStruct
---- @field parameters ParameterDefinition[]
+--- @field parameters ParameterStruct[]
 --- @field super fun(o: any, ...) This function is called prior to the body function.
 --- @field superInfo FunctionInfo The super function's information. (line-range and path)
 --- @field body fun(o: any, ...) TODO: Rename as `body`.
@@ -72,16 +72,16 @@
 --- @field super fun(super: SuperTable, ...)? This function is called prior to the body function. If not defined, an attempt at `super()` is called. If not exists, an error occurs.
 --- @field body fun(o: any, ...)? TODO: Rename as `body`.
 
---- @class (exact) ParameterDefinition
+--- @class (exact) ParameterStruct
 ---
---- @field __type__ 'ParameterDefinition'
+--- @field __type__ 'ParameterStruct'
 ---
 --- @field audited boolean If true, the struct is audited and verified to be valid.
 --- @field class ClassStruct
 --- @field name string
 --- @field types AllowedType[]
 
---- @class (exact) ParameterDefinitionParameter
+--- @class (exact) ParameterStructParameter
 --- @field types AllowedType[]?
 --- @field type AllowedType?
 --- @field name string?
@@ -193,15 +193,15 @@ function API.createSignature(definition) end
 --- @return ConstructorStruct|nil method
 function API.getConstructorFromLine(self, path, line) end
 
---- @param paramsA ParameterDefinition[]
---- @param paramsB ParameterDefinition[]
+--- @param paramsA ParameterStruct[]
+--- @param paramsB ParameterStruct[]
 ---
 --- @return boolean
 function API.areCompatible(paramsA, paramsB) end
 
 --- @param def ParameterableInput
 ---
---- @return ParameterDefinition[]
+--- @return ParameterStruct[]
 function API.compile(def) end
 
 --- Used to fill-in for missing super function blocks for constructors.

@@ -7,15 +7,15 @@
 --- @class VMAuditModule: VMModule
 local API = {};
 
---- @param paramDef ParameterDefinition
+--- @param paramDef ParameterStruct
 --- @param i integer
 --- @param errHeader string
 function API.auditParameter(paramDef, i, errHeader) end
 
---- @param parameters ParameterDefinition[]?
+--- @param parameters ParameterStruct[]?
 --- @param errHeader string
 ---
---- @return ParameterDefinition[]
+--- @return ParameterStruct[]
 function API.auditParameters(parameters, errHeader) end
 
 --- @param name string

@@ -779,8 +779,8 @@ function API.getConstructorFromLine(self, path, line)
     return nil;
 end
 
---- @param paramsA ParameterDefinition[]
---- @param paramsB ParameterDefinition[]
+--- @param paramsA ParameterStruct[]
+--- @param paramsB ParameterStruct[]
 ---
 --- @return boolean
 function API.areCompatible(paramsA, paramsB)
