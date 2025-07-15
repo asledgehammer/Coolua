@@ -2,9 +2,6 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local dump = require 'cool/dump';
-local DebugUtils = require 'cool/debug';
-
 local PrintPlus = require 'cool/print';
 local errorf = PrintPlus.errorf;
 
@@ -26,7 +23,10 @@ local API = {
     end
 };
 
-local function applyMetatable(self)
+-- Internal API
+local IAPI = {};
+
+function IAPI.applyStructMetatable(self)
     local mt = getmetatable(self) or {};
     local __properties = {};
     for k, v in pairs(self) do __properties[k] = v end
@@ -108,9 +108,6 @@ local function applyMetatable(self)
             path = callInfo.path
         });
 
-        local callInfo = DebugUtils.getCallInfo(level, nil, true);
-        callInfo.path = relPath;
-
         local classScopeAllowed = vm.scope.getScopeForCall(self, callInfo);
 
         -- Ensure that the interface is accessible from the scope.
@@ -191,216 +188,7 @@ local function applyMetatable(self)
     setmetatable(self, mt);
 end
 
--- Internal API
-local IAPI = {};
-
--- MARK: - Method
-
 --- @cast API VMInterfaceModule
-
---- @param self InterfaceStruct
---- @param MethodStruct InterfaceMethodStructInput
----
---- @return MethodStruct
-function IAPI.addMethod(self, MethodStruct)
-    local errHeader = string.format('InterfaceStruct(%s):addMethod():', self.name);
-
-    local body = MethodStruct.body;
-    local bodyInfo = vm.executable.getExecutableInfo(body);
-
-    local name = vm.audit.auditMethodParamName(MethodStruct.name, errHeader);
-    local types = vm.audit.auditMethodReturnsProperty(MethodStruct.returnTypes, errHeader);
-    local parameters = vm.audit.auditParameters(MethodStruct.parameters, errHeader);
-
-    local md = {
-
-        __type__ = 'MethodStruct',
-
-        -- Base properties. --
-        class = self,
-        name = name,
-        returnTypes = types,
-        parameters = parameters,
-        body = body,
-
-        -- Used for scope-visibility analysis. --
-        scope = 'public',
-        bodyInfo = bodyInfo,
-
-        -- General method flags --
-        static = false,
-        final = false, -- Cannot define finals in a interface context.
-
-        -- Compiled method flags --
-        audited = false,
-        override = false,
-        super = nil,
-
-        -- Interface definition. --
-        interface = self, -- Lets the VM know this belongs to an interface.
-        default = body ~= nil,
-
-        -- Always falsify class flags in class method definitions. --
-        abstract = false,
-    };
-
-    md.signature = vm.executable.createSignature(md);
-
-    --- @cast md MethodStruct
-
-    local methodCluster = self.declaredMethods[md.name];
-    if not methodCluster then
-        methodCluster = {};
-        self.declaredMethods[md.name] = methodCluster;
-    end
-    methodCluster[md.signature] = md;
-
-    return md;
-end
-
---- @cast API VMInterfaceModule
-
---- @param self InterfaceStruct
---- @param methodInput InterfaceStaticMethodStructInput
----
---- @return MethodStruct
-function IAPI.addStaticMethod(self, methodInput)
-    local errHeader = string.format('InterfaceStruct(%s):addStaticMethod():', self.name);
-
-    local body = methodInput.body;
-
-    local scope = vm.audit.auditStructPropertyScope(self.scope, methodInput.scope, errHeader);
-    local name = vm.audit.auditMethodParamName(methodInput.name, errHeader);
-    local types = vm.audit.auditMethodReturnsProperty(methodInput.returnTypes, errHeader);
-    local parameters = vm.audit.auditParameters(methodInput.parameters, errHeader);
-    local bodyInfo = vm.executable.getExecutableInfo(body);
-
-    local methodStruct = {
-
-        __type__ = 'MethodStruct',
-
-        -- Base properties. --
-        class = self,
-        name = name,
-        returnTypes = types,
-        parameters = parameters,
-        body = body,
-        bodyInfo = bodyInfo,
-
-        -- Used for scope-visibility analysis. --
-        scope = scope,
-
-        -- General method flags --
-        static = true,
-        final = false, -- Cannot define finals in a interface context.
-
-        -- Compiled method flags --
-        audited = false,
-        override = false,
-        super = nil,
-
-        -- Interface struct. --
-        interface = self, -- Lets the VM know this belongs to an interface.
-        default = body ~= nil,
-
-        -- Always falsify class flags in class method structs. --
-        abstract = false,
-    };
-
-    methodStruct.signature = vm.executable.createSignature(methodStruct);
-
-    --- @cast methodStruct MethodStruct
-
-    local methodCluster = self.declaredMethods[methodStruct.name];
-    if not methodCluster then
-        methodCluster = {};
-        self.declaredMethods[methodStruct.name] = methodCluster;
-    end
-    methodCluster[methodStruct.signature] = methodStruct;
-
-    return methodStruct;
-end
-
---- Attempts to resolve a MethodStruct in the Struct. If the method isn't defined in the interface,
---- `nil` is returned.
----
---- @param self InterfaceStruct
---- @param methodName string
----
---- @return MethodStruct[]? methods
-function IAPI.getDeclaredMethods(self, methodName)
-    return self.declaredMethods[methodName];
-end
-
---- @param self InterfaceStruct
---- @param methodName string
---- @param args any[]
----
---- @return MethodStruct|nil MethodStruct
-function IAPI.getMethod(self, methodName, args)
-    local methodStruct = self:getDeclaredMethod(methodName, args);
-    if not methodStruct and self.super then
-        methodStruct = self.super:getMethod(methodName, args);
-    end
-    return methodStruct;
-end
-
---- @param self InterfaceStruct
---- @param name string
---- @param args any[]
----
---- @return MethodStruct|nil MethodStruct
-function IAPI.getDeclaredMethod(self, name, args)
-    local argsLen = #args;
-    local methodStructCluster = self.declaredMethods[name];
-
-    -- No declared methods with name.
-    if not methodStructCluster then return nil end
-
-    for i = 1, #methodStructCluster do
-        local methodStruct = methodStructCluster[i];
-        local methodParams = methodStruct.parameters;
-        local paramsLen = #methodParams;
-
-        if argsLen == paramsLen then
-            --- Empty args methods.
-            if argsLen == 0 then
-                return methodStruct;
-            else
-                for j = 1, #methodParams do
-                    local arg = args[j];
-                    local parameter = methodParams[j];
-                    if not vm.type.isAssignableFromType(arg, parameter.types) then
-                        methodStruct = nil;
-                        break;
-                    end
-                end
-                if methodStruct then return methodStruct end
-            end
-        end
-    end
-    return nil;
-end
-
---- @param self InterfaceStruct
---- @param line integer
----
---- @return MethodStruct|nil methodStruct
-function IAPI.getMethodFromLine(self, line)
-    --- @type MethodStruct
-    local methodStruct;
-    for _, methodStructCluster in pairs(self.declaredMethods) do
-        for i = 1, #methodStructCluster do
-            methodStruct = methodStructCluster[i];
-            if line >= methodStruct.lineRange.start and line <= methodStruct.lineRange.stop then
-                return methodStruct;
-            end
-        end
-    end
-    return nil;
-end
-
--- MARK: - Hierarchical
 
 --- (Handles recursively going through sub-interfaces to see if a class is a sub-class)
 ---
@@ -412,203 +200,11 @@ function IAPI.__recurseSubInterface(subInterface, interfaceToEval)
     local len = #subInterface.sub;
     for i = 1, len do
         local next = subInterface.sub[i];
-        if IAPI.isAssignableFromType(next, interfaceToEval) or IAPI.__recurseSubInterface(next, interfaceToEval) then
+        if next:isAssignableFromType(interfaceToEval) or IAPI.__recurseSubInterface(next, interfaceToEval) then
             return true;
         end
     end
     return false;
-end
-
-function IAPI.isSubInterface(self, interfaceStruct)
-    if IAPI.__recurseSubInterface(self, interfaceStruct) then
-        return true;
-    end
-    return false;
-end
-
-function IAPI.isAssignableFromType(self, struct)
-    if struct.__type__ ~= 'InterfaceStruct' then
-        return false;
-    end
-
-    --- @cast struct InterfaceStruct
-
-    return self == struct or IAPI.isSuperInterface(self, struct);
-end
-
-function IAPI.isSuperInterface(self, interface)
-    --- @type InterfaceStruct|nil
-    local next = self.super;
-    while next do
-        if next == interface then return true end
-        next = next.super;
-    end
-    return false;
-end
-
-function IAPI.addStaticField(self, fieldInput)
-    --- @type FieldStruct
-    local fieldStruct = {
-        __type__ = 'FieldStruct',
-        audited = false,
-        class = self,
-        types = fieldInput.types,
-        type = fieldInput.type,
-        name = fieldInput.name,
-        scope = 'public',
-        static = true,
-        final = true,
-        value = fieldInput.value,
-        get = fieldInput.get,
-        set = fieldInput.set,
-        assignedOnce = false,
-    };
-
-    vm.audit.auditField(self, fieldStruct);
-
-    -- Ensure that all constants are defined.
-    if not fieldStruct.value then
-        errorf(2, '%s Cannot add interface field without a value: %s', self.printHeader, fieldStruct.name);
-    end
-
-    self.declaredFields[fieldStruct.name] = fieldStruct;
-
-    return fieldStruct;
-end
-
--- MARK: Struct
-
-function IAPI.finalize(self)
-    local errHeader = string.format('Interface(%s):finalize():', self.path);
-
-    if self.__readonly__ then
-        errorf(2, '%s Cannot finalize. (Interface is already finalized!)', errHeader);
-    elseif self.super and (self.super.__type__ == 'ClassStruct' and not self.super.__readonly__) then
-        errorf(2, '%s Cannot finalize. (Super-Interface %s is not finalized!)', errHeader, self.path);
-    end
-
-    -- If any auto-methods are defined for fields (get, set), create them before compiling class methods.
-    vm.field.compileFieldAutoMethods(self);
-
-    -- TODO: Audit everything.
-
-    vm.executable.compileMethods(self);
-
-    -- Change add methods.
-    self.addMethod = function() errorf(2, '%s Cannot add methods. (Interface is final!)', errHeader) end
-
-    -- Set default value(s) for static fields.
-    for name, fd in pairs(self.declaredFields) do
-        if fd.static then
-            self[name] = fd.value;
-        end
-    end
-
-    self.__middleMethods = {};
-
-    -- Insert boilerplate method invoker function.
-    for name, methods in pairs(self.methods) do
-        for i, md in pairs(methods) do
-            if md.override then
-                -- RULE: Cannot override method if super-method is final.
-                if md.super.final then
-                    local sMethod = vm.print.printMethod(md);
-                    errorf(2, '%s Method cannot override final method in super-class: %s',
-                        errHeader,
-                        md.super.class.name,
-                        sMethod
-                    );
-                    return self;
-                    -- RULE: Cannot reduce scope of overrided super-method.
-                elseif not vm.scope.canAccessScope(md.scope, md.super.scope) then
-                    local sMethod = vm.print.printMethod(md);
-                    errorf(2, '%s Method cannot reduce scope of super-class: %s (super-scope = %s, scope = %s)',
-                        errHeader,
-                        sMethod, md.super.scope, md.scope
-                    );
-                    return self;
-                    -- RULE: override Methods must either be consistently static (or not) with their super-method(s).
-                elseif md.static ~= md.super.static then
-                    local sMethod = vm.print.printMethod(md);
-                    errorf(2,
-                        '%s All method(s) with identical signatures must either be static or not: %s (super.static = %s, static = %s)',
-                        errHeader,
-                        sMethod, tostring(md.super.static), tostring(md.static)
-                    );
-                    return self;
-                end
-            end
-        end
-        self.__middleMethods[name] = vm.executable.createMiddleMethod(self, name, methods);
-    end
-
-    -- Add static method references.
-    for methodName, mCluster in pairs(self.declaredMethods) do
-        self[methodName] = self.__middleMethods[methodName];
-    end
-
-    local declaredFields = {};
-    for k, v in pairs(self.declaredFields) do
-        --- @params T: FieldStruct
-        declaredFields[k] = readonly(v);
-    end
-    self.declaredFields = declaredFields;
-
-    local declaredMethods = {};
-    for methodName, v in pairs(self.declaredMethods) do
-        declaredMethods[methodName] = {};
-        for sig, methodStruct in pairs(v) do
-            --- @params T: MethodStruct
-            declaredMethods[methodName][sig] = readonly(methodStruct);
-        end
-    end
-    self.declaredMethods = declaredMethods;
-
-    self.__readonly__ = true;
-    vm.STRUCTS[self.path] = self;
-
-    -- Set class as child.
-    if self.super then
-        table.insert(self.super.sub, self);
-    end
-
-    -- Add a reference for global package and static code to enclosing struct.
-    if self.outer then
-        vm.stepIn();
-        self.outer[self.name] = self;
-        vm.stepOut();
-    end
-
-    return self;
-end
-
--- MARK: - Field
-
-function IAPI.getField(self, fieldName)
-    local fieldStruct = self:getDeclaredField(fieldName);
-    if not fieldStruct and self.super then
-        return self.super:getField(fieldName);
-    end
-    return fieldStruct;
-end
-
-function IAPI.getDeclaredField(self, fieldName)
-    return self.declaredFields[fieldName];
-end
-
-function IAPI.getFields(self)
-    --- @type FieldStruct[]
-    local array = {};
-
-    local next = self;
-    while next do
-        for _, fieldStruct in pairs(next.declaredFields) do
-            table.insert(array, fieldStruct);
-        end
-        next = next.super;
-    end
-
-    return array;
 end
 
 function API.newInterface(interfaceInput, outer)
@@ -732,16 +328,303 @@ function API.newInterface(interfaceInput, outer)
     end
 
     -- * General API * --
-    interfaceStruct.finalize = IAPI.finalize;
+    function interfaceStruct:finalize()
+        local errHeader = string.format('Interface(%s):finalize():', self.path);
+
+        if self.__readonly__ then
+            errorf(2, '%s Cannot finalize. (Interface is already finalized!)', errHeader);
+        elseif self.super and (self.super.__type__ == 'ClassStruct' and not self.super.__readonly__) then
+            errorf(2, '%s Cannot finalize. (Super-Interface %s is not finalized!)', errHeader, self.path);
+        end
+
+        -- If any auto-methods are defined for fields (get, set), create them before compiling class methods.
+        vm.field.compileFieldAutoMethods(self);
+
+        -- TODO: Audit everything.
+
+        vm.executable.compileMethods(self);
+
+        -- Change add methods.
+        self.addMethod = function() errorf(2, '%s Cannot add methods. (Interface is final!)', errHeader) end
+
+        -- Set default value(s) for static fields.
+        for name, fd in pairs(self.declaredFields) do
+            if fd.static then
+                self[name] = fd.value;
+            end
+        end
+
+        self.__middleMethods = {};
+
+        -- Insert boilerplate method invoker function.
+        for name, methods in pairs(self.methods) do
+            for i, md in pairs(methods) do
+                if md.override then
+                    -- RULE: Cannot override method if super-method is final.
+                    if md.super.final then
+                        local sMethod = vm.print.printMethod(md);
+                        errorf(2, '%s Method cannot override final method in super-class: %s',
+                            errHeader,
+                            md.super.class.name,
+                            sMethod
+                        );
+                        return self;
+                        -- RULE: Cannot reduce scope of overrided super-method.
+                    elseif not vm.scope.canAccessScope(md.scope, md.super.scope) then
+                        local sMethod = vm.print.printMethod(md);
+                        errorf(2, '%s Method cannot reduce scope of super-class: %s (super-scope = %s, scope = %s)',
+                            errHeader,
+                            sMethod, md.super.scope, md.scope
+                        );
+                        return self;
+                        -- RULE: override Methods must either be consistently static (or not) with their super-method(s).
+                    elseif md.static ~= md.super.static then
+                        local sMethod = vm.print.printMethod(md);
+                        errorf(2,
+                            '%s All method(s) with identical signatures must either be static or not: %s (super.static = %s, static = %s)',
+                            errHeader,
+                            sMethod, tostring(md.super.static), tostring(md.static)
+                        );
+                        return self;
+                    end
+                end
+            end
+            self.__middleMethods[name] = vm.executable.createMiddleMethod(self, name, methods);
+        end
+
+        -- Add static method references.
+        for methodName, mCluster in pairs(self.declaredMethods) do
+            self[methodName] = self.__middleMethods[methodName];
+        end
+
+        local declaredFields = {};
+        for k, v in pairs(self.declaredFields) do
+            --- @params T: FieldStruct
+            declaredFields[k] = readonly(v);
+        end
+        self.declaredFields = declaredFields;
+
+        local declaredMethods = {};
+        for methodName, v in pairs(self.declaredMethods) do
+            declaredMethods[methodName] = {};
+            for sig, methodStruct in pairs(v) do
+                --- @params T: MethodStruct
+                declaredMethods[methodName][sig] = readonly(methodStruct);
+            end
+        end
+        self.declaredMethods = declaredMethods;
+
+        self.__readonly__ = true;
+        vm.STRUCTS[self.path] = self;
+
+        -- Set class as child.
+        if self.super then
+            table.insert(self.super.sub, self);
+        end
+
+        -- Add a reference for global package and static code to enclosing struct.
+        if self.outer then
+            vm.stepIn();
+            self.outer[self.name] = self;
+            vm.stepOut();
+        end
+
+        return self;
+    end
 
     -- * Fieldable API * --
-    interfaceStruct.addStaticField = IAPI.addStaticField;
-    interfaceStruct.getDeclaredField = IAPI.getDeclaredField;
-    interfaceStruct.getField = IAPI.getField;
 
-    -- * Methodable API * --
-    interfaceStruct.addMethod = IAPI.addMethod;
-    interfaceStruct.addStaticMethod = IAPI.addStaticMethod;
+    function interfaceStruct:addStaticField(fieldInput)
+        --- @type FieldStruct
+        local fieldStruct = {
+            __type__ = 'FieldStruct',
+            audited = false,
+            class = self,
+            types = fieldInput.types,
+            type = fieldInput.type,
+            name = fieldInput.name,
+            scope = 'public',
+            static = true,
+            final = true,
+            value = fieldInput.value,
+            get = fieldInput.get,
+            set = fieldInput.set,
+            assignedOnce = false,
+        };
+
+        vm.audit.auditField(self, fieldStruct);
+
+        -- Ensure that all constants are defined.
+        if not fieldStruct.value then
+            errorf(2, '%s Cannot add interface field without a value: %s', self.printHeader, fieldStruct.name);
+        end
+
+        self.declaredFields[fieldStruct.name] = fieldStruct;
+
+        return fieldStruct;
+    end
+
+    function interfaceStruct:getDeclaredField(fieldName)
+        return self.declaredFields[fieldName];
+    end
+
+    function interfaceStruct:getField(fieldName)
+        local fieldStruct = self:getDeclaredField(fieldName);
+        if not fieldStruct and self.super then
+            return self.super:getField(fieldName);
+        end
+        return fieldStruct;
+    end
+
+    function interfaceStruct:getFields()
+        --- @type FieldStruct[]
+        local array = {};
+
+        local next = self;
+        while next do
+            for _, fieldStruct in pairs(next.declaredFields) do
+                table.insert(array, fieldStruct);
+            end
+            next = next.super;
+        end
+
+        return array;
+    end
+
+    --- @param self InterfaceStruct
+    --- @param MethodStruct InterfaceMethodStructInput
+    ---
+    --- @return MethodStruct
+    function interfaceStruct:addMethod(MethodStruct)
+        local errHeader = string.format('InterfaceStruct(%s):addMethod():', self.name);
+
+        local body = MethodStruct.body;
+        local bodyInfo = vm.executable.getExecutableInfo(body);
+
+        local name = vm.audit.auditMethodParamName(MethodStruct.name, errHeader);
+        local types = vm.audit.auditMethodReturnsProperty(MethodStruct.returnTypes, errHeader);
+        local parameters = vm.audit.auditParameters(MethodStruct.parameters, errHeader);
+
+        local md = {
+
+            __type__ = 'MethodStruct',
+
+            -- Base properties. --
+            class = self,
+            name = name,
+            returnTypes = types,
+            parameters = parameters,
+            body = body,
+
+            -- Used for scope-visibility analysis. --
+            scope = 'public',
+            bodyInfo = bodyInfo,
+
+            -- General method flags --
+            static = false,
+            final = false, -- Cannot define finals in a interface context.
+
+            -- Compiled method flags --
+            audited = false,
+            override = false,
+            super = nil,
+
+            -- Interface definition. --
+            interface = self, -- Lets the VM know this belongs to an interface.
+            default = body ~= nil,
+
+            -- Always falsify class flags in class method definitions. --
+            abstract = false,
+        };
+
+        md.signature = vm.executable.createSignature(md);
+
+        --- @cast md MethodStruct
+
+        local methodCluster = self.declaredMethods[md.name];
+        if not methodCluster then
+            methodCluster = {};
+            self.declaredMethods[md.name] = methodCluster;
+        end
+        methodCluster[md.signature] = md;
+
+        return md;
+    end
+
+    function interfaceStruct:addStaticMethod(methodInput)
+        local errHeader = string.format('InterfaceStruct(%s):addStaticMethod():', self.name);
+
+        local body = methodInput.body;
+
+        local scope = vm.audit.auditStructPropertyScope(self.scope, methodInput.scope, errHeader);
+        local name = vm.audit.auditMethodParamName(methodInput.name, errHeader);
+        local types = vm.audit.auditMethodReturnsProperty(methodInput.returnTypes, errHeader);
+        local parameters = vm.audit.auditParameters(methodInput.parameters, errHeader);
+        local bodyInfo = vm.executable.getExecutableInfo(body);
+
+        local methodStruct = {
+
+            __type__ = 'MethodStruct',
+
+            -- Base properties. --
+            class = self,
+            name = name,
+            returnTypes = types,
+            parameters = parameters,
+            body = body,
+            bodyInfo = bodyInfo,
+
+            -- Used for scope-visibility analysis. --
+            scope = scope,
+
+            -- General method flags --
+            static = true,
+            final = false, -- Cannot define finals in a interface context.
+
+            -- Compiled method flags --
+            audited = false,
+            override = false,
+            super = nil,
+
+            -- Interface struct. --
+            interface = self, -- Lets the VM know this belongs to an interface.
+            default = body ~= nil,
+
+            -- Always falsify class flags in class method structs. --
+            abstract = false,
+        };
+
+        methodStruct.signature = vm.executable.createSignature(methodStruct);
+
+        --- @cast methodStruct MethodStruct
+
+        local methodCluster = self.declaredMethods[methodStruct.name];
+        if not methodCluster then
+            methodCluster = {};
+            self.declaredMethods[methodStruct.name] = methodCluster;
+        end
+        methodCluster[methodStruct.signature] = methodStruct;
+
+        return methodStruct;
+    end
+
+    --- @param self InterfaceStruct
+    --- @param line integer
+    ---
+    --- @return MethodStruct|nil methodStruct
+    function interfaceStruct:getMethodFromLine(line)
+        --- @type MethodStruct
+        local methodStruct;
+        for _, methodStructCluster in pairs(self.declaredMethods) do
+            for i = 1, #methodStructCluster do
+                methodStruct = methodStructCluster[i];
+                if line >= methodStruct.lineRange.start and line <= methodStruct.lineRange.stop then
+                    return methodStruct;
+                end
+            end
+        end
+        return nil;
+    end
 
     function interfaceStruct:getDeclaredMethods(methodName)
         return self.declaredMethods[methodName];
@@ -756,25 +639,38 @@ function API.newInterface(interfaceInput, outer)
     end
 
     -- * Hierarchical API * --
-    interfaceStruct.isSuperInterface = IAPI.isSuperInterface;
-    interfaceStruct.isSubInterface = IAPI.isSubInterface;
-    interfaceStruct.isAssignableFromType = IAPI.isAssignableFromType;
+    function interfaceStruct:isSuperInterface(interface)
+        --- @type InterfaceStruct|nil
+        local next = self.super;
+        while next do
+            if next == interface then return true end
+            next = next.super;
+        end
+        return false;
+    end
 
-    function interfaceStruct:isAssignableFromType(superStruct)
-        -- All other super-structs fail on assignable check.
-        if not superStruct or superStruct.__type__ == 'ClassStruct' then
+    function interfaceStruct:isSubInterface(subInterfaceStruct)
+        if IAPI.__recurseSubInterface(self, subInterfaceStruct) then
+            return true;
+        end
+        return false;
+    end
+
+    function interfaceStruct:isAssignableFromType(struct)
+        if not struct or struct.__type__ ~= 'InterfaceStruct' then
             return false;
         end
 
-        --- @cast superStruct InterfaceStruct
-        return self == superStruct or self:isSuperInterface(superStruct);
+        --- @cast struct InterfaceStruct
+
+        return self == struct or self:isSuperInterface(struct);
     end
 
     function interfaceStruct:isFinalized()
         return self.__readonly__;
     end
 
-    applyMetatable(interfaceStruct);
+    IAPI.applyStructMetatable(interfaceStruct);
 
     return interfaceStruct;
 end

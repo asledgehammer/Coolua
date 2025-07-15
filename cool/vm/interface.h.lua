@@ -57,6 +57,9 @@ function InterfaceStruct:addStaticField(input) end
 --- @return FieldStruct? FieldStruct
 function InterfaceStruct:getField(name) end
 
+--- @return FieldStruct[]
+function InterfaceStruct:getFields() end
+
 --- Attempts to resolve a FieldStruct in the InterfaceStruct. If the field isn't defined in the class, `nil`
 --- is returned.
 ---
@@ -88,6 +91,11 @@ function InterfaceStruct:getMethods(name) end
 ---
 --- @return MethodStruct|nil MethodStruct
 function InterfaceStruct:getMethod(name, args) end
+
+--- @param line integer
+--- 
+--- @return MethodStruct|nil
+function InterfaceStruct:getMethodFromLine(line) end
 
 --- Attempts to resolve a MethodStruct in the InterfaceStruct. If the method isn't defined in the class, `nil`
 --- is returned.
