@@ -198,12 +198,12 @@ local IAPI = {};
 
 --- @cast API VMInterfaceModule
 
---- @param self InterfaceStructDefinition
+--- @param self InterfaceStruct
 --- @param methodDefinition InterfaceMethodDefinitionParameter
 ---
 --- @return MethodDefinition
 function IAPI.addMethod(self, methodDefinition)
-    local errHeader = string.format('InterfaceStructDefinition(%s):addMethod():', self.name);
+    local errHeader = string.format('InterfaceStruct(%s):addMethod():', self.name);
 
     local body = methodDefinition.body;
     local bodyInfo = vm.executable.getExecutableInfo(body);
@@ -260,12 +260,12 @@ end
 
 --- @cast API VMInterfaceModule
 
---- @param self InterfaceStructDefinition
+--- @param self InterfaceStruct
 --- @param definition InterfaceStaticMethodDefinitionParameter
 ---
 --- @return MethodDefinition
 function IAPI.addStaticMethod(self, definition)
-    local errHeader = string.format('InterfaceStructDefinition(%s):addStaticMethod():', self.name);
+    local errHeader = string.format('InterfaceStruct(%s):addStaticMethod():', self.name);
 
     local body = definition.body;
 
@@ -324,7 +324,7 @@ end
 --- Attempts to resolve a MethodDefinition in the StructDefinition. If the method isn't defined in the interface,
 --- `nil` is returned.
 ---
---- @param self InterfaceStructDefinition
+--- @param self InterfaceStruct
 --- @param name string
 ---
 --- @return MethodDefinition[]? methods
@@ -332,7 +332,7 @@ function IAPI.getDeclaredMethods(self, name)
     return self.declaredMethods[name];
 end
 
---- @param self InterfaceStructDefinition
+--- @param self InterfaceStruct
 --- @param name string
 --- @param args any[]
 ---
@@ -345,7 +345,7 @@ function IAPI.getMethod(self, name, args)
     return method;
 end
 
---- @param self InterfaceStructDefinition
+--- @param self InterfaceStruct
 --- @param name string
 --- @param args any[]
 ---
@@ -384,7 +384,7 @@ function IAPI.getDeclaredMethod(self, name, args)
     return nil;
 end
 
---- @param self InterfaceStructDefinition
+--- @param self InterfaceStruct
 --- @param line integer
 ---
 --- @return MethodDefinition|nil method
@@ -406,8 +406,8 @@ end
 
 --- (Handles recursively going through sub-interfaces to see if a class is a sub-class)
 ---
---- @param subInterface InterfaceStructDefinition
---- @param interfaceToEval InterfaceStructDefinition
+--- @param subInterface InterfaceStruct
+--- @param interfaceToEval InterfaceStruct
 ---
 --- @return boolean result True if the interface to evaluate is a super-class of the subClass.
 function IAPI.__recurseSubInterface(subInterface, interfaceToEval)
@@ -421,7 +421,7 @@ function IAPI.__recurseSubInterface(subInterface, interfaceToEval)
     return false;
 end
 
---- @param interface InterfaceStructDefinition The interface to evaulate.
+--- @param interface InterfaceStruct The interface to evaulate.
 ---
 --- @return boolean result True if the interface to evaluate is a super-interface of the sub-interface.
 function IAPI:isSubInterface(self, interface)
@@ -431,26 +431,26 @@ function IAPI:isSubInterface(self, interface)
     return false;
 end
 
---- @param self InterfaceStructDefinition
+--- @param self InterfaceStruct
 --- @param struct StructDefinition
 ---
 --- @return boolean
 function IAPI.isAssignableFromType(self, struct)
-    if struct.__type__ ~= 'InterfaceStructDefinition' then
+    if struct.__type__ ~= 'InterfaceStruct' then
         return false;
     end
 
-    --- @cast struct InterfaceStructDefinition
+    --- @cast struct InterfaceStruct
 
     return self == struct or IAPI.isSuperInterface(self, struct);
 end
 
---- @param self InterfaceStructDefinition
---- @param interface InterfaceStructDefinition?
+--- @param self InterfaceStruct
+--- @param interface InterfaceStruct?
 ---
 --- @return boolean
 function IAPI.isSuperInterface(self, interface)
-    --- @type InterfaceStructDefinition|nil
+    --- @type InterfaceStruct|nil
     local next = self.super;
     while next do
         if next == interface then return true end
@@ -491,9 +491,9 @@ end
 
 -- MARK: Struct
 
---- @param self InterfaceStructDefinition
+--- @param self InterfaceStruct
 ---
---- @return InterfaceStructDefinition interfaceDef
+--- @return InterfaceStruct interfaceDef
 function IAPI.finalize(self)
     local errHeader = string.format('Interface(%s):finalize():', self.path);
 
@@ -656,7 +656,7 @@ function API.newInterface(definition, enclosingStruct)
     local extends = definition.extends;
 
     -- * Internal Type * --
-    id.__type__ = 'InterfaceStructDefinition';
+    id.__type__ = 'InterfaceStruct';
 
     -- * Struct Properties * --
     id.path = path;
@@ -694,7 +694,7 @@ function API.newInterface(definition, enclosingStruct)
 
     id.__readonly__ = false;
 
-    --- @cast id InterfaceStructDefinition
+    --- @cast id InterfaceStruct
 
     vm.DEFINITIONS[id.path] = id;
 
@@ -797,11 +797,11 @@ function API.newInterface(definition, enclosingStruct)
         -- All other super-structs fail on assignable check.
         if not superStruct or
             superStruct.__type__ == 'ClassStruct' or
-            superStruct.__type__ == 'InterfaceStructDefinition' then
+            superStruct.__type__ == 'InterfaceStruct' then
             return false;
         end
 
-        --- @cast superStruct InterfaceStructDefinition
+        --- @cast superStruct InterfaceStruct
         return self == superStruct or self:isSuperInterface(superStruct);
     end
 

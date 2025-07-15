@@ -326,11 +326,11 @@ function API.newClass(definition, outer)
     end
 
     -- Prepare & validate interfaces array.
-    --- @type InterfaceStructDefinition[]
+    --- @type InterfaceStruct[]
     local interfaces = {};
     if definition.implements then
         if type(definition.implements) == 'table' then
-            if definition.implements.__type__ == 'InterfaceStructDefinition' then
+            if definition.implements.__type__ == 'InterfaceStruct' then
                 if not definition.implements.__readonly__ then
                     definition.implements:finalize();
                 end
@@ -360,7 +360,7 @@ function API.newClass(definition, outer)
 
                 for i = 1, #definition.implements do
                     local interface = definition.implements[i];
-                    if interface.__type__ ~= 'InterfaceStructDefinition' then
+                    if interface.__type__ ~= 'InterfaceStruct' then
                         print('interface.__type__ = ', interface.__type__);
                         errorf(2, '%s Implements argument #%i is not a Interface.', path, i);
                     end
@@ -1168,7 +1168,7 @@ function API.newClass(definition, outer)
         return false;
     end
 
-    --- @param superInterface InterfaceStructDefinition
+    --- @param superInterface InterfaceStruct
     ---
     --- @return boolean
     function cd:isSuperInterface(superInterface)
@@ -1195,7 +1195,7 @@ function API.newClass(definition, outer)
 
         if superStruct.__type__ == 'ClassStruct' then
             return self == superStruct or self:isSuperClass(superStruct);
-        elseif superStruct.__type__ == 'InterfaceStructDefinition' then
+        elseif superStruct.__type__ == 'InterfaceStruct' then
             return self:isSuperInterface(superStruct);
         end
 

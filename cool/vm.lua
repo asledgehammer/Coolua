@@ -173,10 +173,10 @@ function vm.forName(path)
         local def = vm.DEFINITIONS[path];
         if def and (
                 def.__type__ == 'ClassStruct' or
-                def.__type__ == 'InterfaceStructDefinition' or
+                def.__type__ == 'InterfaceStruct' or
                 def.__type__ == 'EnumStructDefinition'
             ) then
-            --- @cast def ClassStruct|InterfaceStructDefinition|EnumStructDefinition
+            --- @cast def ClassStruct|InterfaceStruct|EnumStructDefinition
 
             vm.stepIn();
             class = vm.package.packages.lua.lang.Class.new(def);

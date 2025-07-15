@@ -55,5 +55,5 @@
 --- @class VMFieldModule: VMModule
 local API = {};
 
---- @param self ClassStruct|InterfaceStructDefinition
+--- @param self ClassStruct|InterfaceStruct
 function API.compileFieldAutoMethods(self) end

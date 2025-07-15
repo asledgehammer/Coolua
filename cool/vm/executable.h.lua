@@ -152,7 +152,7 @@ function API.resolveMethodDeep(methods, args) end
 --- @return table<string, table<string, MethodDefinition>>
 function API.combineAllMethods(self, name, comb) end
 
---- @param self ClassStruct|InterfaceStructDefinition
+--- @param self ClassStruct|InterfaceStruct
 function API.compileMethods(self) end
 
 --- @param self StructDefinition
@@ -162,7 +162,7 @@ function API.compileMethods(self) end
 --- @return MethodDefinition|nil method
 function API.getDeclaredMethodFromLine(self, path, line) end
 
---- @param self ClassStruct|InterfaceStructDefinition
+--- @param self ClassStruct|InterfaceStruct
 --- @param path string
 --- @param line number
 ---

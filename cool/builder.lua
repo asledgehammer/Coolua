@@ -146,7 +146,7 @@ buildClass = function(self, enclosingStruct)
             for name, innerInterface in pairs(self.static.interfaces) do
                 if innerInterface.__type__ == 'InterfaceTable' then
                     buildInterface(innerInterface, cls);
-                elseif innerInterface.__type__ == 'InterfaceStructDefinition' then
+                elseif innerInterface.__type__ == 'InterfaceStruct' then
                     cls:addStaticStruct(innerInterface);
                     -- innerInterface:setOuterStruct(cls);
                 end
@@ -188,13 +188,13 @@ end
 --- @param self table
 --- @param outerStruct StructDefinition
 ---
---- @return InterfaceStructDefinition interfaceDef, any table
+--- @return InterfaceStruct interfaceDef, any table
 local function buildInterface(self, outerStruct)
     if not self.name then
         errorf(2, 'Interface doesn\'t have a name!');
     end
 
-    --- @type InterfaceStructDefinitionParameter
+    --- @type InterfaceStructParameter
     local intArgs = {
         name = self.name,
         extends = self.extends,
@@ -246,7 +246,7 @@ local function buildInterface(self, outerStruct)
             for name, innerInterface in pairs(self.static.interfaces) do
                 if innerInterface.__type__ == 'InterfaceTable' then
                     buildInterface(innerInterface, interface);
-                elseif innerInterface.__type__ == 'InterfaceStructDefinition' then
+                elseif innerInterface.__type__ == 'InterfaceStruct' then
                     interface:addStaticStruct(innerInterface);
                 end
             end
@@ -366,7 +366,7 @@ local function processTypes(e)
         table.insert(types, e);
     elseif te == 'table' then
         if e.__type__ then
-            if e.__type__ == 'ClassStruct' or e.__type__ == 'InterfaceStructDefinition' then
+            if e.__type__ == 'ClassStruct' or e.__type__ == 'InterfaceStruct' then
                 --- @cast e ClassStruct
                 table.insert(types, e);
             elseif e.getDefinition then
@@ -442,7 +442,7 @@ local function static(body)
                 classes[entry.name] = entry;
             elseif entry.__type__ == 'ClassStruct' then
                 classes[entry.name] = entry;
-            elseif entry.__type__ == 'InterfaceStructDefinition' then
+            elseif entry.__type__ == 'InterfaceStruct' then
                 interfaces[entry.name] = entry;
             else
                 errorf(2, 'Entry #%i is an unknown struct. {type = %s, value = %s}',
@@ -488,8 +488,8 @@ local mt_class_body = function(self, ...)
             elseif arg.__type__ == 'ClassStruct' then
                 --- @cast arg ClassStruct
                 self.instanced.classes[arg.name] = arg;
-            elseif arg.__type__ == 'InterfaceStructDefinition' then
-                --- @cast arg InterfaceStructDefinition
+            elseif arg.__type__ == 'InterfaceStruct' then
+                --- @cast arg InterfaceStruct
                 self.instanced.interfaces[arg.name] = arg;
             elseif arg.__type__ == 'FieldTable' then
                 --- @cast arg FieldTable
@@ -575,7 +575,7 @@ end
 
 -- MARK: - Interface
 
---- @return InterfaceStructDefinition
+--- @return InterfaceStruct
 local mt_interface_body = function(self, ...)
     local args = { ... };
     for i = 1, #args do
@@ -647,7 +647,7 @@ local mt_interface = {
 
 --- @param name string
 ---
---- @return InterfaceStructDefinition
+--- @return InterfaceStruct
 local function interface(name)
     return setmetatable({
         __type__ = 'InterfaceTable',

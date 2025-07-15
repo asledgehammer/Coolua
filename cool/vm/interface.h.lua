@@ -28,112 +28,112 @@ local InterfaceInstance = {};
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body function?
 
---- @class InterfaceStructDefinitionParameter: StructDefinitionParameter
+--- @class InterfaceStructParameter: StructDefinitionParameter
 ---
---- @field extends InterfaceStructDefinition?
+--- @field extends InterfaceStruct?
 --- @field static boolean?
 --- @field scope ClassScope? (Default: package)
-local InterfaceStructDefinitionParameter = {};
+local InterfaceStructParameter = {};
 
---- @class InterfaceStructDefinition: HierarchicalStructDefinition, Fieldable
---- @field __type__ 'InterfaceStructDefinition'
+--- @class InterfaceStruct: HierarchicalStructDefinition, Fieldable
+--- @field __type__ 'InterfaceStruct'
 --- @field __readonly__ boolean
 ---
 --- @field printHeader string
---- @field super InterfaceStructDefinition?
---- @field sub InterfaceStructDefinition[]
+--- @field super InterfaceStruct?
+--- @field sub InterfaceStruct[]
 --- @field lock boolean
 --- @field static boolean
-local InterfaceStructDefinition = {};
+local InterfaceStruct = {};
 
 --- @param definition FieldDefinitionParameter
 ---
 --- @return FieldDefinition
-function InterfaceStructDefinition:addStaticField(definition) end
+function InterfaceStruct:addStaticField(definition) end
 
---- Attempts to resolve a FieldDefinition in the InterfaceStructDefinition. If the field isn't declared for the class level,
+--- Attempts to resolve a FieldDefinition in the InterfaceStruct. If the field isn't declared for the class level,
 --- the super-class(es) are checked.
 ---
 --- @param name string
 ---
 --- @return FieldDefinition? fieldDefinition
-function InterfaceStructDefinition:getField(name) end
+function InterfaceStruct:getField(name) end
 
---- Attempts to resolve a FieldDefinition in the InterfaceStructDefinition. If the field isn't defined in the class, `nil`
+--- Attempts to resolve a FieldDefinition in the InterfaceStruct. If the field isn't defined in the class, `nil`
 --- is returned.
 ---
 --- @param name string
 ---
 --- @return FieldDefinition? fieldDefinition
-function InterfaceStructDefinition:getDeclaredField(name) end
+function InterfaceStruct:getDeclaredField(name) end
 
 --- @param definition InterfaceMethodDefinitionParameter
 ---
 --- @return MethodDefinition
-function InterfaceStructDefinition:addMethod(definition) end
+function InterfaceStruct:addMethod(definition) end
 
 --- @param definition InterfaceStaticMethodDefinitionParameter
 ---
 --- @return MethodDefinition
-function InterfaceStructDefinition:addStaticMethod(definition) end
+function InterfaceStruct:addStaticMethod(definition) end
 
---- Attempts to resolve a MethodDefinition in the InterfaceStructDefinition. If the method isn't declared for the class
+--- Attempts to resolve a MethodDefinition in the InterfaceStruct. If the method isn't declared for the class
 --- level, the super-class(es) are checked.
 ---
 --- @param name string
 ---
 --- @return MethodDefinition[]? methods
-function InterfaceStructDefinition:getMethods(name) end
+function InterfaceStruct:getMethods(name) end
 
 --- @param name string
 --- @param args any[]
 ---
 --- @return MethodDefinition|nil methodDefinition
-function InterfaceStructDefinition:getMethod(name, args) end
+function InterfaceStruct:getMethod(name, args) end
 
---- Attempts to resolve a MethodDefinition in the InterfaceStructDefinition. If the method isn't defined in the class, `nil`
+--- Attempts to resolve a MethodDefinition in the InterfaceStruct. If the method isn't defined in the class, `nil`
 --- is returned.
 ---
 --- @param name string
 ---
 --- @return MethodDefinition[]? methods
-function InterfaceStructDefinition:getDeclaredMethods(name) end
+function InterfaceStruct:getDeclaredMethods(name) end
 
 --- @param name string
 --- @param args any[]
 ---
 --- @return MethodDefinition|nil methodDefinition
-function InterfaceStructDefinition:getDeclaredMethod(name, args) end
+function InterfaceStruct:getDeclaredMethod(name, args) end
 
---- @return InterfaceStructDefinition
-function InterfaceStructDefinition:finalize() end
+--- @return InterfaceStruct
+function InterfaceStruct:finalize() end
 
 --- @return boolean
-function InterfaceStructDefinition:isFinalized() end
+function InterfaceStruct:isFinalized() end
 
---- @param interface InterfaceStructDefinition
+--- @param interface InterfaceStruct
 ---
 --- @return boolean
-function InterfaceStructDefinition:isSuperInterface(interface) end
+function InterfaceStruct:isSuperInterface(interface) end
 
---- @param interface InterfaceStructDefinition
+--- @param interface InterfaceStruct
 ---
 --- @return boolean
-function InterfaceStructDefinition:isSubInterface(interface) end
+function InterfaceStruct:isSubInterface(interface) end
 
 --- @param clsDef StructDefinition
-function InterfaceStructDefinition:addStaticStruct(clsDef) end
+function InterfaceStruct:addStaticStruct(clsDef) end
 
 --- @param outer StructDefinition
-function InterfaceStructDefinition:setOuterStruct(outer) end
+function InterfaceStruct:setOuterStruct(outer) end
 
 -- MARK: - Module
 
 --- @class VMInterfaceModule: VMModule
 local API = {};
 
---- @param definition InterfaceStructDefinitionParameter
+--- @param definition InterfaceStructParameter
 --- @param enclosingStruct StructDefinition?
 ---
---- @return InterfaceStructDefinition
+--- @return InterfaceStruct
 function API.newInterface(definition, enclosingStruct) end

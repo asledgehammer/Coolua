@@ -62,7 +62,7 @@ Class = class 'Class' (public, final) {
         properties {
             types = {
                 'ClassStruct',
-                'InterfaceStructDefinition',
+                'InterfaceStruct',
                 'EnumStructDefinition'
             }
         },
@@ -73,7 +73,7 @@ Class = class 'Class' (public, final) {
         parameters {
             {
                 name = 'def',
-                types = { 'ClassStruct', 'InterfaceStructDefinition', 'EnumStructDefinition' }
+                types = { 'ClassStruct', 'InterfaceStruct', 'EnumStructDefinition' }
             }
         },
         --- @param self Class
@@ -112,7 +112,7 @@ Class = class 'Class' (public, final) {
     method 'isInterface' (public, final) {
         returnTypes('boolean'),
         function(self)
-            return self.definition.__type__ == 'InterfaceStructDefinition';
+            return self.definition.__type__ == 'InterfaceStruct';
         end
     },
 

@@ -36,18 +36,18 @@
 
 --- @class ExtendsTable: BuilderTable
 --- @field __type__ 'ExtendsTable'
---- @field value ClassStruct|InterfaceStructDefinition
+--- @field value ClassStruct|InterfaceStruct
 
 --- @class ImplementsTable: BuilderTable
 --- @field __type__ 'ImplementsTable'
---- @field value InterfaceStructDefinition[]
+--- @field value InterfaceStruct[]
 
 -- MARK: - static
 
 --- @class StaticTable: BuilderTable
 --- @field __type__ 'StaticTable'
 --- @field classes table<string, ClassStruct>
---- @field interfaces table<string, InterfaceStructDefinition>
+--- @field interfaces table<string, InterfaceStruct>
 --- @field fields table<string, FieldTable>
 --- @field methods table<string, MethodTable>
 
@@ -55,17 +55,17 @@
 
 --- @class ClassTableInstanced
 --- @field classes table<string, ClassStruct>
---- @field interfaces table<string, InterfaceStructDefinition>
+--- @field interfaces table<string, InterfaceStruct>
 --- @field fields table<string, FieldTable>
 --- @field methods table<string, MethodTable>
 
 --- @class ClassTableStatic
 --- @field classes table<string, ClassStruct>
---- @field interfaces table<string, InterfaceStructDefinition>
+--- @field interfaces table<string, InterfaceStruct>
 --- @field fields table<string, FieldTable>
 --- @field methods table<string, MethodTable>
 
---- @alias ClassTableBody {__type__: 'ExtendsTable'|'ImplementsTable'|'ClassStruct'|'InterfaceStructDefinition'|'ConstructorTable'|'MethodTable'|'FieldTable'}[]
+--- @alias ClassTableBody {__type__: 'ExtendsTable'|'ImplementsTable'|'ClassStruct'|'InterfaceStruct'|'ConstructorTable'|'MethodTable'|'FieldTable'}[]
 
 --- @class ClassTable
 --- @field __type__ 'ClassTable'

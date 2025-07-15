@@ -32,7 +32,7 @@ function API.printConstructor(def) end
 --- @return string
 function API.printMethod(def) end
 
---- @param def InterfaceStructDefinition
+--- @param def InterfaceStruct
 ---
 --- @return string
 function API.printInterface(def) end

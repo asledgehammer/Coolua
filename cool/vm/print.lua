@@ -138,7 +138,7 @@ end
 function API.printStruct(def)
     if def.__type__ == 'ClassStruct' then
         return API.printClass(def);
-    elseif def.__type__ == 'InterfaceStructDefinition' then
+    elseif def.__type__ == 'InterfaceStruct' then
         return API.printInterface(def);
     end
 

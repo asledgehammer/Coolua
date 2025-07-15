@@ -40,7 +40,7 @@
 --- @field generics GenericsTypesDefinitionParameter? Any generic parameter definitions.
 --- @field static boolean? If the class is defined as static.
 --- @field abstract boolean? (Default: false)
---- @field implements InterfaceStructDefinition|InterfaceStructDefinition[]?
+--- @field implements InterfaceStruct|InterfaceStruct[]?
 
 --- @class (exact) ChildClassStructParameter: StructDefinitionParameter
 --- @field final boolean? (Default: false)
@@ -48,7 +48,7 @@
 --- @field extends ClassStruct? (Default: nil)
 --- @field generics GenericsTypesDefinitionParameter? Any generic parameter definitions.
 --- @field abstract boolean? (Default: false)
---- @field implements InterfaceStructDefinition|InterfaceStructDefinition[]?
+--- @field implements InterfaceStruct|InterfaceStruct[]?
 
 --- @class (exact) ClassStruct: HierarchicalStructDefinition, Genericable, Constructable, Fieldable, Staticable, Abstractable, Auditable
 --- @field __type__ 'ClassStruct'
@@ -60,7 +60,7 @@
 --- @field classObj Class?
 --- @field super ClassStruct?
 --- @field sub ClassStruct[]
---- @field interfaces InterfaceStructDefinition[]
+--- @field interfaces InterfaceStruct[]
 local ClassStruct = {};
 
 --- @return ClassInstance
@@ -174,7 +174,7 @@ function ClassStruct:isSuperClass(class) end
 --- @return boolean result True if the class to evaluate is a super-class of the subClass.
 function ClassStruct:isSubClass(class) end
 
---- @param superInterface InterfaceStructDefinition
+--- @param superInterface InterfaceStruct
 ---
 --- @return boolean
 function ClassStruct:isSuperInterface(superInterface) end

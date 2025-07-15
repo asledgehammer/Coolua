@@ -364,7 +364,7 @@ function API.getMethodNames(classDef, methodNames)
     vm.stepIn();
     -- Grab any super-struct declarations.
     if classDef['super'] then
-        --- @cast classDef ClassStruct|InterfaceStructDefinition
+        --- @cast classDef ClassStruct|InterfaceStruct
         API.getMethodNames(classDef.super, methodNames);
     end
 
@@ -402,7 +402,7 @@ function API.combineAllMethods(def, name, comb)
     vm.stepIn();
     -- Grab all the super-context methods first.
     if def['super'] then
-        --- @cast def ClassStruct|InterfaceStructDefinition
+        --- @cast def ClassStruct|InterfaceStruct
         API.combineAllMethods(def.super, name, comb);
     end
 
@@ -486,7 +486,7 @@ function API.compileMethods(self)
     local count = 0;
 
     -- Make sure that all methods exposed are not abstract in non-abstract classes.
-    if self.__type__ ~= 'InterfaceStructDefinition' and not self['abstract'] then
+    if self.__type__ ~= 'InterfaceStruct' and not self['abstract'] then
         for _, methodCluster in pairs(self.methods) do
             -- Ignore constructors.
             for _, method in pairs(methodCluster) do
@@ -528,7 +528,7 @@ function API.getDeclaredMethodFromLine(self, path, line)
     return nil;
 end
 
---- @param self ClassStruct|InterfaceStructDefinition
+--- @param self ClassStruct|InterfaceStruct
 --- @param path string
 --- @param line number
 ---
