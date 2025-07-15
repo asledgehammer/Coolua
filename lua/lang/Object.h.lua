@@ -8,7 +8,7 @@
 local ObjectDefinition = {};
 
 --- Empty constructor
---- 
+---
 --- @return Object
 function ObjectDefinition.new() end
 
@@ -22,7 +22,7 @@ function Object:getClass() end
 function Object:instanceOf(classDef) end
 
 --- @param other any
---- 
+---
 --- @return boolean isEqualToOther
 function Object:equals(other) end
 

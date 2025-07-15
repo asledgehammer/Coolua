@@ -5,7 +5,7 @@
 ---]]
 
 --- @class MathDefinition: ClassDefinition
---- 
+---
 --- @field PI number (Static)
 local MathDefinition = {};
 
@@ -14,7 +14,7 @@ local MathDefinition = {};
 function MathDefinition.new() end
 
 --- @class Math: Object
---- 
+---
 --- @field PI number (Static)
 local Math = {};
 

@@ -7,7 +7,7 @@
 -- MARK: Definitions
 
 --- @class SuperTable
---- 
+---
 --- @field methods table<string, function>
 --- @field constructor function
 --- @field __who__ (ConstructorDefinition|MethodDefinition)? While a constructor is ran, this will help point to it.

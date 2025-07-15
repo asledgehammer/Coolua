@@ -54,7 +54,7 @@
 --- @field __type__ 'ClassStructDefinition'
 --- @field __readonly__ boolean
 --- @field __supertable__ SuperTable
---- 
+---
 --- @field printHeader string
 --- @field type string
 --- @field classObj Class?
@@ -152,7 +152,6 @@ function ClassStructDefinition:getDeclaredMethods(name) end
 ---
 --- @return MethodDefinition|nil methodDefinition
 function ClassStructDefinition:getDeclaredMethod(name, args) end
-
 
 --- @return ClassStructDefinition
 function ClassStructDefinition:finalize() end

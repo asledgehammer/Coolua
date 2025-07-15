@@ -93,7 +93,7 @@ local API = {};
 function API.calcPathNamePackage(definition, outer) end
 
 --- @param path string
---- 
+---
 --- @return StructReference
 function API.newReference(path) end
 

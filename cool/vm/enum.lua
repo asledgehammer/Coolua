@@ -18,7 +18,6 @@ local API = {
 };
 
 function API.newEnum(definition, enclosingStruct)
-
     local locInfo = vm.struct.calcPathNamePackage(definition, enclosingStruct);
     local path = locInfo.path;
     local name = locInfo.name;

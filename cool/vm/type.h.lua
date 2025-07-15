@@ -11,7 +11,7 @@ local API = {};
 
 --- @param value any
 --- @param typeOrTypes string[]|string
---- 
+---
 --- @return boolean
 function API.isAssignableFromType(value, typeOrTypes) end
 

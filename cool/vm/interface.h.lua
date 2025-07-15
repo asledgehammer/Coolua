@@ -10,17 +10,17 @@
 local InterfaceInstance = {};
 
 --- @class (exact) InterfaceMethodDefinitionParameter
---- 
+---
 --- NOTE: All instanced interface methods are public.
 --- @field name string
 --- @field generics GenericsTypesDefinitionParameter?
 --- @field parameters ParameterDefinitionParameter[]? (Default: no parameters)
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body function?
---- NOTE: The `default` flag is automatically true if a function body is provided at the time of adding the method. 
+--- NOTE: The `default` flag is automatically true if a function body is provided at the time of adding the method.
 
 --- @class (exact) InterfaceStaticMethodDefinitionParameter
---- 
+---
 --- @field scope ClassScope? (Default: package)
 --- @field name string
 --- @field generics GenericsTypesDefinitionParameter?
@@ -29,7 +29,7 @@ local InterfaceInstance = {};
 --- @field body function?
 
 --- @class InterfaceStructDefinitionParameter: StructDefinitionParameter
---- 
+---
 --- @field extends InterfaceStructDefinition?
 --- @field static boolean?
 --- @field scope ClassScope? (Default: package)
@@ -38,7 +38,7 @@ local InterfaceStructDefinitionParameter = {};
 --- @class InterfaceStructDefinition: HierarchicalStructDefinition, Fieldable
 --- @field __type__ 'InterfaceStructDefinition'
 --- @field __readonly__ boolean
---- 
+---
 --- @field printHeader string
 --- @field super InterfaceStructDefinition?
 --- @field sub InterfaceStructDefinition[]
@@ -76,7 +76,6 @@ function InterfaceStructDefinition:addMethod(definition) end
 ---
 --- @return MethodDefinition
 function InterfaceStructDefinition:addStaticMethod(definition) end
-
 
 --- Attempts to resolve a MethodDefinition in the InterfaceStructDefinition. If the method isn't declared for the class
 --- level, the super-class(es) are checked.
@@ -127,7 +126,6 @@ function InterfaceStructDefinition:addStaticStruct(clsDef) end
 
 --- @param outer StructDefinition
 function InterfaceStructDefinition:setOuterStruct(outer) end
-
 
 -- MARK: - Module
 

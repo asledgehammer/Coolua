@@ -9,7 +9,7 @@ local DimensionDefinition = {};
 
 --- @param width number
 --- @param height number
---- 
+---
 --- @return Dimension
 function DimensionDefinition.new(width, height) end
 

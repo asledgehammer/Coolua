@@ -41,7 +41,7 @@ local Dimension = class 'Dimension' (public) {
         set(public) {},
     },
 
-    constructor (public) {
+    constructor(public) {
 
         parameters {
             { name = 'width',  type = 'number' },
@@ -68,7 +68,7 @@ local Dimension = class 'Dimension' (public) {
     equals {
         --- @param self Dimension
         --- @param other Object
-        --- 
+        ---
         --- @return boolean equalsOther
         function(self, other)
             if not other or not self:instanceOf(other:getClass()) then

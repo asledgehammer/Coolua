@@ -27,19 +27,19 @@ local StackTraceElement = class 'StackTraceElement' (public) {
         properties {
             type = 'string'
         },
-        get (public) {}
+        get(public) {}
     },
     field 'line' (private, final) {
         properties {
             type = 'number'
         },
-        get (public) {}
+        get(public) {}
     },
     field 'context' (private, final) {
         properties {
             type = 'string'
         },
-        get (public) {}
+        get(public) {}
     },
     field 'class' (private, final) {
         properties {
@@ -51,7 +51,7 @@ local StackTraceElement = class 'StackTraceElement' (public) {
         properties {
             type = 'any'
         },
-        get (public) {}
+        get(public) {}
     },
 
     constructor(public) {

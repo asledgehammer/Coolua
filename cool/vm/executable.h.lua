@@ -7,19 +7,19 @@
 -- MARK: - Definition
 
 --- @class (exact) Parameterable
---- 
+---
 --- @field parameters ParameterDefinition[]
 --- @field vararg boolean If true, the executable's last paramater is a vararg.
 
 --- @class (exact) ParameterableInput
---- 
+---
 --- @field parameters ParameterDefinition[]? (Default: No parameters)
 --- @field vararg boolean? (Default: false) If true, the executable's last paramater is a vararg.
 
 --- @class (exact) ExecutableDefinition: Parameterable
---- 
+---
 --- @field __type__ string
---- 
+---
 --- @field signature string The identity of the method. used for comparison.
 --- @field audited boolean If true, the struct is audited and verified to be valid.
 --- @field body function?
@@ -27,9 +27,9 @@
 --- @field scope ClassScope
 
 --- @class (exact) MethodDefinition: ExecutableDefinition
---- 
+---
 --- @field __type__ 'MethodDefinition'
---- 
+---
 --- @field class StructDefinition
 --- @field name string
 --- @field super MethodDefinition? (Internally assigned. If none, this is nil)
@@ -59,9 +59,9 @@
 --- @field returnTypes (string[]|string)? (Default: void)
 
 --- @class (exact) ConstructorDefinition: ExecutableDefinition
---- 
+---
 --- @field __type__ 'ConstructorDefinition'
---- 
+---
 --- @field __super_flag__ boolean Used internally to track calls to super while invoked.
 --- @field class ClassStructDefinition
 --- @field parameters ParameterDefinition[]
@@ -75,9 +75,9 @@
 --- @field body fun(o: any, ...)? TODO: Rename as `body`.
 
 --- @class (exact) ParameterDefinition
---- 
+---
 --- @field __type__ 'ParameterDefinition'
---- 
+---
 --- @field audited boolean If true, the struct is audited and verified to be valid.
 --- @field class ClassStructDefinition
 --- @field name string

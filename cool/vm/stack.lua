@@ -53,7 +53,7 @@ function API.pushContext(context)
     if vm.isInside() or vm.flags.ignorePushPopContext then return end
 
     debugf(vm.debug.scope, '[SCOPE] :: line %i ContextStack[%i] pushContext(%s)', DebugUtils.getCurrentLine(3),
-    #stack + 1,
+        #stack + 1,
         tostring(context));
 
     -- Prevent infinite loop.

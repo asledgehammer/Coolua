@@ -5,7 +5,7 @@
 ---]]
 
 --- @class (exact) VMDebugModule: VMModule
---- 
+---
 --- @field internal boolean
 --- @field method boolean
 --- @field scope boolean

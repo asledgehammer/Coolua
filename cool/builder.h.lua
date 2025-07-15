@@ -19,13 +19,13 @@
 
 --- @class FieldTable: BuilderTable
 --- @field __type__ 'FieldTable'
---- 
+---
 --- @field name string
 --- @field flags string[]
 
 --- @class MethodTable: BuilderTable
 --- @field __type__ 'MethodTable'
---- 
+---
 --- @field name string
 --- @field body MethodTableBody
 
@@ -69,7 +69,7 @@
 
 --- @class ClassTable
 --- @field __type__ 'ClassTable'
---- 
+---
 --- @field name string
 --- @field flags string[]
 --- @field instanced ClassTableInstanced
