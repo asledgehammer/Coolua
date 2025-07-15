@@ -95,19 +95,19 @@ function ClassStruct:getFields() end
 --- @return FieldDefinition? fieldDefinition
 function ClassStruct:getDeclaredField(name) end
 
---- @param constructorDefinition ConstructorDefinitionParameter
+--- @param ConstructorStruct ConstructorStructParameter
 ---
---- @return ConstructorDefinition
-function ClassStruct:addConstructor(constructorDefinition) end
+--- @return ConstructorStruct
+function ClassStruct:addConstructor(ConstructorStruct) end
 
 --- @param args any[]
 ---
---- @return ConstructorDefinition|nil constructorDefinition
+--- @return ConstructorStruct|nil ConstructorStruct
 function ClassStruct:getConstructor(args) end
 
 --- @param args any[]
 ---
---- @return ConstructorDefinition|nil constructorDefinition
+--- @return ConstructorStruct|nil ConstructorStruct
 function ClassStruct:getDeclaredConstructor(args) end
 
 --- @param definition ClassMethodStructParameter

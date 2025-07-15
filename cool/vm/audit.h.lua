@@ -49,5 +49,5 @@ function API.auditField(cd, fd) end
 --- @param o ClassInstance
 function API.auditFinalFields(classDef, o) end
 
---- @param consDef ConstructorDefinition
+--- @param consDef ConstructorStruct
 function API.auditConstructor(consDef) end

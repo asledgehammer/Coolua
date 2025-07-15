@@ -20,7 +20,7 @@
 
 --- @class (exact) Constructable Any struct that supports self-construction. (Classes, Enums)
 --- @field __middleConstructor function
---- @field declaredConstructors table<string, ConstructorDefinition>
+--- @field declaredConstructors table<string, ConstructorStruct>
 
 --- @class (exact) Methodable Any struct that supports methods. (Class, Interface, Enum)
 --- @field __middleMethods table<string, function> All middle functables for methods.

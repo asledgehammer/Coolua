@@ -33,19 +33,19 @@ function EnumStructDefinition:getField(name) end
 --- @return FieldDefinition? fieldDefinition
 function EnumStructDefinition:getDeclaredField(name) end
 
---- @param constructorDefinition ConstructorDefinitionParameter
+--- @param ConstructorStruct ConstructorStructParameter
 ---
---- @return ConstructorDefinition
-function EnumStructDefinition:addConstructor(constructorDefinition) end
+--- @return ConstructorStruct
+function EnumStructDefinition:addConstructor(ConstructorStruct) end
 
 --- @param args any[]
 ---
---- @return ConstructorDefinition|nil constructorDefinition
+--- @return ConstructorStruct|nil ConstructorStruct
 function EnumStructDefinition:getConstructor(args) end
 
 --- @param args any[]
 ---
---- @return ConstructorDefinition|nil constructorDefinition
+--- @return ConstructorStruct|nil ConstructorStruct
 function EnumStructDefinition:getDeclaredConstructor(args) end
 
 --- @param definition MethodStructParameter

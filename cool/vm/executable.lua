@@ -301,7 +301,7 @@ end
 function API.createSignature(definition)
     local name;
 
-    if definition.__type__ == 'ConstructorDefinition' then
+    if definition.__type__ == 'ConstructorStruct' then
         name = 'new';
     else
         name = definition.name;
@@ -545,7 +545,7 @@ end
 function API.resolveConstructor(cons, args)
     local argsLen = #args;
 
-    --- @type ConstructorDefinition?
+    --- @type ConstructorStruct?
     local consDef = nil;
 
     -- Try to find the method without varargs first.
@@ -767,7 +767,7 @@ end
 --- @param path string
 --- @param line integer
 ---
---- @return ConstructorDefinition|nil method
+--- @return ConstructorStruct|nil method
 function API.getConstructorFromLine(self, path, line)
     for _, consDef in pairs(self.declaredConstructors) do
         if path == consDef.bodyInfo.path and

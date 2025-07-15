@@ -19,7 +19,7 @@ function StackTraceElementDefinition.new(path, line, class, context, element) en
 --- @field line integer
 --- @field class any
 --- @field context string
---- @field element FieldDefinition|ConstructorDefinition|MethodStruct
+--- @field element FieldDefinition|ConstructorStruct|MethodStruct
 local StackTraceElement = {};
 
 --- @return string

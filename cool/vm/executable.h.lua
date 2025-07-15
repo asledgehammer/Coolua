@@ -58,9 +58,9 @@
 --- @field generics GenericsTypesDefinitionParameter?
 --- @field returnTypes (string[]|string)? (Default: void)
 
---- @class (exact) ConstructorDefinition: ExecutableDefinition
+--- @class (exact) ConstructorStruct: ExecutableDefinition
 ---
---- @field __type__ 'ConstructorDefinition'
+--- @field __type__ 'ConstructorStruct'
 ---
 --- @field __super_flag__ boolean Used internally to track calls to super while invoked.
 --- @field class ClassStruct
@@ -69,7 +69,7 @@
 --- @field superInfo FunctionInfo The super function's information. (line-range and path)
 --- @field body fun(o: any, ...) TODO: Rename as `body`.
 
---- @class (exact) ConstructorDefinitionParameter: ParameterableInput
+--- @class (exact) ConstructorStructParameter: ParameterableInput
 --- @field scope ClassScope? (Default: "package")
 --- @field super fun(super: SuperTable, ...)? This function is called prior to the body function. If not defined, an attempt at `super()` is called. If not exists, an error occurs.
 --- @field body fun(o: any, ...)? TODO: Rename as `body`.
@@ -177,13 +177,13 @@ function API.getExecutableInfo(func) end
 --- @param classDef ClassStruct
 function API.createMiddleConstructor(classDef) end
 
---- @param constructors ConstructorDefinition[]
+--- @param constructors ConstructorStruct[]
 --- @param args table
 ---
---- @return ConstructorDefinition|nil
+--- @return ConstructorStruct|nil
 function API.resolveConstructor(constructors, args) end
 
---- @param definition ConstructorDefinition
+--- @param definition ConstructorStruct
 ---
 --- @return string
 function API.createSignature(definition) end
@@ -192,7 +192,7 @@ function API.createSignature(definition) end
 --- @param path string
 --- @param line integer
 ---
---- @return ConstructorDefinition|nil method
+--- @return ConstructorStruct|nil method
 function API.getConstructorFromLine(self, path, line) end
 
 --- @param paramsA ParameterDefinition[]

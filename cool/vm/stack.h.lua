@@ -10,7 +10,7 @@
 ---
 --- @field class ClassStruct The current class in the stack.
 --- @field context 'constructor'|'method'|'field-get'|'field-set' The current context. (Final fields can be set here)
---- @field executable MethodStruct|ConstructorDefinition? The definition of the context.
+--- @field executable MethodStruct|ConstructorStruct? The definition of the context.
 --- @field field FieldDefinition?
 --- @field file string
 --- @field line integer

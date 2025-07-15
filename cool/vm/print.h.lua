@@ -22,7 +22,7 @@ function API.printStruct(def) end
 --- @return string
 function API.printExecutable(def) end
 
---- @param def ConstructorDefinition
+--- @param def ConstructorStruct
 ---
 --- @return string
 function API.printConstructor(def) end

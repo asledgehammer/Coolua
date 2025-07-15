@@ -98,8 +98,8 @@ function API.createSuperTable(cd)
             return;
         end
 
-        local constructorDefinition = superClass:getConstructor(args);
-        if not constructorDefinition then
+        local ConstructorStruct = superClass:getConstructor(args);
+        if not ConstructorStruct then
             errorf(2, '%s Unknown super-constructor: %s', cd.printHeader, dump(args));
             return;
         end
@@ -108,19 +108,19 @@ function API.createSuperTable(cd)
 
         vm.stack.pushContext({
             class = cd,
-            element = constructorDefinition,
+            element = ConstructorStruct,
             context = 'constructor',
             line = callInfo.currentLine,
             path = callInfo.path
         });
 
-        local scopeAllowed = vm.scope.getScopeForCall(constructorDefinition.class, callInfo);
+        local scopeAllowed = vm.scope.getScopeForCall(ConstructorStruct.class, callInfo);
 
-        if not vm.scope.canAccessScope(constructorDefinition.scope, scopeAllowed) then
+        if not vm.scope.canAccessScope(ConstructorStruct.scope, scopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The constructor %s.new(%s) is set as "%s" access level. (Access Level from call: "%s")\n%s',
-                constructorDefinition.class.name, dump(constructorDefinition.parameters),
-                constructorDefinition.scope, scopeAllowed,
+                ConstructorStruct.class.name, dump(ConstructorStruct.parameters),
+                ConstructorStruct.scope, scopeAllowed,
                 vm.stack.printStackTrace()
             );
             vm.stack.popContext();
@@ -226,7 +226,7 @@ function API.createSuperTable(cd)
         vm.stepOut();
 
         if who then
-            if who.__type__ == 'ConstructorDefinition' then
+            if who.__type__ == 'ConstructorStruct' then
                 -- Let upstream calls know super was invoked.
                 vm.stepIn();
                 super.__call_count__ = super.__call_count__ + 1;

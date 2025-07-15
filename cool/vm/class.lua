@@ -730,20 +730,20 @@ function API.newClass(definition, outer)
 
     -- MARK: - Constructor
 
-    --- @param constructorDefinition ConstructorDefinitionParameter
+    --- @param ConstructorStruct ConstructorStructParameter
     ---
-    --- @return ConstructorDefinition
-    function cd:addConstructor(constructorDefinition)
+    --- @return ConstructorStruct
+    function cd:addConstructor(ConstructorStruct)
         -- Some constructors are empty. Allow this to be optional.
-        local body = constructorDefinition.body;
+        local body = ConstructorStruct.body;
         if not body then body = function() end end
 
         -- If the super-call is not there, then write
-        local _super = constructorDefinition.super;
+        local _super = ConstructorStruct.super;
         if not _super then _super = vm.executable.defaultSuperFunc end
 
         -- Friendly check for implementation.
-        if not self or type(constructorDefinition) == 'function' then
+        if not self or type(ConstructorStruct) == 'function' then
             error(
                 'Improper method call. (Not instanced) Use MyClass:addConstructor() instead of MyClass.addConstructor()',
                 2
@@ -752,7 +752,7 @@ function API.newClass(definition, outer)
 
         local errHeader = string.format('ClassStruct(%s):addConstructor():', cd.name);
 
-        if not constructorDefinition then
+        if not ConstructorStruct then
             error(
                 string.format(
                     '%s The constructor definition is not provided.',
@@ -762,15 +762,15 @@ function API.newClass(definition, outer)
             );
         end
 
-        local parameters = vm.executable.compile(constructorDefinition);
+        local parameters = vm.executable.compile(ConstructorStruct);
 
         local args = {
 
-            __type__ = 'ConstructorDefinition',
+            __type__ = 'ConstructorStruct',
 
             audited = false,
             class = cd,
-            scope = constructorDefinition.scope or 'package',
+            scope = ConstructorStruct.scope or 'package',
             parameters = parameters,
 
             -- * Function properties * --
@@ -782,7 +782,7 @@ function API.newClass(definition, outer)
 
         args.signature = vm.executable.createSignature(args);
 
-        --- @cast args ConstructorDefinition
+        --- @cast args ConstructorStruct
 
         --- Validate function.
         if not args.body then
@@ -810,7 +810,7 @@ function API.newClass(definition, outer)
 
     --- @param args any[]
     ---
-    --- @return ConstructorDefinition|nil constructorDefinition
+    --- @return ConstructorStruct|nil ConstructorStruct
     function cd:getConstructor(args)
         local cons = self:getDeclaredConstructor(args);
         if not cons and self.super then
@@ -821,7 +821,7 @@ function API.newClass(definition, outer)
 
     --- @param args any[]
     ---
-    --- @return ConstructorDefinition|nil constructorDefinition
+    --- @return ConstructorStruct|nil ConstructorStruct
     function cd:getDeclaredConstructor(args)
         args = args or vm.constants.EMPTY_TABLE;
         return vm.executable.resolveConstructor(self.declaredConstructors, args);
@@ -1112,7 +1112,7 @@ function API.newClass(definition, outer)
         end
         for i = 1, #self.declaredConstructors do
             local next = self.declaredConstructors[i];
-            --- @params T: ConstructorDefinition
+            --- @params T: ConstructorStruct
             self.declaredConstructors[i] = readonly(next);
         end
 

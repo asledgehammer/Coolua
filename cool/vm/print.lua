@@ -81,7 +81,7 @@ end
 function API.printExecutable(def)
     if def.__type__ == 'MethodStruct' then
         return API.printMethod(def);
-    elseif def.__type__ == 'ConstructorDefinition' then
+    elseif def.__type__ == 'ConstructorStruct' then
         return API.printConstructor(def);
     else
         errorf(2, 'Unknown ExecutableDefinition type: %s', def.__type__);

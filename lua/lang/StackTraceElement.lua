@@ -73,7 +73,7 @@ local StackTraceElement = class 'StackTraceElement' (public) {
         --- @param line number
         --- @param class any
         --- @param context string
-        --- @param element FieldDefinition|ConstructorDefinition|MethodStruct
+        --- @param element FieldDefinition|ConstructorStruct|MethodStruct
         body = function(self, path, line, class, context, element)
             self.path = path;
             self.line = line;
@@ -102,7 +102,7 @@ local StackTraceElement = class 'StackTraceElement' (public) {
                         element.name,
                         dump(element.parameters)
                     );
-                elseif element.__type__ == 'ConstructorDefinition' then
+                elseif element.__type__ == 'ConstructorStruct' then
                     return string.format('%s:%s: calling %s.new(%s)',
                         path,
                         line,
