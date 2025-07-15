@@ -6,15 +6,15 @@
 
 -- MARK: - Struct
 
---- @class ClassContext The ClassContext is used to monitor and audit calls for scope-visible methods and fields.
+--- @class StackContext The StackContext is used to monitor and audit calls for scope-visible methods and fields.
 ---
---- @field class ClassStruct The current class in the stack.
+--- @field struct Struct The current struct in the stack.
 --- @field context 'constructor'|'method'|'field-get'|'field-set' The current context. (Final fields can be set here)
 --- @field executable MethodStruct|ConstructorStruct? The definition of the context.
 --- @field field FieldStruct?
 --- @field file string
 --- @field line integer
-local ClassContext = {};
+local StackContext = {};
 
 -- MARK: - Module
 
@@ -31,7 +31,7 @@ function API.getContext() end
 
 --- Adds a context to the stack. This happens when constructors or methods are invoked.
 ---
---- @param context ContextArgs
+--- @param context StackContext
 function API.pushContext(context) end
 
 function API.popContext() end

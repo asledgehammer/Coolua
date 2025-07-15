@@ -13,18 +13,10 @@ local InterfaceInstance = {};
 ---
 --- NOTE: All instanced interface methods are public.
 --- @field name string
---- @field parameters ParameterStructParameter[]? (Default: no parameters)
+--- @field parameters ParameterStructInput[]? (Default: no parameters)
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body function?
 --- NOTE: The `default` flag is automatically true if a function body is provided at the time of adding the method.
-
---- @class (exact) InterfaceStaticMethodStructInput
----
---- @field scope ClassScope? (Default: package)
---- @field name string
---- @field parameters ParameterStructParameter[]? (Default: no parameters)
---- @field returnTypes AllowedType[]|AllowedType
---- @field body function?
 
 --- @class InterfaceStructInput: StructInput
 ---
@@ -33,7 +25,7 @@ local InterfaceInstance = {};
 --- @field scope ClassScope? (Default: package)
 local InterfaceStructInput = {};
 
---- @class InterfaceStruct: HierarchicalStruct, Fieldable
+--- @class InterfaceStruct: HierarchicalStruct
 --- @field __type__ 'InterfaceStruct'
 --- @field __readonly__ boolean
 ---
@@ -73,7 +65,7 @@ function InterfaceStruct:getDeclaredField(name) end
 --- @return MethodStruct
 function InterfaceStruct:addMethod(input) end
 
---- @param input InterfaceStaticMethodStructInput
+--- @param input StaticMethodStructInput
 ---
 --- @return MethodStruct
 function InterfaceStruct:addStaticMethod(input) end

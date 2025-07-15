@@ -28,40 +28,41 @@ local API = {
     end
 };
 
-local function applyStructMetatable(cd)
-    local mt = getmetatable(cd) or {};
+--- @param struct ClassStruct
+local function applyStructMetatable(struct)
+    local mt = getmetatable(struct) or {};
     local __properties = {};
-    for k, v in pairs(cd) do __properties[k] = v end
+    for k, v in pairs(struct) do __properties[k] = v end
     -- mt.__metatable = false;
-    mt.__tostring = function() return vm.print.printClass(cd) end
+    mt.__tostring = function() return vm.print.printClass(struct) end
 
-    mt.__index = function(self, field)
+    mt.__index = function(_, field)
         if vm.isInside() or field == 'super' then
             return __properties[field];
         end
 
         vm.stepIn();
 
-        local fd = cd:getField(field);
+        local fieldStruct = struct:getField(field);
 
         local callInfo = vm.scope.getRelativeCall();
 
         vm.stack.pushContext({
-            class = cd,
-            element = fd,
+            struct = struct,
+            element = fieldStruct,
             context = 'field-set',
             line = callInfo.currentLine,
             path = callInfo.path
         });
 
-        if not fd then
+        if not fieldStruct then
             errorf(2, 'FieldNotFoundException: Cannot access field, method, or struct: %s.%s',
-                cd.path, field
+                struct.path, field
             );
             return;
-        elseif not fd.static then
+        elseif not fieldStruct.static then
             errorf(2, 'StaticFieldException: Accessing non-static field, method, or struct in static context: %s.%s',
-                cd.path, field
+                struct.path, field
             );
             return;
         end
@@ -69,22 +70,22 @@ local function applyStructMetatable(cd)
         local callInfo = vm.scope.getRelativeCall();
 
         vm.stack.pushContext({
-            class = cd,
-            element = fd,
+            struct = struct,
+            element = fieldStruct,
             context = 'field-set',
             line = callInfo.currentLine,
             path = callInfo.path
         });
 
         -- Ensure that the class is accessible from the scope.
-        local classScopeAllowed = vm.scope.getScopeForCall(cd, callInfo);
-        if not vm.scope.canAccessScope(cd.scope, classScopeAllowed) then
-            local sClass = cd.path;
+        local classScopeAllowed = vm.scope.getScopeForCall(struct, callInfo);
+        if not vm.scope.canAccessScope(struct.scope, classScopeAllowed) then
+            local sClass = struct.path;
             local errMsg = string.format(
                 'IllegalAccessException: The class "%s" is "%s".' ..
                 ' (Access Level from call: "%s")\n%s',
                 sClass,
-                cd.scope, classScopeAllowed,
+                struct.scope, classScopeAllowed,
                 vm.stack.printStackTrace()
             );
             vm.stack.popContext();
@@ -95,12 +96,12 @@ local function applyStructMetatable(cd)
         end
 
         -- Next, ensure that the field is accessible from the scope.
-        local fieldScopeAllowed = vm.scope.getScopeForCall(fd.class, callInfo);
-        if not vm.scope.canAccessScope(fd.scope, fieldScopeAllowed) then
+        local fieldScopeAllowed = vm.scope.getScopeForCall(fieldStruct.struct, callInfo);
+        if not vm.scope.canAccessScope(fieldStruct.scope, fieldScopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
-                cd.name, fd.name,
-                fd.scope, fieldScopeAllowed,
+                struct.name, fieldStruct.name,
+                fieldStruct.scope, fieldScopeAllowed,
                 vm.stack.printStackTrace()
             );
             vm.stack.popContext();
@@ -117,7 +118,7 @@ local function applyStructMetatable(cd)
         -- (Just in-case)
         if value == vm.constants.UNINITIALIZED_VALUE then
             local errMsg = string.format('%s Cannot set %s as UNINITIALIZED_VALUE. (Internal Error)\n%s',
-                cd.printHeader, field, vm.stack.printStackTrace()
+                struct.printHeader, field, vm.stack.printStackTrace()
             );
             vm.stack.popContext();
             error(errMsg, 2);
@@ -131,11 +132,9 @@ local function applyStructMetatable(cd)
     end
 
     mt.__newindex = function(_, field, value)
-        -- TODO: Visibility scope analysis.
-        -- TODO: Type-checking.
 
         if field == 'super' or field == '__super__' then
-            errorf(2, '%s Cannot set super. (Static context)', cd.printHeader);
+            errorf(2, '%s Cannot set super. (Static context)', struct.printHeader);
             return;
         end
 
@@ -145,7 +144,7 @@ local function applyStructMetatable(cd)
             return;
         end
 
-        local fd = cd:getField(field);
+        local fieldStruct = struct:getField(field);
 
         -- Internal bypass for struct construction.
         if vm.isInside() then
@@ -153,16 +152,16 @@ local function applyStructMetatable(cd)
             __properties[field] = value;
 
             -- Apply forward the value metrics. (If defined)
-            if fd then
-                fd.assignedOnce = true;
-                fd.value = value;
+            if fieldStruct then
+                fieldStruct.assignedOnce = true;
+                fieldStruct.value = value;
             end
 
             return;
         end
 
         -- Inner class invocation.
-        if cd.inner[field] then
+        if struct.inner[field] then
             if vm.isOutside() then
                 errorf(2, 'Cannot set inner class explicitly. Use the API.');
             end
@@ -170,14 +169,14 @@ local function applyStructMetatable(cd)
             return;
         end
 
-        if not fd then
+        if not fieldStruct then
             errorf(2, 'FieldNotFoundException: Cannot set new field or method: %s.%s',
-                cd.path, field
+                struct.path, field
             );
             return;
-        elseif not fd.static then
+        elseif not fieldStruct.static then
             errorf(2, 'StaticFieldException: Assigning non-static field in static context: %s.%s',
-                cd.path, field
+                struct.path, field
             );
             return;
         end
@@ -185,22 +184,22 @@ local function applyStructMetatable(cd)
         local callInfo = vm.scope.getRelativeCall();
 
         vm.stack.pushContext({
-            class = cd,
-            element = fd,
+            struct = struct,
+            element = fieldStruct,
             context = 'field-set',
             line = callInfo.currentLine,
             path = callInfo.path
         });
 
         -- Ensure that the class is accessible from the scope.
-        local classScopeAllowed = vm.scope.getScopeForCall(cd, callInfo);
-        if not vm.scope.canAccessScope(cd.scope, classScopeAllowed) then
-            local sClass = cd.path;
+        local classScopeAllowed = vm.scope.getScopeForCall(struct, callInfo);
+        if not vm.scope.canAccessScope(struct.scope, classScopeAllowed) then
+            local sClass = struct.path;
             local errMsg = string.format(
                 'IllegalAccessException: The class "%s" is "%s".' ..
                 ' (Access Level from call: "%s")\n%s',
                 sClass,
-                cd.scope, classScopeAllowed,
+                struct.scope, classScopeAllowed,
                 vm.stack.printStackTrace()
             );
             vm.stack.popContext();
@@ -210,12 +209,12 @@ local function applyStructMetatable(cd)
         end
 
         -- Next, ensure that the field is accessible from the scope.
-        local fieldScopeAllowed = vm.scope.getScopeForCall(fd.class, callInfo);
-        if not vm.scope.canAccessScope(fd.scope, fieldScopeAllowed) then
+        local fieldScopeAllowed = vm.scope.getScopeForCall(fieldStruct.struct, callInfo);
+        if not vm.scope.canAccessScope(fieldStruct.scope, fieldScopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
-                cd.name, fd.name,
-                fd.scope, fieldScopeAllowed,
+                struct.name, fieldStruct.name,
+                fieldStruct.scope, fieldScopeAllowed,
                 vm.stack.printStackTrace()
             );
             vm.stack.popContext();
@@ -227,34 +226,34 @@ local function applyStructMetatable(cd)
         -- (Just in-case)
         if value == vm.constants.UNINITIALIZED_VALUE then
             local errMsg = string.format('%s Cannot set %s as UNINITIALIZED_VALUE. (Internal Error)\n%s',
-                cd.printHeader, field, vm.stack.printStackTrace()
+                struct.printHeader, field, vm.stack.printStackTrace()
             );
             vm.stack.popContext();
             error(errMsg, 2);
             return;
         end
 
-        if fd.final then
+        if fieldStruct.final then
             local ste = vm.stack.getContext();
             if not ste then
                 vm.stack.popContext();
-                errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
+                errorf(2, '%s Attempt to assign final field %s outside of Class scope.', struct.printHeader, field);
                 return;
             end
 
             local context = ste:getContext();
-            local class = ste:getCallingClass();
-            if class ~= cd then
+            local class = ste:getCallingStruct();
+            if class ~= struct then
                 vm.stack.popContext();
-                errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
+                errorf(2, '%s Attempt to assign final field %s outside of Class scope.', struct.printHeader, field);
                 return;
             elseif context ~= 'constructor' then
                 vm.stack.popContext();
-                errorf(2, '%s Attempt to assign final field %s outside of constructor scope.', cd.printHeader, field);
+                errorf(2, '%s Attempt to assign final field %s outside of constructor scope.', struct.printHeader, field);
                 return;
-            elseif fd.assignedOnce then
+            elseif fieldStruct.assignedOnce then
                 vm.stack.popContext();
-                errorf(2, '%s Attempt to assign final field %s. (Already defined)', cd.printHeader, field);
+                errorf(2, '%s Attempt to assign final field %s. (Already defined)', struct.printHeader, field);
                 return;
             end
         end
@@ -265,11 +264,11 @@ local function applyStructMetatable(cd)
         vm.stack.popContext();
 
         -- Apply forward the value metrics.
-        fd.assignedOnce = true;
-        fd.value = value;
+        fieldStruct.assignedOnce = true;
+        fieldStruct.value = value;
     end
 
-    setmetatable(cd, mt);
+    setmetatable(struct, mt);
 end
 
 --- @cast API VMClassModule
@@ -523,10 +522,10 @@ function API.newClass(classInput, outer)
             self.outer = nil;
         end
 
-        local locInfo = vm.struct.calcPathNamePackage(classInput, outerStruct);
-        self.path = locInfo.path;
-        self.name = locInfo.name;
-        self.pkg = locInfo.pkg;
+        local outerLocInfo = vm.struct.calcPathNamePackage(classInput, outerStruct);
+        self.path = outerLocInfo.path;
+        self.name = outerLocInfo.name;
+        self.pkg = outerLocInfo.pkg;
 
         if outerStruct then
             outerStruct.inner[self.name] = self;
@@ -546,8 +545,8 @@ function API.newClass(classInput, outer)
         end
 
         -- Check and see if the calling code can access the class.
-        local callInfo = vm.scope.getRelativeCall();
-        local scopeCalled = vm.scope.getScopeForCall(classStruct, callInfo);
+        local newCallInfo = vm.scope.getRelativeCall();
+        local scopeCalled = vm.scope.getScopeForCall(classStruct, newCallInfo);
         if not vm.scope.canAccessScope(classStruct.scope, scopeCalled) then
             local sClass = vm.print.printClass(classStruct);
             local errMsg = string.format(
@@ -578,11 +577,10 @@ function API.newClass(classInput, outer)
         -- For native Lua table identity. Helps prevent infinite loops when checking self literally.
         o.__table_id__ = tostring(o);
 
-
         --- Assign the middle-functions to the object.
-        for name, func in pairs(classStruct.__middleMethods) do
+        for methodName, func in pairs(classStruct.__middleMethods) do
             --- @diagnostic disable-next-line
-            o[name] = func;
+            o[methodName] = func;
         end
 
         o.getClass = function(self)
@@ -597,22 +595,22 @@ function API.newClass(classInput, outer)
         -- Assign non-static default values of fields.
         local fields = classStruct:getFields();
         for i = 1, #fields do
-            local fd = fields[i];
-            if not fd.static then
-                o[fd.name] = fd.value;
+            local fieldStruct = fields[i];
+            if not fieldStruct.static then
+                o[fieldStruct.name] = fieldStruct.value;
             end
         end
 
         local middleMethods = classStruct.__middleMethods;
-        for name, func in pairs(middleMethods) do
+        for methodName, func in pairs(middleMethods) do
             --- @diagnostic disable-next-line
-            o[name] = func;
+            o[methodName] = func;
         end
 
         -- Set instanced inner structs for class instances.
-        for iname, icd in pairs(classStruct.inner) do
-            if not icd.static then
-                o[name] = icd;
+        for _, innerStruct in pairs(classStruct.inner) do
+            if not innerStruct.static then
+                o[name] = innerStruct;
             end
         end
 
@@ -636,10 +634,10 @@ function API.newClass(classInput, outer)
     --- @return FieldStruct
     function classStruct:addField(fieldInput)
         --- @type FieldStruct
-        local args = {
+        local fieldStruct = {
             __type__ = 'FieldStruct',
             audited = false,
-            class = classStruct,
+            struct = classStruct,
             types = fieldInput.types,
             type = fieldInput.type,
             name = fieldInput.name,
@@ -652,19 +650,19 @@ function API.newClass(classInput, outer)
             assignedOnce = false,
         };
 
-        vm.audit.auditField(self, args);
+        vm.audit.auditField(self, fieldStruct);
 
-        self.declaredFields[args.name] = args;
+        self.declaredFields[fieldStruct.name] = fieldStruct;
 
-        return args;
+        return fieldStruct;
     end
 
     function classStruct:addStaticField(fieldInput)
         --- @type FieldStruct
-        local args = {
+        local fieldStruct = {
             __type__ = 'FieldStruct',
             audited = false,
-            class = classStruct,
+            struct = classStruct,
             types = fieldInput.types,
             type = fieldInput.type,
             name = fieldInput.name,
@@ -677,11 +675,11 @@ function API.newClass(classInput, outer)
             assignedOnce = false,
         };
 
-        vm.audit.auditField(self, args);
+        vm.audit.auditField(self, fieldStruct);
 
-        self.declaredFields[args.name] = args;
+        self.declaredFields[fieldStruct.name] = fieldStruct;
 
-        return args;
+        return fieldStruct;
     end
 
     --- Attempts to resolve a FieldStruct in the ClassStruct. If the field isn't declared for the class
@@ -764,7 +762,7 @@ function API.newClass(classInput, outer)
             __type__ = 'ConstructorStruct',
 
             audited = false,
-            class = classStruct,
+            struct = classStruct,
             scope = constructorInput.scope or 'package',
             parameters = parameters,
 
@@ -840,7 +838,7 @@ function API.newClass(classInput, outer)
             __type__ = 'MethodStruct',
 
             -- Base properties. --
-            class = classStruct,
+            struct = classStruct,
             name = methodName,
             returnTypes = types,
             parameters = parameters,
@@ -901,7 +899,7 @@ function API.newClass(classInput, outer)
             __type__ = 'MethodStruct',
 
             -- Base properties. --
-            class = classStruct,
+            struct = classStruct,
             name = name,
             returnTypes = types,
             parameters = parameters,
@@ -962,7 +960,7 @@ function API.newClass(classInput, outer)
             __type__ = 'MethodStruct',
 
             -- Base properties. --
-            class = classStruct,
+            struct = classStruct,
             name = name,
             returnTypes = types,
             parameters = parameters,

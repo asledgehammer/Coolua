@@ -101,7 +101,7 @@ function IAPI.applyStructMetatable(self)
         local callInfo = vm.scope.getRelativeCall();
 
         vm.stack.pushContext({
-            class = self,
+            struct = self,
             element = fd,
             context = 'field-set',
             line = callInfo.currentLine,
@@ -126,7 +126,7 @@ function IAPI.applyStructMetatable(self)
         end
 
         -- Next, ensure that the field is accessible from the scope.
-        local fieldScopeAllowed = vm.scope.getScopeForCall(fd.class, callInfo);
+        local fieldScopeAllowed = vm.scope.getScopeForCall(fd.struct, callInfo);
         if not vm.scope.canAccessScope(fd.scope, fieldScopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
@@ -159,7 +159,7 @@ function IAPI.applyStructMetatable(self)
             end
 
             local context = ste:getContext();
-            local class = ste:getCallingClass();
+            local class = ste:getCallingStruct();
             if class ~= self then
                 vm.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s outside of interface scope.', self.printHeader, field);
@@ -365,7 +365,7 @@ function API.newInterface(interfaceInput, outer)
                         local sMethod = vm.print.printMethod(md);
                         errorf(2, '%s Method cannot override final method in super-class: %s',
                             errHeader,
-                            md.super.class.name,
+                            md.super.struct.name,
                             sMethod
                         );
                         return self;
@@ -439,7 +439,7 @@ function API.newInterface(interfaceInput, outer)
         local fieldStruct = {
             __type__ = 'FieldStruct',
             audited = false,
-            class = self,
+            struct = self,
             types = fieldInput.types,
             type = fieldInput.type,
             name = fieldInput.name,
@@ -510,7 +510,7 @@ function API.newInterface(interfaceInput, outer)
             __type__ = 'MethodStruct',
 
             -- Base properties. --
-            class = self,
+            struct = self,
             name = name,
             returnTypes = types,
             parameters = parameters,
@@ -567,7 +567,7 @@ function API.newInterface(interfaceInput, outer)
             __type__ = 'MethodStruct',
 
             -- Base properties. --
-            class = self,
+            struct = self,
             name = name,
             returnTypes = types,
             parameters = parameters,

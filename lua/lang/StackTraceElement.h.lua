@@ -9,15 +9,15 @@ local StackTraceElementDefinition = {};
 
 --- @param path string
 --- @param line number
---- @param class any
+--- @param struct Struct
 --- @param context string
 --- @param element any
-function StackTraceElementDefinition.new(path, line, class, context, element) end
+function StackTraceElementDefinition.new(path, line, struct, context, element) end
 
 --- @class StackTraceElement: Object
 --- @field path string
 --- @field line integer
---- @field class any
+--- @field struct Struct
 --- @field context string
 --- @field element FieldStruct|ConstructorStruct|MethodStruct
 local StackTraceElement = {};
@@ -29,7 +29,7 @@ function StackTraceElement:getPath() end
 function StackTraceElement:getLine() end
 
 --- @return number
-function StackTraceElement:getCallingClass() end
+function StackTraceElement:getCallingStruct() end
 
 --- @return string
 function StackTraceElement:getContext() end

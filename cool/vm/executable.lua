@@ -146,7 +146,7 @@ function API.createMiddleMethods(struct)
                     local sMethod = vm.print.printMethod(md);
                     errorf(2, '%s Method cannot override final method in super-class: %s.%s',
                         struct.printHeader,
-                        md.super.class.name,
+                        md.super.struct.name,
                         mName,
                         sMethod
                     );
@@ -195,7 +195,7 @@ function API.createMiddleMethod(cd, name, methods)
         local callInfo = vm.scope.getRelativeCall();
 
         vm.stack.pushContext({
-            class = cd,
+            struct = cd,
             element = md,
             context = 'method',
             line = callInfo.currentLine,
@@ -630,7 +630,7 @@ function API.createMiddleConstructor(classDef)
         local callInfo = vm.scope.getRelativeCall();
 
         vm.stack.pushContext({
-            class = classDef,
+            struct = classDef,
             element = cons,
             context = 'constructor',
             line = callInfo.currentLine,
@@ -653,12 +653,12 @@ function API.createMiddleConstructor(classDef)
             return;
         end
 
-        local scopeAllowed = vm.scope.getScopeForCall(cons.class, callInfo);
+        local scopeAllowed = vm.scope.getScopeForCall(cons.struct, callInfo);
         if vm.isOutside() and not vm.scope.canAccessScope(cons.scope, scopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The constructor %s.new(%s) is set as "%s" access level.' ..
                 ' (Access Level from call: "%s")\n%s',
-                cons.class.name, dump(cons.parameters),
+                cons.struct.name, dump(cons.parameters),
                 cons.scope, scopeAllowed,
                 vm.stack.printStackTrace()
             );

@@ -38,16 +38,10 @@ function API.getContext()
     return stack[stackLen];
 end
 
---- @class (exact) ContextArgs
---- @field path string
---- @field line number
---- @field class Struct
---- @field context string
---- @field element FieldStruct|ConstructorStruct|MethodStruct
 
 --- Adds a context to the stack. This happens when constructors or methods are invoked.
 ---
---- @param context ContextArgs
+--- @param context StackContext
 function API.pushContext(context)
     -- Muting context.
     if vm.isInside() or vm.flags.ignorePushPopContext then return end
@@ -63,7 +57,7 @@ function API.pushContext(context)
         vm.package.packages.lua.lang.StackTraceElement.new(
             context.path,
             context.line,
-            context.class,
+            context.struct,
             context.context,
             context.element
         )

@@ -71,8 +71,8 @@ function API.createInstanceMetatable(cd, o)
             return fields[field];
         end
 
-        local fd = cd:getField(field);
-        if not fd then
+        local fieldStruct = cd:getField(field);
+        if not fieldStruct then
             errorf(2, 'FieldNotFoundException: Field doesn\'t exist: %s.%s',
                 cd.path, field
             );
@@ -82,20 +82,20 @@ function API.createInstanceMetatable(cd, o)
         local callInfo = vm.scope.getRelativeCall();
 
         vm.stack.pushContext({
-            class = cd,
-            element = fd,
+            struct = cd,
+            element = fieldStruct,
             context = 'field-get',
             line = callInfo.currentLine,
             path = callInfo.path
         });
 
-        local scopeAllowed = vm.scope.getScopeForCall(fd.class, callInfo);
+        local scopeAllowed = vm.scope.getScopeForCall(fieldStruct.struct, callInfo);
 
-        if not vm.flags.bypassFieldSet and not vm.scope.canAccessScope(fd.scope, scopeAllowed) then
+        if not vm.flags.bypassFieldSet and not vm.scope.canAccessScope(fieldStruct.scope, scopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
-                cd.name, fd.name,
-                fd.scope, scopeAllowed,
+                cd.name, fieldStruct.name,
+                fieldStruct.scope, scopeAllowed,
                 vm.stack.printStackTrace()
             );
             vm.stack.popContext();
@@ -107,8 +107,8 @@ function API.createInstanceMetatable(cd, o)
         vm.stack.popContext();
 
         -- Get the value.
-        if fd.static then
-            return fd.class[field];
+        if fieldStruct.static then
+            return fieldStruct.struct[field];
         else
             return fields[cd.path .. '@' .. field];
         end
@@ -142,8 +142,8 @@ function API.createInstanceMetatable(cd, o)
             return;
         end
 
-        local fd = cd:getField(field);
-        if not fd then
+        local fieldStruct = cd:getField(field);
+        if not fieldStruct then
             errorf(2, 'FieldNotFoundException: Field doesn\'t exist: %s.%s',
                 cd.path, field
             );
@@ -153,20 +153,20 @@ function API.createInstanceMetatable(cd, o)
         local callInfo = vm.scope.getRelativeCall();
 
         vm.stack.pushContext({
-            class = cd,
-            element = fd,
+            struct = cd,
+            element = fieldStruct,
             context = 'field-set',
             line = callInfo.currentLine,
             path = callInfo.path
         });
 
-        local scopeAllowed = vm.scope.getScopeForCall(fd.class, callInfo);
+        local scopeAllowed = vm.scope.getScopeForCall(fieldStruct.struct, callInfo);
 
-        if not vm.flags.bypassFieldSet and not vm.scope.canAccessScope(fd.scope, scopeAllowed) then
+        if not vm.flags.bypassFieldSet and not vm.scope.canAccessScope(fieldStruct.scope, scopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
-                cd.name, fd.name,
-                fd.scope, scopeAllowed,
+                cd.name, fieldStruct.name,
+                fieldStruct.scope, scopeAllowed,
                 vm.stack.printStackTrace()
             );
             vm.stack.popContext();
@@ -195,14 +195,14 @@ function API.createInstanceMetatable(cd, o)
 
         local context = ste:getContext();
 
-        if fd.final then
+        if fieldStruct.final then
             if not ste then
                 vm.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
                 return;
             end
 
-            if ste:getCallingClass() ~= cd then
+            if ste:getCallingStruct() ~= cd then
                 vm.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s outside of Class scope.', cd.printHeader, field);
                 return;
@@ -210,7 +210,7 @@ function API.createInstanceMetatable(cd, o)
                 vm.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s outside of constructor scope.', cd.printHeader, field);
                 return;
-            elseif fd.assignedOnce then
+            elseif fieldStruct.assignedOnce then
                 vm.stack.popContext();
                 errorf(2, '%s Attempt to assign final field %s. (Already defined)', cd.printHeader, field);
                 return;
@@ -218,17 +218,17 @@ function API.createInstanceMetatable(cd, o)
         end
 
         -- Set the value.
-        if fd.static then
-            fd.class[field] = value;
+        if fieldStruct.static then
+            fieldStruct.struct[field] = value;
         else
-            fields[fd.class.path .. '@' .. field] = value;
+            fields[fieldStruct.struct.path .. '@' .. field] = value;
         end
 
         vm.stack.popContext();
 
         -- Apply forward the value metrics.
-        fd.assignedOnce = true;
-        fd.value = value;
+        fieldStruct.assignedOnce = true;
+        fieldStruct.value = value;
     end
 
     mt.__eq = vm.class.equals;

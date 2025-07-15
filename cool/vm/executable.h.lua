@@ -30,7 +30,7 @@
 ---
 --- @field __type__ 'MethodStruct'
 ---
---- @field class Struct
+--- @field struct Struct
 --- @field name string
 --- @field super MethodStruct? (Internally assigned. If none, this is nil)
 --- @field parameters ParameterStruct[]
@@ -56,12 +56,20 @@
 --- @field name string
 --- @field returnTypes (string[]|string)? (Default: void)
 
+--- @class (exact) StaticMethodStructInput
+---
+--- @field scope ClassScope? (Default: package)
+--- @field name string
+--- @field parameters ParameterStructInput[]? (Default: no parameters)
+--- @field returnTypes AllowedType[]|AllowedType
+--- @field body function?
+
 --- @class (exact) ConstructorStruct: ExecutableStruct
 ---
 --- @field __type__ 'ConstructorStruct'
 ---
 --- @field __super_flag__ boolean Used internally to track calls to super while invoked.
---- @field class ClassStruct
+--- @field struct ClassStruct
 --- @field parameters ParameterStruct[]
 --- @field super fun(o: any, ...) This function is called prior to the body function.
 --- @field superInfo FunctionInfo The super function's information. (line-range and path)
@@ -77,11 +85,11 @@
 --- @field __type__ 'ParameterStruct'
 ---
 --- @field audited boolean If true, the struct is audited and verified to be valid.
---- @field class ClassStruct
+--- @field struct ClassStruct
 --- @field name string
 --- @field types AllowedType[]
 
---- @class (exact) ParameterStructParameter
+--- @class (exact) ParameterStructInput
 --- @field types AllowedType[]?
 --- @field type AllowedType?
 --- @field name string?

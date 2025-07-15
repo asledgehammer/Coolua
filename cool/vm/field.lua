@@ -32,9 +32,9 @@ local API = {
 
 --- @cast API VMFieldModule
 
---- @param self ClassStruct|InterfaceStruct
-function API.compileFieldAutoMethods(self)
-    for _, fieldDef in pairs(self.declaredFields) do
+--- @param struct Struct
+function API.compileFieldAutoMethods(struct)
+    for _, fieldDef in pairs(struct.declaredFields) do
         local funcName = firstCharToUpper(fieldDef.name);
         local tGet = type(fieldDef.get);
         local tSet = type(fieldDef.set);
@@ -60,7 +60,7 @@ function API.compileFieldAutoMethods(self)
                     if type(fieldDef.get.body) ~= 'function' then
                         errorf(2,
                             '%s The getter method definition for field "%s" is not a function; {type = %s, value = %s}',
-                            self.printHeader,
+                            struct.printHeader,
                             name,
                             vm.type.getType(fieldDef.get.body),
                             tostring(fieldDef.get.body)
@@ -71,7 +71,7 @@ function API.compileFieldAutoMethods(self)
                 else
                     if fieldDef.static then
                         fGet = function()
-                            return self[fieldDef.name];
+                            return struct[fieldDef.name];
                         end
                     else
                         fGet = function(ins)
@@ -84,17 +84,17 @@ function API.compileFieldAutoMethods(self)
             mGetDef.body = fGet;
 
             debugf(vm.debug.method, '[METHOD] :: %s Creating auto-method: %s:%s()',
-                self.printHeader,
-                self.name, mGetDef.name
+                struct.printHeader,
+                struct.name, mGetDef.name
             );
 
-            self:addMethod(mGetDef);
+            struct:addMethod(mGetDef);
         end
 
         if tSet ~= 'nil' then
             if fieldDef.final then
                 errorf(2, '%s Cannot add setter to final field: %s',
-                    self.printHeader,
+                    struct.printHeader,
                     fieldDef.name
                 );
             end
@@ -115,7 +115,7 @@ function API.compileFieldAutoMethods(self)
                     if type(fieldDef.get.body) ~= 'function' then
                         errorf(2,
                             '%s The setter method definition for field "%s" is not a function; {type = %s, value = %s}',
-                            self.printHeader,
+                            struct.printHeader,
                             name,
                             vm.type.getType(fieldDef.get.body),
                             tostring(fieldDef.get.body)
@@ -125,7 +125,7 @@ function API.compileFieldAutoMethods(self)
                 else
                     if fieldDef.static then
                         fSet = function()
-                            return self[fieldDef.name];
+                            return struct[fieldDef.name];
                         end
                     else
                         fSet = function(ins)
@@ -138,14 +138,14 @@ function API.compileFieldAutoMethods(self)
             mSetDef.body = fSet;
 
             debugf(vm.debug.method, '[METHOD] :: %s Creating auto-method: %s(...)',
-                self.printHeader,
+                struct.printHeader,
                 mSetDef.name
             );
 
-            local md = self:addMethod(mSetDef);
+            local md = struct:addMethod(mSetDef);
 
             debugf(vm.debug.method, '[METHOD] :: %s Created auto-method: %s',
-                self.printHeader,
+                struct.printHeader,
                 md.signature
             );
         end

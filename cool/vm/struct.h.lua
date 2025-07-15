@@ -42,7 +42,7 @@
 --- @field __type__ 'StructReference'
 --- @field path string The file/package path to the definition.
 
---- @class Struct: Methodable
+--- @class Struct: Methodable, Fieldable
 --- @field __type__ string The internal type. Used for evaluation for several components inside the VM.
 --- @field __readonly__ boolean
 --- @field __supertable__ SuperTable
@@ -59,6 +59,16 @@
 --- @field outer Struct
 --- @field inner table<string, Struct>
 local Struct = {};
+
+--- @param input MethodStructInput
+---
+--- @return MethodStruct
+function Struct:addMethod(input) end
+
+--- @param input StaticMethodStructInput
+---
+--- @return MethodStruct
+function Struct:addStaticMethod(input) end
 
 --- @param struct Struct
 function Struct:setOuterStruct(struct) end

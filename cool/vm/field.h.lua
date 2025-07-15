@@ -9,7 +9,7 @@
 --- @class (exact) FieldStruct
 --- @field __type__ 'FieldStruct'
 --- @field audited boolean If true, the struct is audited and verified to be valid.
---- @field class ClassStruct
+--- @field struct Struct
 --- @field name string
 --- @field types AllowedType[]
 --- @field scope ClassScope

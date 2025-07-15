@@ -23,30 +23,35 @@ local final = builder.final;
 
 --- @type StackTraceElementDefinition
 local StackTraceElement = class 'StackTraceElement' (public) {
+    
     field 'path' (private, final) {
         properties {
             type = 'string'
         },
         get(public) {}
     },
+    
     field 'line' (private, final) {
         properties {
             type = 'number'
         },
         get(public) {}
     },
+    
     field 'context' (private, final) {
         properties {
             type = 'string'
         },
         get(public) {}
     },
-    field 'class' (private, final) {
+    
+    field 'struct' (private, final) {
         properties {
             type = 'any'
         },
-        get 'getCallingClass' (public) {}
+        get 'getCallingStruct' (public) {}
     },
+
     field 'element' (private, final) {
         properties {
             type = 'any'
@@ -58,7 +63,7 @@ local StackTraceElement = class 'StackTraceElement' (public) {
         parameters {
             { name = 'path',    type = 'string' },
             { name = 'line',    type = 'number' },
-            { name = 'class',   type = 'any' },
+            { name = 'struct',   type = 'any' },
             { name = 'context', type = 'string' },
             { name = 'element', type = 'any' }
         },
@@ -71,13 +76,13 @@ local StackTraceElement = class 'StackTraceElement' (public) {
         --- @param self StackTraceElement
         --- @param path string
         --- @param line number
-        --- @param class any
+        --- @param struct Struct
         --- @param context string
         --- @param element FieldStruct|ConstructorStruct|MethodStruct
-        body = function(self, path, line, class, context, element)
+        body = function(self, path, line, struct, context, element)
             self.path = path;
             self.line = line;
-            self.class = class;
+            self.struct = struct;
             self.context = context;
             self.element = element;
         end
@@ -97,7 +102,7 @@ local StackTraceElement = class 'StackTraceElement' (public) {
                     return string.format('%s:%s: calling %s%s%s(%s)',
                         path,
                         line,
-                        element.class.name,
+                        element.struct.name,
                         callSyntax,
                         element.name,
                         dump(element.parameters)
@@ -106,7 +111,7 @@ local StackTraceElement = class 'StackTraceElement' (public) {
                     return string.format('%s:%s: calling %s.new(%s)',
                         path,
                         line,
-                        element.class.name,
+                        element.struct.name,
                         dump(element.parameters)
                     );
                 elseif element.__type__ == 'FieldStruct' then
@@ -114,14 +119,14 @@ local StackTraceElement = class 'StackTraceElement' (public) {
                         return string.format('%s:%s: accessing field %s.%s',
                             path,
                             line,
-                            element.class.name,
+                            element.struct.name,
                             element.name
                         );
                     elseif context == 'field-set' then
                         return string.format('%s:%s: assigning field %s.%s',
                             path,
                             line,
-                            element.class.name,
+                            element.struct.name,
                             element.name
                         );
                     end

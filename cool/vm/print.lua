@@ -63,11 +63,11 @@ function API.printMethod(def)
         callSyntax = ':';
     end
 
-    return string.format('%s%s%s%s%s', sStatic, sFinal, def.class.name, callSyntax, def.signature);
+    return string.format('%s%s%s%s%s', sStatic, sFinal, def.struct.name, callSyntax, def.signature);
 end
 
 function API.printConstructor(def)
-    return string.format('%s:%s', def.class.name, def.signature);
+    return string.format('%s:%s', def.struct.name, def.signature);
 end
 
 function API.printInterface(def)

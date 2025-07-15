@@ -67,9 +67,9 @@ function API.createSuperTable(cd)
         end
     end
 
-    local superClass = cd.super;
+    local superStruct = cd.super;
     -- This would only apply to `lua.lang.Object` and any modifications made to it.
-    if not superClass then
+    if not superStruct then
         -- Nothing to call. Let the implementation know.
         function mt.__call()
             errorf(2, '%s No superclass.', cd.printHeader);
@@ -81,10 +81,10 @@ function API.createSuperTable(cd)
 
     -- Copy middle-constructor.
     properties.super = super;
-    properties.__middleConstructor = superClass.__middleConstructor;
+    properties.__middleConstructor = superStruct.__middleConstructor;
 
     -- Copy middle-methods.
-    properties.__middleMethods = superClass.__middleMethods;
+    properties.__middleMethods = superStruct.__middleMethods;
 
     -- Assign / discover the inferred method in the super-class.
 
@@ -98,8 +98,8 @@ function API.createSuperTable(cd)
             return;
         end
 
-        local ConstructorStruct = superClass:getConstructor(args);
-        if not ConstructorStruct then
+        local constructorStruct = superStruct:getConstructor(args);
+        if not constructorStruct then
             errorf(2, '%s Unknown super-constructor: %s', cd.printHeader, dump(args));
             return;
         end
@@ -107,20 +107,20 @@ function API.createSuperTable(cd)
         local callInfo = vm.scope.getRelativeCall();
 
         vm.stack.pushContext({
-            class = cd,
-            element = ConstructorStruct,
+            struct = cd,
+            element = constructorStruct,
             context = 'constructor',
             line = callInfo.currentLine,
             path = callInfo.path
         });
 
-        local scopeAllowed = vm.scope.getScopeForCall(ConstructorStruct.class, callInfo);
+        local scopeAllowed = vm.scope.getScopeForCall(constructorStruct.struct, callInfo);
 
-        if not vm.scope.canAccessScope(ConstructorStruct.scope, scopeAllowed) then
+        if not vm.scope.canAccessScope(constructorStruct.scope, scopeAllowed) then
             local errMsg = string.format(
                 'IllegalAccessException: The constructor %s.new(%s) is set as "%s" access level. (Access Level from call: "%s")\n%s',
-                ConstructorStruct.class.name, dump(ConstructorStruct.parameters),
-                ConstructorStruct.scope, scopeAllowed,
+                constructorStruct.struct.name, dump(constructorStruct.parameters),
+                constructorStruct.scope, scopeAllowed,
                 vm.stack.printStackTrace()
             );
             vm.stack.popContext();
@@ -142,7 +142,7 @@ function API.createSuperTable(cd)
 
         --- ClassInstance is below the Object layer.
         if cd.path ~= 'lua.lang.Object' then
-            return superClass.__middleConstructor(o, unpack(args));
+            return superStruct.__middleConstructor(o, unpack(args));
         end
     end
 
@@ -152,9 +152,9 @@ function API.createSuperTable(cd)
         end
 
         --- @type MethodStruct|nil
-        local md = superClass:getMethod(name, args);
+        local methodStruct = superStruct:getMethod(name, args);
 
-        if not md then
+        if not methodStruct then
             errorf(2, '%s Unknown super-method: %s %s', cd.printHeader, name, dump(args));
             return;
         end
@@ -162,21 +162,21 @@ function API.createSuperTable(cd)
         local callInfo = vm.scope.getRelativeCall();
 
         vm.stack.pushContext({
-            class = cd,
-            element = md,
+            struct = cd,
+            element = methodStruct,
             context = 'method',
             line = callInfo.currentLine,
             path = callInfo.path
         });
 
-        local scopeAllowed = vm.scope.getScopeForCall(md.class, callInfo);
+        local scopeAllowed = vm.scope.getScopeForCall(methodStruct.struct, callInfo);
 
-        if not vm.scope.canAccessScope(md.scope, scopeAllowed) then
-            local sMethod = vm.print.printMethod(md);
+        if not vm.scope.canAccessScope(methodStruct.scope, scopeAllowed) then
+            local sMethod = vm.print.printMethod(methodStruct);
             local errMsg = string.format(
                 'IllegalAccessException: The method %s is set as "%s" access level. (Access Level from call: "%s")\n%s',
                 sMethod,
-                md.scope, scopeAllowed,
+                methodStruct.scope, scopeAllowed,
                 vm.stack.printStackTrace()
             );
             vm.stack.popContext();
@@ -187,10 +187,10 @@ function API.createSuperTable(cd)
 
         local retVal;
         local result, errMsg = xpcall(function()
-            if md.static then
-                retVal = md.body(unpack(args));
+            if methodStruct.static then
+                retVal = methodStruct.body(unpack(args));
             else
-                retVal = md.body(o, unpack(args));
+                retVal = methodStruct.body(o, unpack(args));
             end
             -- TODO: Check type-cast of returned value.
         end, debug.traceback);

@@ -10,15 +10,7 @@
 --- @field scope ClassScope? (Default: public)
 --- @field final boolean? (Default: false)
 --- @field name string
---- @field parameters ParameterStructParameter[]? (Default: no parameters)
---- @field returnTypes AllowedType[]|AllowedType
---- @field body function
-
---- @class (exact) ClassStaticMethodStructInput
---- @field scope ClassScope? (Default: public)
---- @field final boolean? (Default: false)
---- @field name string
---- @field parameters ParameterStructParameter[]? (Default: no parameters)
+--- @field parameters ParameterStructInput[]? (Default: no parameters)
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body function
 
@@ -26,7 +18,7 @@
 --- @field scope ClassScope? (Default: public)
 --- @field final boolean? (Default: false)
 --- @field name string
---- @field parameters ParameterStructParameter[]? (Default: no parameters)
+--- @field parameters ParameterStructInput[]? (Default: no parameters)
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body nil
 
@@ -45,7 +37,7 @@
 --- @field abstract boolean? (Default: false)
 --- @field implements InterfaceStruct|InterfaceStruct[]?
 
---- @class (exact) ClassStruct: HierarchicalStruct, Constructable, Fieldable, Staticable, Abstractable, Auditable
+--- @class (exact) ClassStruct: HierarchicalStruct, Constructable, Staticable, Abstractable, Auditable
 --- @field __type__ 'ClassStruct'
 --- @field __readonly__ boolean
 --- @field __supertable__ SuperTable
@@ -115,7 +107,7 @@ function ClassStruct:addMethod(input) end
 --- @return MethodStruct
 function ClassStruct:addAbstractMethod(input) end
 
---- @param input ClassStaticMethodStructInput
+--- @param input StaticMethodStructInput
 ---
 --- @return MethodStruct
 function ClassStruct:addStaticMethod(input) end
