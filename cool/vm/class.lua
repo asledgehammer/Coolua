@@ -432,7 +432,7 @@ function API.newClass(definition, outer)
     cd.__middleConstructor = vm.executable.createMiddleConstructor(cd);
 
     if not cd.super and cd.path ~= 'lua.lang.Object' then
-        cd.super = vm.forNameDef('lua.lang.Object');
+        cd.super = vm.getStruct('lua.lang.Object');
         if not cd.super then
             errorf(2, '%s lua.lang.Object not defined!', cd.printHeader);
         end

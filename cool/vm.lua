@@ -159,7 +159,7 @@ end
 --- @param path string
 ---
 --- @return Struct|nil
-function vm.forNameDef(path)
+function vm.getStruct(path)
     return vm.STRUCTS[path];
 end
 
