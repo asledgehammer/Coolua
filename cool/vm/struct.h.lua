@@ -29,7 +29,7 @@
 --- @field methodCache table<string, MethodStruct> Cache all method call signatures with their resolved method definitions. This is used to optimize method routing.
 
 --- @class (exact) Fieldable Any struct that supports fields. (Class, Interface, Enum)
---- @field declaredFields table<string, FieldDefinition>
+--- @field declaredFields table<string, FieldStruct>
 --- @field staticFields table<string, any> Stores the static values for classes.
 
 --- @class (exact) Hierarchical

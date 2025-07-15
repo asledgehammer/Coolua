@@ -12,25 +12,25 @@ local EnumStructDefinitionParameter = {};
 --- @class EnumStructDefinition: StructDefinition
 local EnumStructDefinition = {};
 
---- @param definition FieldDefinitionParameter
+--- @param definition FieldStructParameter
 ---
---- @return FieldDefinition
+--- @return FieldStruct
 function EnumStructDefinition:addField(definition) end
 
---- Attempts to resolve a FieldDefinition in the EnumStructDefinition. If the field isn't declared for the class level,
+--- Attempts to resolve a FieldStruct in the EnumStructDefinition. If the field isn't declared for the class level,
 --- the super-class(es) are checked.
 ---
 --- @param name string
 ---
---- @return FieldDefinition? fieldDefinition
+--- @return FieldStruct? FieldStruct
 function EnumStructDefinition:getField(name) end
 
---- Attempts to resolve a FieldDefinition in the EnumStructDefinition. If the field isn't defined in the class, `nil`
+--- Attempts to resolve a FieldStruct in the EnumStructDefinition. If the field isn't defined in the class, `nil`
 --- is returned.
 ---
 --- @param name string
 ---
---- @return FieldDefinition? fieldDefinition
+--- @return FieldStruct? FieldStruct
 function EnumStructDefinition:getDeclaredField(name) end
 
 --- @param ConstructorStruct ConstructorStructParameter

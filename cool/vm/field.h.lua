@@ -6,8 +6,8 @@
 
 -- MARK: - Field
 
---- @class (exact) FieldDefinition
---- @field __type__ 'FieldDefinition'
+--- @class (exact) FieldStruct
+--- @field __type__ 'FieldStruct'
 --- @field audited boolean If true, the struct is audited and verified to be valid.
 --- @field class ClassStruct
 --- @field name string
@@ -20,7 +20,7 @@
 --- @field set FieldSetDefinition?
 --- @field assignedOnce boolean This flag is used for final fields. If true, all assignments will fail.
 
---- @class (exact) FieldDefinitionParameter
+--- @class (exact) FieldStructParameter
 --- @field name string
 --- @field types AllowedType[]?
 --- @field type AllowedType?
@@ -30,7 +30,7 @@
 --- @field get FieldGetDefinition?
 --- @field set FieldSetDefinition?
 
---- @class (exact) StaticFieldDefinitionParameter
+--- @class (exact) StaticFieldStructParameter
 --- @field name string
 --- @field types AllowedType[]?
 --- @field type AllowedType?

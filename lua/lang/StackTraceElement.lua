@@ -73,7 +73,7 @@ local StackTraceElement = class 'StackTraceElement' (public) {
         --- @param line number
         --- @param class any
         --- @param context string
-        --- @param element FieldDefinition|ConstructorStruct|MethodStruct
+        --- @param element FieldStruct|ConstructorStruct|MethodStruct
         body = function(self, path, line, class, context, element)
             self.path = path;
             self.line = line;
@@ -109,7 +109,7 @@ local StackTraceElement = class 'StackTraceElement' (public) {
                         element.class.name,
                         dump(element.parameters)
                     );
-                elseif element.__type__ == 'FieldDefinition' then
+                elseif element.__type__ == 'FieldStruct' then
                     if context == 'field-get' then
                         return string.format('%s:%s: accessing field %s.%s',
                             path,

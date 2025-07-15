@@ -636,13 +636,13 @@ function API.newClass(definition, outer)
 
     -- MARK: - Field
 
-    --- @param fd FieldDefinitionParameter
+    --- @param fd FieldStructParameter
     ---
-    --- @return FieldDefinition
+    --- @return FieldStruct
     function cd:addField(fd)
-        --- @type FieldDefinition
+        --- @type FieldStruct
         local args = {
-            __type__ = 'FieldDefinition',
+            __type__ = 'FieldStruct',
             audited = false,
             class = cd,
             types = fd.types,
@@ -665,9 +665,9 @@ function API.newClass(definition, outer)
     end
 
     function cd:addStaticField(fd)
-        --- @type FieldDefinition
+        --- @type FieldStruct
         local args = {
-            __type__ = 'FieldDefinition',
+            __type__ = 'FieldStruct',
             audited = false,
             class = cd,
             types = fd.types,
@@ -689,12 +689,12 @@ function API.newClass(definition, outer)
         return args;
     end
 
-    --- Attempts to resolve a FieldDefinition in the ClassStruct. If the field isn't declared for the class
+    --- Attempts to resolve a FieldStruct in the ClassStruct. If the field isn't declared for the class
     --- level, the super-class(es) are checked.
     ---
     --- @param name string
     ---
-    --- @return FieldDefinition? fieldDefinition
+    --- @return FieldStruct? FieldStruct
     function cd:getField(name)
         local fd = cd:getDeclaredField(name);
         if not fd and cd.super then
@@ -703,18 +703,18 @@ function API.newClass(definition, outer)
         return fd;
     end
 
-    --- Attempts to resolve a FieldDefinition in the ClassStruct. If the field isn't defined in the class, nil
+    --- Attempts to resolve a FieldStruct in the ClassStruct. If the field isn't defined in the class, nil
     --- is returned.
     ---
     --- @param name string
     ---
-    --- @return FieldDefinition? fieldDefinition
+    --- @return FieldStruct? FieldStruct
     function cd:getDeclaredField(name)
         return cd.declaredFields[name];
     end
 
     function cd:getFields()
-        --- @type FieldDefinition[]
+        --- @type FieldStruct[]
         local array = {};
 
         local next = cd;
@@ -1101,7 +1101,7 @@ function API.newClass(definition, outer)
         applyStructMetatable(self);
 
         for k, v in pairs(self.declaredFields) do
-            --- @params T: FieldDefinition
+            --- @params T: FieldStruct
             self.declaredFields[k] = readonly(v);
         end
         for _, v in pairs(self.declaredMethods) do

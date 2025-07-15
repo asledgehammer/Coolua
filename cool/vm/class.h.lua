@@ -66,33 +66,33 @@ local ClassStruct = {};
 --- @return ClassInstance
 function ClassStruct:new(...) end
 
---- @param definition FieldDefinitionParameter
+--- @param definition FieldStructParameter
 ---
---- @return FieldDefinition
+--- @return FieldStruct
 function ClassStruct:addField(definition) end
 
---- @param definition StaticFieldDefinitionParameter
+--- @param definition StaticFieldStructParameter
 ---
---- @return FieldDefinition
+--- @return FieldStruct
 function ClassStruct:addStaticField(definition) end
 
---- Attempts to resolve a FieldDefinition in the ClassStruct. If the field isn't declared for the class level, the
+--- Attempts to resolve a FieldStruct in the ClassStruct. If the field isn't declared for the class level, the
 --- super-class(es) are checked.
 ---
 --- @param name string
 ---
---- @return FieldDefinition? fieldDefinition
+--- @return FieldStruct? FieldStruct
 function ClassStruct:getField(name) end
 
---- @return FieldDefinition[]
+--- @return FieldStruct[]
 function ClassStruct:getFields() end
 
---- Attempts to resolve a FieldDefinition in the ClassStruct. If the field isn't defined in the class, nil
+--- Attempts to resolve a FieldStruct in the ClassStruct. If the field isn't defined in the class, nil
 --- is returned.
 ---
 --- @param name string
 ---
---- @return FieldDefinition? fieldDefinition
+--- @return FieldStruct? FieldStruct
 function ClassStruct:getDeclaredField(name) end
 
 --- @param ConstructorStruct ConstructorStructParameter

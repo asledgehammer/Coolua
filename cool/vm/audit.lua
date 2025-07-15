@@ -172,7 +172,7 @@ function API.auditFinalFields(cd, o)
     for name, fd in pairs(fields) do
         local fieldValue = o[name];
         if fd.final and fieldValue == vm.constants.UNINITIALIZED_VALUE then
-            errorf(2, '%s Field is not initialized: %s (Check the FieldDefinitions and Constructors)',
+            errorf(2, '%s Field is not initialized: %s (Check the FieldStructs and Constructors)',
                 cd.printHeader, name
             );
         end

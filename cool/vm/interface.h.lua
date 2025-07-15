@@ -46,25 +46,25 @@ local InterfaceStructParameter = {};
 --- @field static boolean
 local InterfaceStruct = {};
 
---- @param definition FieldDefinitionParameter
+--- @param definition FieldStructParameter
 ---
---- @return FieldDefinition
+--- @return FieldStruct
 function InterfaceStruct:addStaticField(definition) end
 
---- Attempts to resolve a FieldDefinition in the InterfaceStruct. If the field isn't declared for the class level,
+--- Attempts to resolve a FieldStruct in the InterfaceStruct. If the field isn't declared for the class level,
 --- the super-class(es) are checked.
 ---
 --- @param name string
 ---
---- @return FieldDefinition? fieldDefinition
+--- @return FieldStruct? FieldStruct
 function InterfaceStruct:getField(name) end
 
---- Attempts to resolve a FieldDefinition in the InterfaceStruct. If the field isn't defined in the class, `nil`
+--- Attempts to resolve a FieldStruct in the InterfaceStruct. If the field isn't defined in the class, `nil`
 --- is returned.
 ---
 --- @param name string
 ---
---- @return FieldDefinition? fieldDefinition
+--- @return FieldStruct? FieldStruct
 function InterfaceStruct:getDeclaredField(name) end
 
 --- @param definition InterfaceMethodStructParameter

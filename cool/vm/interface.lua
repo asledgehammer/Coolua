@@ -460,9 +460,9 @@ function IAPI.isSuperInterface(self, interface)
 end
 
 function IAPI.addStaticField(self, fd)
-    --- @type FieldDefinition
+    --- @type FieldStruct
     local args = {
-        __type__ = 'FieldDefinition',
+        __type__ = 'FieldStruct',
         audited = false,
         class = self,
         types = fd.types,
@@ -565,7 +565,7 @@ function IAPI.finalize(self)
 
     local declaredFields = {};
     for k, v in pairs(self.declaredFields) do
-        --- @params T: FieldDefinition
+        --- @params T: FieldStruct
         declaredFields[k] = readonly(v);
     end
     self.declaredFields = declaredFields;
@@ -600,12 +600,12 @@ end
 
 -- MARK: - Field
 
---- Attempts to resolve a FieldDefinition in the ClassStruct. If the field isn't declared for the class
+--- Attempts to resolve a FieldStruct in the ClassStruct. If the field isn't declared for the class
 --- level, the super-class(es) are checked.
 ---
 --- @param name string
 ---
---- @return FieldDefinition? fieldDefinition
+--- @return FieldStruct? FieldStruct
 function IAPI.getField(self, name)
     local fd = self:getDeclaredField(name);
     if not fd and self.super then
@@ -614,18 +614,18 @@ function IAPI.getField(self, name)
     return fd;
 end
 
---- Attempts to resolve a FieldDefinition in the ClassStruct. If the field isn't defined in the class, nil
+--- Attempts to resolve a FieldStruct in the ClassStruct. If the field isn't defined in the class, nil
 --- is returned.
 ---
 --- @param name string
 ---
---- @return FieldDefinition? fieldDefinition
+--- @return FieldStruct? FieldStruct
 function IAPI.getDeclaredField(self, name)
     return self.declaredFields[name];
 end
 
 function IAPI.getFields(self)
-    --- @type FieldDefinition[]
+    --- @type FieldStruct[]
     local array = {};
 
     local next = self;
