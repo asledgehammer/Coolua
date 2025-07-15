@@ -36,9 +36,6 @@ function API.auditStructPropertyScope(structScope, propertyScope, errHeader) end
 --- @return string[]
 function API.auditMethodReturnsProperty(returnTypes, errHeader) end
 
---- @param genDef GenericTypeDefinition
-function API.auditGenericType(genDef) end
-
 --- @param cd ClassStruct
 --- @param fd FieldStruct
 function API.auditField(cd, fd) end

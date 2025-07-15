@@ -28,31 +28,6 @@ local API = {
 
 -- --- @cast API VMAuditModule
 
---- @param def GenericTypeDefinition
-function API.auditGenericType(def)
-    if not def.__type__ ~= 'GenericTypeDefinition' then
-        errorf(2, 'Parameter is not a GenericTypeDefinition. {type = %s, value = %s}',
-            vm.type.getType(def),
-            tostring(def)
-        );
-    end
-
-    if not def.name then
-        errorf(2, 'Property "name" is nil. (Must be a non-empty string)');
-    elseif def.name == '' then
-        errorf(2, 'Property "name" is an empty string. (Must be a non-empty string)');
-    end
-
-    if not def.types then
-        errorf(2, 'Property "types" is nil. (Must be an array))');
-    elseif type(def.types) == 'table' or not isArray(def.types) then
-        errorf(2, 'Property "types" is not an array. {type = %s, value = %s}',
-            vm.type.getType(def),
-            tostring(def)
-        );
-    end
-end
-
 function API.auditField(cd, fd)
     local errHeader = string.format('Class(%s):addField():', cd.name);
 

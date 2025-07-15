@@ -22,45 +22,6 @@ local API = {
     end
 };
 
-function API.printGenericType(def)
-    -- Make sure the def is valid.
-    vm.audit.auditGenericType(def);
-
-    local name = def.name;
-    local typesS = table.concat(def.types, '|');
-    return string.format('%s: %s', name, typesS);
-end
-
-function API.printGenericTypes(def)
-    -- Audit array parameter.
-    if not def then
-        error('Parameter is nil.', 2);
-    elseif type(def) ~= 'table' or not isArray(def) then
-        errorf(2, 'Parameter is not GenericsTypesDefinition[]. {type = %s, value = %s}',
-            type(def),
-            tostring(def)
-        );
-    end
-
-    local defLen = #def;
-
-    if defLen == 0 then return '<>' end
-
-    local s = '';
-
-    for i = 1, defLen do
-        local next = defLen[i];
-        local nextS = API.printGenericType(next);
-        if s == '' then
-            s = nextS;
-        else
-            s = s .. ', ' .. nextS;
-        end
-    end
-
-    return string.format('<%s>', s);
-end
-
 function API.argsToString(args)
     local argsLen = #args;
     if argsLen == 0 then

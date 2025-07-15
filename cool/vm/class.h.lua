@@ -45,7 +45,7 @@
 --- @field abstract boolean? (Default: false)
 --- @field implements InterfaceStruct|InterfaceStruct[]?
 
---- @class (exact) ClassStruct: HierarchicalStruct, Genericable, Constructable, Fieldable, Staticable, Abstractable, Auditable
+--- @class (exact) ClassStruct: HierarchicalStruct, Constructable, Fieldable, Staticable, Abstractable, Auditable
 --- @field __type__ 'ClassStruct'
 --- @field __readonly__ boolean
 --- @field __supertable__ SuperTable

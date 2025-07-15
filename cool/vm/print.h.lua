@@ -41,13 +41,3 @@ function API.printInterface(def) end
 ---
 --- @return string
 function API.printClass(def) end
-
---- @param def GenericTypeDefinition
----
---- @return string
-function API.printGenericType(def) end
-
---- @param def GenericsTypesDefinition
----
---- @return string
-function API.printGenericTypes(def) end
