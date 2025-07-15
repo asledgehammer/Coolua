@@ -31,6 +31,3 @@ function Class:getStruct() end
 
 --- @return boolean
 function Class:isInterface() end
-
---- @return boolean
-function Class:isEnum() end

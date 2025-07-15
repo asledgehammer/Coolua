@@ -310,12 +310,6 @@ local function buildInterface(self, outerStruct)
         end
     end
 
-    -- TODO: Add inner classes.
-    -- TODO: Add inner interfaces.
-    -- TODO: Add inner enums.
-
-    -- interface:finalize();
-
     debugf(vm.debug.builder, '[BUILDER] :: Built interface: %s', tostring(interface));
 
     return interface, self;
@@ -327,11 +321,6 @@ end
 buildFlags = function(struct, appliedStruct, defaultScope)
     local flags = struct.flags;
     defaultScope = defaultScope or 'package';
-
-    -- if not flags then
-    --     appliedStruct.flags = {};
-    --     return;
-    -- end
 
     for i = 1, #flags do
         local flag = flags[i];

@@ -370,7 +370,7 @@ function API.getMethodNames(classDef, methodNames)
 
     -- Grab any interface declarations.
     if classDef['interfaces'] then
-        --- @cast classDef ClassStruct|EnumStruct
+        --- @cast classDef ClassStruct
         local interfaceLen = #classDef.interfaces;
         if interfaceLen ~= 0 then
             for i = 1, interfaceLen do
@@ -407,7 +407,7 @@ function API.combineAllMethods(def, name, comb)
     end
 
     if def['interfaces'] then
-        --- @cast def ClassStruct|EnumStruct
+        --- @cast def ClassStruct
         -- Copy any interface method array.
         local interfaceLen = #def.interfaces;
         if interfaceLen ~= 0 then

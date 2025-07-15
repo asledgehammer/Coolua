@@ -30,7 +30,6 @@ function VMModule.setVM(vm) end
 ---
 --- * Modules
 --- @field debug VMDebugModule
---- @field enum VMEnumModule
 --- @field flags VMFlagsModule
 --- @field constants VMConstantsModule
 --- @field print VMPrintModule

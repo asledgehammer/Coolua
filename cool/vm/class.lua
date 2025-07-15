@@ -1182,11 +1182,7 @@ function API.newClass(classInput, outer)
     end
 
     function classStruct:isAssignableFromType(superStruct)
-        -- Enum super-structs fail on assignable check.
-        if not superStruct or
-            superStruct.__type__ == 'EnumStruct' then
-            return false;
-        end
+        if not superStruct then return false end
 
         if superStruct.__type__ == 'ClassStruct' then
             return self == superStruct or self:isSuperClass(superStruct);

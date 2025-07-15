@@ -15,17 +15,17 @@
 --- @class (exact) Abstractable
 --- @field abstract boolean (Default: false)
 
---- @class (exact) Constructable Any struct that supports self-construction. (Classes, Enums)
+--- @class (exact) Constructable Any struct that supports self-construction.
 --- @field __middleConstructor function
 --- @field declaredConstructors table<string, ConstructorStruct>
 
---- @class (exact) Methodable Any struct that supports methods. (Class, Interface, Enum)
+--- @class (exact) Methodable Any struct that supports methods.
 --- @field __middleMethods table<string, function> All middle functables for methods.
 --- @field declaredMethods table<string, table<string, MethodStruct>> All compiled methods for the class.
 --- @field methods table<string, table<string, MethodStruct>> All compiled methods. If the struct is extendable then all directly-accessable methods from super-classes are assigned here.
 --- @field methodCache table<string, MethodStruct> Cache all method call signatures with their resolved method definitions. This is used to optimize method routing.
 
---- @class (exact) Fieldable Any struct that supports fields. (Class, Interface, Enum)
+--- @class (exact) Fieldable Any struct that supports fields.
 --- @field declaredFields table<string, FieldStruct>
 --- @field staticFields table<string, any> Stores the static values for classes.
 

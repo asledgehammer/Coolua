@@ -84,7 +84,6 @@ vm = {
     PACKAGES = {},
 
     debug = debug,
-    enum = require 'cool/vm/enum',
     constants = require 'cool/vm/constants',
     flags = require 'cool/vm/flags',
     print = require 'cool/vm/print',
@@ -122,7 +121,6 @@ vm = {
 
 utils.setVM(vm);
 vm.debug.setVM(vm);
-vm.enum.setVM(vm);
 vm.constants.setVM(vm);
 vm.flags.setVM(vm);
 vm.print.setVM(vm);
@@ -171,10 +169,9 @@ function vm.forName(path)
         local def = vm.STRUCTS[path];
         if def and (
                 def.__type__ == 'ClassStruct' or
-                def.__type__ == 'InterfaceStruct' or
-                def.__type__ == 'EnumStruct'
+                def.__type__ == 'InterfaceStruct'
             ) then
-            --- @cast def ClassStruct|InterfaceStruct|EnumStruct
+            --- @cast def ClassStruct|InterfaceStruct
 
             vm.stepIn();
             class = vm.package.packages.lua.lang.Class.new(def);

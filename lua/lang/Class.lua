@@ -60,11 +60,7 @@ Class = class 'Class' (public, final) {
 
     field 'struct' (private, final) {
         properties {
-            types = {
-                'ClassStruct',
-                'InterfaceStruct',
-                'EnumStruct'
-            }
+            types = { 'ClassStruct', 'InterfaceStruct' }
         },
         get(public) {}
     },
@@ -73,7 +69,7 @@ Class = class 'Class' (public, final) {
         parameters {
             {
                 name = 'def',
-                types = { 'ClassStruct', 'InterfaceStruct', 'EnumStruct' }
+                types = { 'ClassStruct', 'InterfaceStruct' }
             }
         },
         --- @param self Class
@@ -115,12 +111,6 @@ Class = class 'Class' (public, final) {
         end
     },
 
-    method 'isEnum' (public, final) {
-        returnTypes('boolean'),
-        function(self)
-            return self.struct.__type__ == 'EnumStruct';
-        end
-    }
 };
 
 return Class;
