@@ -16,7 +16,7 @@
 --- @field value any
 --- @field static boolean
 --- @field final boolean
---- @field get FieldGetDefinition?
+--- @field get FieldGetStruct?
 --- @field set FieldSetDefinition?
 --- @field assignedOnce boolean This flag is used for final fields. If true, all assignments will fail.
 
@@ -27,7 +27,7 @@
 --- @field scope ClassScope?
 --- @field final boolean?
 --- @field value any?
---- @field get FieldGetDefinition?
+--- @field get FieldGetStruct?
 --- @field set FieldSetDefinition?
 
 --- @class (exact) StaticFieldStructParameter
@@ -37,10 +37,10 @@
 --- @field scope ClassScope?
 --- @field final boolean?
 --- @field value any?
---- @field get FieldGetDefinition?
+--- @field get FieldGetStruct?
 --- @field set FieldSetDefinition?
 
---- @class (exact) FieldGetDefinition
+--- @class (exact) FieldGetStruct
 --- @field scope ClassScope?
 --- @field body function?
 --- @field name string?
