@@ -261,21 +261,21 @@ end
 --- @cast API VMInterfaceModule
 
 --- @param self InterfaceStruct
---- @param definition InterfaceStaticMethodStructInput
+--- @param methodInput InterfaceStaticMethodStructInput
 ---
 --- @return MethodStruct
-function IAPI.addStaticMethod(self, definition)
+function IAPI.addStaticMethod(self, methodInput)
     local errHeader = string.format('InterfaceStruct(%s):addStaticMethod():', self.name);
 
-    local body = definition.body;
+    local body = methodInput.body;
 
-    local scope = vm.audit.auditStructPropertyScope(self.scope, definition.scope, errHeader);
-    local name = vm.audit.auditMethodParamName(definition.name, errHeader);
-    local types = vm.audit.auditMethodReturnsProperty(definition.returnTypes, errHeader);
-    local parameters = vm.audit.auditParameters(definition.parameters, errHeader);
+    local scope = vm.audit.auditStructPropertyScope(self.scope, methodInput.scope, errHeader);
+    local name = vm.audit.auditMethodParamName(methodInput.name, errHeader);
+    local types = vm.audit.auditMethodReturnsProperty(methodInput.returnTypes, errHeader);
+    local parameters = vm.audit.auditParameters(methodInput.parameters, errHeader);
     local bodyInfo = vm.executable.getExecutableInfo(body);
 
-    local md = {
+    local methodStruct = {
 
         __type__ = 'MethodStruct',
 
@@ -299,50 +299,50 @@ function IAPI.addStaticMethod(self, definition)
         override = false,
         super = nil,
 
-        -- Interface definition. --
+        -- Interface struct. --
         interface = self, -- Lets the VM know this belongs to an interface.
         default = body ~= nil,
 
-        -- Always falsify class flags in class method definitions. --
+        -- Always falsify class flags in class method structs. --
         abstract = false,
     };
 
-    md.signature = vm.executable.createSignature(md);
+    methodStruct.signature = vm.executable.createSignature(methodStruct);
 
-    --- @cast md MethodStruct
+    --- @cast methodStruct MethodStruct
 
-    local methodCluster = self.declaredMethods[md.name];
+    local methodCluster = self.declaredMethods[methodStruct.name];
     if not methodCluster then
         methodCluster = {};
-        self.declaredMethods[md.name] = methodCluster;
+        self.declaredMethods[methodStruct.name] = methodCluster;
     end
-    methodCluster[md.signature] = md;
+    methodCluster[methodStruct.signature] = methodStruct;
 
-    return md;
+    return methodStruct;
 end
 
 --- Attempts to resolve a MethodStruct in the Struct. If the method isn't defined in the interface,
 --- `nil` is returned.
 ---
 --- @param self InterfaceStruct
---- @param name string
+--- @param methodName string
 ---
 --- @return MethodStruct[]? methods
-function IAPI.getDeclaredMethods(self, name)
-    return self.declaredMethods[name];
+function IAPI.getDeclaredMethods(self, methodName)
+    return self.declaredMethods[methodName];
 end
 
 --- @param self InterfaceStruct
---- @param name string
+--- @param methodName string
 --- @param args any[]
 ---
 --- @return MethodStruct|nil MethodStruct
-function IAPI.getMethod(self, name, args)
-    local method = self:getDeclaredMethod(name, args);
-    if not method and self.super then
-        method = self.super:getMethod(name, args);
+function IAPI.getMethod(self, methodName, args)
+    local methodStruct = self:getDeclaredMethod(methodName, args);
+    if not methodStruct and self.super then
+        methodStruct = self.super:getMethod(methodName, args);
     end
-    return method;
+    return methodStruct;
 end
 
 --- @param self InterfaceStruct
@@ -352,32 +352,30 @@ end
 --- @return MethodStruct|nil MethodStruct
 function IAPI.getDeclaredMethod(self, name, args)
     local argsLen = #args;
-    local methods = self.declaredMethods[name];
+    local methodStructCluster = self.declaredMethods[name];
 
     -- No declared methods with name.
-    if not methods then
-        return nil;
-    end
+    if not methodStructCluster then return nil end
 
-    for i = 1, #methods do
-        local method = methods[i];
-        local methodParams = method.parameters;
+    for i = 1, #methodStructCluster do
+        local methodStruct = methodStructCluster[i];
+        local methodParams = methodStruct.parameters;
         local paramsLen = #methodParams;
 
         if argsLen == paramsLen then
             --- Empty args methods.
             if argsLen == 0 then
-                return method;
+                return methodStruct;
             else
                 for j = 1, #methodParams do
                     local arg = args[j];
                     local parameter = methodParams[j];
                     if not vm.type.isAssignableFromType(arg, parameter.types) then
-                        method = nil;
+                        methodStruct = nil;
                         break;
                     end
                 end
-                if method then return method end
+                if methodStruct then return methodStruct end
             end
         end
     end
@@ -387,15 +385,15 @@ end
 --- @param self InterfaceStruct
 --- @param line integer
 ---
---- @return MethodStruct|nil method
+--- @return MethodStruct|nil methodStruct
 function IAPI.getMethodFromLine(self, line)
     --- @type MethodStruct
-    local md;
-    for _, mdc in pairs(self.declaredMethods) do
-        for i = 1, #mdc do
-            md = mdc[i];
-            if line >= md.lineRange.start and line <= md.lineRange.stop then
-                return md;
+    local methodStruct;
+    for _, methodStructCluster in pairs(self.declaredMethods) do
+        for i = 1, #methodStructCluster do
+            methodStruct = methodStructCluster[i];
+            if line >= methodStruct.lineRange.start and line <= methodStruct.lineRange.stop then
+                return methodStruct;
             end
         end
     end
@@ -411,8 +409,8 @@ end
 ---
 --- @return boolean result True if the interface to evaluate is a super-class of the subClass.
 function IAPI.__recurseSubInterface(subInterface, interfaceToEval)
-    local subLen = #subInterface.sub;
-    for i = 1, subLen do
+    local len = #subInterface.sub;
+    for i = 1, len do
         local next = subInterface.sub[i];
         if IAPI.isAssignableFromType(next, interfaceToEval) or IAPI.__recurseSubInterface(next, interfaceToEval) then
             return true;
@@ -421,20 +419,13 @@ function IAPI.__recurseSubInterface(subInterface, interfaceToEval)
     return false;
 end
 
---- @param interface InterfaceStruct The interface to evaulate.
----
---- @return boolean result True if the interface to evaluate is a super-interface of the sub-interface.
-function IAPI:isSubInterface(self, interface)
-    if IAPI.__recurseSubInterface(self, interface) then
+function IAPI.isSubInterface(self, interfaceStruct)
+    if IAPI.__recurseSubInterface(self, interfaceStruct) then
         return true;
     end
     return false;
 end
 
---- @param self InterfaceStruct
---- @param struct Struct
----
---- @return boolean
 function IAPI.isAssignableFromType(self, struct)
     if struct.__type__ ~= 'InterfaceStruct' then
         return false;
@@ -445,10 +436,6 @@ function IAPI.isAssignableFromType(self, struct)
     return self == struct or IAPI.isSuperInterface(self, struct);
 end
 
---- @param self InterfaceStruct
---- @param interface InterfaceStruct?
----
---- @return boolean
 function IAPI.isSuperInterface(self, interface)
     --- @type InterfaceStruct|nil
     local next = self.super;
@@ -459,41 +446,38 @@ function IAPI.isSuperInterface(self, interface)
     return false;
 end
 
-function IAPI.addStaticField(self, fd)
+function IAPI.addStaticField(self, fieldInput)
     --- @type FieldStruct
-    local args = {
+    local fieldStruct = {
         __type__ = 'FieldStruct',
         audited = false,
         class = self,
-        types = fd.types,
-        type = fd.type,
-        name = fd.name,
+        types = fieldInput.types,
+        type = fieldInput.type,
+        name = fieldInput.name,
         scope = 'public',
         static = true,
         final = true,
-        value = fd.value,
-        get = fd.get,
-        set = fd.set,
+        value = fieldInput.value,
+        get = fieldInput.get,
+        set = fieldInput.set,
         assignedOnce = false,
     };
 
-    vm.audit.auditField(self, args);
+    vm.audit.auditField(self, fieldStruct);
 
     -- Ensure that all constants are defined.
-    if not args.value then
-        errorf(2, '%s Cannot add interface field without a value: %s', self.printHeader, args.name);
+    if not fieldStruct.value then
+        errorf(2, '%s Cannot add interface field without a value: %s', self.printHeader, fieldStruct.name);
     end
 
-    self.declaredFields[args.name] = args;
+    self.declaredFields[fieldStruct.name] = fieldStruct;
 
-    return args;
+    return fieldStruct;
 end
 
 -- MARK: Struct
 
---- @param self InterfaceStruct
----
---- @return InterfaceStruct interfaceDef
 function IAPI.finalize(self)
     local errHeader = string.format('Interface(%s):finalize():', self.path);
 
@@ -559,8 +543,8 @@ function IAPI.finalize(self)
     end
 
     -- Add static method references.
-    for name, mCluster in pairs(self.declaredMethods) do
-        self[name] = self.__middleMethods[name];
+    for methodName, mCluster in pairs(self.declaredMethods) do
+        self[methodName] = self.__middleMethods[methodName];
     end
 
     local declaredFields = {};
@@ -571,11 +555,11 @@ function IAPI.finalize(self)
     self.declaredFields = declaredFields;
 
     local declaredMethods = {};
-    for mName, v in pairs(self.declaredMethods) do
-        declaredMethods[mName] = {};
-        for sig, method in pairs(v) do
+    for methodName, v in pairs(self.declaredMethods) do
+        declaredMethods[methodName] = {};
+        for sig, methodStruct in pairs(v) do
             --- @params T: MethodStruct
-            declaredMethods[mName][sig] = readonly(method);
+            declaredMethods[methodName][sig] = readonly(methodStruct);
         end
     end
     self.declaredMethods = declaredMethods;
@@ -600,28 +584,16 @@ end
 
 -- MARK: - Field
 
---- Attempts to resolve a FieldStruct in the ClassStruct. If the field isn't declared for the class
---- level, the super-class(es) are checked.
----
---- @param name string
----
---- @return FieldStruct? FieldStruct
-function IAPI.getField(self, name)
-    local fd = self:getDeclaredField(name);
-    if not fd and self.super then
-        return self.super:getField(name);
+function IAPI.getField(self, fieldName)
+    local fieldStruct = self:getDeclaredField(fieldName);
+    if not fieldStruct and self.super then
+        return self.super:getField(fieldName);
     end
-    return fd;
+    return fieldStruct;
 end
 
---- Attempts to resolve a FieldStruct in the ClassStruct. If the field isn't defined in the class, nil
---- is returned.
----
---- @param name string
----
---- @return FieldStruct? FieldStruct
-function IAPI.getDeclaredField(self, name)
-    return self.declaredFields[name];
+function IAPI.getDeclaredField(self, fieldName)
+    return self.declaredFields[fieldName];
 end
 
 function IAPI.getFields(self)
@@ -630,8 +602,8 @@ function IAPI.getFields(self)
 
     local next = self;
     while next do
-        for _, fd in pairs(next.declaredFields) do
-            table.insert(array, fd);
+        for _, fieldStruct in pairs(next.declaredFields) do
+            table.insert(array, fieldStruct);
         end
         next = next.super;
     end
@@ -639,73 +611,71 @@ function IAPI.getFields(self)
     return array;
 end
 
-function API.newInterface(definition, enclosingStruct)
+function API.newInterface(interfaceInput, outer)
     -- Grab path / package / name context.
-    local locInfo = vm.struct.calcPathNamePackage(definition, enclosingStruct);
+    local locInfo = vm.struct.calcPathNamePackage(interfaceInput, outer);
     local path = locInfo.path;
-    local name = locInfo.name;
+    local interfaceName = locInfo.name;
     local pkg = locInfo.pkg;
 
-    local fileLevel, file, folder = vm.scope.getRelativeFile();
-    print('file: ', file);
-    print('folder: ', folder);
+    local _, file, folder = vm.scope.getRelativeFile();
 
     --- @type any
-    local id = vm.STRUCTS[path] or {};
+    local interfaceStruct = vm.STRUCTS[path] or {};
 
-    local extends = definition.extends;
+    local extends = interfaceInput.extends;
 
     -- * Internal Type * --
-    id.__type__ = 'InterfaceStruct';
+    interfaceStruct.__type__ = 'InterfaceStruct';
 
     -- * Struct Properties * --
-    id.path = path;
-    id.name = name;
-    id.pkg = pkg;
-    id.file = file;
-    id.folder = folder;
-    id.type = 'interface:' .. path;
+    interfaceStruct.path = path;
+    interfaceStruct.name = interfaceName;
+    interfaceStruct.pkg = pkg;
+    interfaceStruct.file = file;
+    interfaceStruct.folder = folder;
+    interfaceStruct.type = 'interface:' .. path;
 
-    id.static = definition.static or false;
+    interfaceStruct.static = interfaceInput.static or false;
 
     -- * Scopable Properties * --
-    id.scope = definition.scope or 'package';
+    interfaceStruct.scope = interfaceInput.scope or 'package';
 
     -- * Hierarchical Properties * --
-    id.extends = extends;
-    id.subClasses = {};
+    interfaceStruct.extends = extends;
+    interfaceStruct.subClasses = {};
 
     -- * Enclosurable Properties * --
-    id.outer = enclosingStruct;
-    id.inner = {};
-    id.isChild = enclosingStruct ~= nil;
-    id.children = {};
+    interfaceStruct.outer = outer;
+    interfaceStruct.inner = {};
+    interfaceStruct.isChild = outer ~= nil;
+    interfaceStruct.children = {};
 
     -- * Fieldable Properties * --
-    id.declaredFields = {};
+    interfaceStruct.declaredFields = {};
 
     -- * Methodable Properties * --
-    id.declaredMethods = {};
-    id.methods = {};
-    id.methodCache = {};
+    interfaceStruct.declaredMethods = {};
+    interfaceStruct.methods = {};
+    interfaceStruct.methodCache = {};
 
     -- * Debug Properties * --
-    id.printHeader = string.format('interface (%s):', path);
+    interfaceStruct.printHeader = string.format('interface (%s):', path);
 
-    id.__readonly__ = false;
+    interfaceStruct.__readonly__ = false;
 
-    --- @cast id InterfaceStruct
+    --- @cast interfaceStruct InterfaceStruct
 
-    vm.STRUCTS[id.path] = id;
+    vm.STRUCTS[interfaceStruct.path] = interfaceStruct;
 
     -- Enclosurable: Add the definition to the enclosing struct.
-    if enclosingStruct then
-        enclosingStruct.inner[id.name] = id;
+    if outer then
+        outer.inner[interfaceStruct.name] = interfaceStruct;
     end
 
     --- Set the class to be accessable from a global package reference.
     vm.stepIn();
-    vm.package.addToPackageStruct(id);
+    vm.package.addToPackageStruct(interfaceStruct);
     vm.stepOut();
 
     if extends then
@@ -713,7 +683,7 @@ function API.newInterface(definition, enclosingStruct)
         local callInfo = vm.scope.getRelativeCall();
 
         -- Check and see if the calling code can access the class.
-        local scopeCalled = vm.scope.getScopeForCall(extends, callInfo, id);
+        local scopeCalled = vm.scope.getScopeForCall(extends, callInfo, interfaceStruct);
         if not vm.scope.canAccessScope(extends.scope, scopeCalled) then
             local sClass = path;
             local sSuper = extends.path;
@@ -730,9 +700,9 @@ function API.newInterface(definition, enclosingStruct)
         end
     end
 
-    -- MARK: - inner
+    -- MARK: - Inner
 
-    function id:addStaticStruct(struct)
+    function interfaceStruct:addStaticStruct(struct)
         if struct.outer then
             error('TODO: Document', 2);
         end
@@ -740,9 +710,9 @@ function API.newInterface(definition, enclosingStruct)
         struct:setOuterStruct(self);
     end
 
-    function id:setOuterStruct(outer)
+    function interfaceStruct:setOuterStruct(outer)
         if self.__readonly__ then
-            errorf(2, '%s Cannot set enclosing struct. (definition is finalized)');
+            errorf(2, '%s Cannot set enclosing struct. (Struct is finalized)');
         end
 
         if self.outer then
@@ -750,10 +720,10 @@ function API.newInterface(definition, enclosingStruct)
             self.outer = nil;
         end
 
-        local locInfo = vm.struct.calcPathNamePackage(definition, outer);
-        self.path = locInfo.path;
-        self.name = locInfo.name;
-        self.pkg = locInfo.pkg;
+        local outerStructLocInfo = vm.struct.calcPathNamePackage(interfaceInput, outer);
+        self.path = outerStructLocInfo.path;
+        self.name = outerStructLocInfo.name;
+        self.pkg = outerStructLocInfo.pkg;
 
         if outer then
             outer.inner[self.name] = self;
@@ -762,39 +732,37 @@ function API.newInterface(definition, enclosingStruct)
     end
 
     -- * General API * --
-    id.finalize = IAPI.finalize;
+    interfaceStruct.finalize = IAPI.finalize;
 
     -- * Fieldable API * --
-    id.addStaticField = IAPI.addStaticField;
-    id.getDeclaredField = IAPI.getDeclaredField;
-    id.getField = IAPI.getField;
+    interfaceStruct.addStaticField = IAPI.addStaticField;
+    interfaceStruct.getDeclaredField = IAPI.getDeclaredField;
+    interfaceStruct.getField = IAPI.getField;
 
     -- * Methodable API * --
-    id.addMethod = IAPI.addMethod;
-    id.addStaticMethod = IAPI.addStaticMethod;
+    interfaceStruct.addMethod = IAPI.addMethod;
+    interfaceStruct.addStaticMethod = IAPI.addStaticMethod;
 
-    function id:getDeclaredMethods(name)
-        return self.declaredMethods[name];
+    function interfaceStruct:getDeclaredMethods(methodName)
+        return self.declaredMethods[methodName];
     end
 
-    function id:getMethod(name, args)
-        return vm.executable.resolveMethod(self, name, self.methods[name], args);
+    function interfaceStruct:getMethod(methodName, args)
+        return vm.executable.resolveMethod(self, methodName, self.methods[methodName], args);
     end
 
-    function id:getDeclaredMethod(name, args)
-        return vm.executable.resolveMethod(self, name, self.declaredMethods[name], args);
+    function interfaceStruct:getDeclaredMethod(methodName, args)
+        return vm.executable.resolveMethod(self, methodName, self.declaredMethods[methodName], args);
     end
 
     -- * Hierarchical API * --
-    id.isSuperInterface = IAPI.isSuperInterface;
-    id.isSubInterface = IAPI.isSubInterface;
-    id.isAssignableFromType = IAPI.isAssignableFromType;
+    interfaceStruct.isSuperInterface = IAPI.isSuperInterface;
+    interfaceStruct.isSubInterface = IAPI.isSubInterface;
+    interfaceStruct.isAssignableFromType = IAPI.isAssignableFromType;
 
-    function id:isAssignableFromType(superStruct)
+    function interfaceStruct:isAssignableFromType(superStruct)
         -- All other super-structs fail on assignable check.
-        if not superStruct or
-            superStruct.__type__ == 'ClassStruct' or
-            superStruct.__type__ == 'InterfaceStruct' then
+        if not superStruct or superStruct.__type__ == 'ClassStruct' then
             return false;
         end
 
@@ -802,13 +770,13 @@ function API.newInterface(definition, enclosingStruct)
         return self == superStruct or self:isSuperInterface(superStruct);
     end
 
-    function id:isFinalized()
+    function interfaceStruct:isFinalized()
         return self.__readonly__;
     end
 
-    applyMetatable(id);
+    applyMetatable(interfaceStruct);
 
-    return id;
+    return interfaceStruct;
 end
 
 return API;

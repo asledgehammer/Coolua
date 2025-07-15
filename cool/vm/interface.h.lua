@@ -44,10 +44,10 @@ local InterfaceStructInput = {};
 --- @field static boolean
 local InterfaceStruct = {};
 
---- @param definition FieldStructInput
+--- @param input FieldStructInput
 ---
 --- @return FieldStruct
-function InterfaceStruct:addStaticField(definition) end
+function InterfaceStruct:addStaticField(input) end
 
 --- Attempts to resolve a FieldStruct in the InterfaceStruct. If the field isn't declared for the class level,
 --- the super-class(es) are checked.
@@ -65,15 +65,15 @@ function InterfaceStruct:getField(name) end
 --- @return FieldStruct? FieldStruct
 function InterfaceStruct:getDeclaredField(name) end
 
---- @param definition InterfaceMethodStructInput
+--- @param input InterfaceMethodStructInput
 ---
 --- @return MethodStruct
-function InterfaceStruct:addMethod(definition) end
+function InterfaceStruct:addMethod(input) end
 
---- @param definition InterfaceStaticMethodStructInput
+--- @param input InterfaceStaticMethodStructInput
 ---
 --- @return MethodStruct
-function InterfaceStruct:addStaticMethod(definition) end
+function InterfaceStruct:addStaticMethod(input) end
 
 --- Attempts to resolve a MethodStruct in the InterfaceStruct. If the method isn't declared for the class
 --- level, the super-class(es) are checked.
@@ -119,8 +119,8 @@ function InterfaceStruct:isSuperInterface(interface) end
 --- @return boolean
 function InterfaceStruct:isSubInterface(interface) end
 
---- @param clsDef Struct
-function InterfaceStruct:addStaticStruct(clsDef) end
+--- @param struct Struct
+function InterfaceStruct:addStaticStruct(struct) end
 
 --- @param outer Struct
 function InterfaceStruct:setOuterStruct(outer) end
@@ -130,8 +130,8 @@ function InterfaceStruct:setOuterStruct(outer) end
 --- @class VMInterfaceModule: VMModule
 local API = {};
 
---- @param definition InterfaceStructInput
---- @param enclosingStruct Struct?
+--- @param input InterfaceStructInput
+--- @param outer Struct?
 ---
 --- @return InterfaceStruct
-function API.newInterface(definition, enclosingStruct) end
+function API.newInterface(input, outer) end
