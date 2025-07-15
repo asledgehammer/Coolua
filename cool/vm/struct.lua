@@ -280,10 +280,10 @@ local mt_reference = {
         return string.format('Reference(%s)', self.path);
     end,
     -- __index = function(self)
-    --     errorf(2, 'Definition is not initialized: %s', self.path);
+    --     errorf(2, 'Struct is not initialized: %s', self.path);
     -- end,
     __newindex = function(self)
-        errorf(2, 'Definition is not initialized: %s', self.path);
+        errorf(2, 'Struct is not initialized: %s', self.path);
     end,
 };
 

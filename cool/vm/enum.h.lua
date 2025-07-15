@@ -4,7 +4,7 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
--- MARK: - Definition
+-- MARK: - Struct
 
 --- @class EnumStructInput: StructInput
 local EnumStructInput = {};

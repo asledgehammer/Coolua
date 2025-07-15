@@ -4,7 +4,7 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
--- MARK: - Definition
+-- MARK: - Struct
 
 --- @class InterfaceInstance
 local InterfaceInstance = {};

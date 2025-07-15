@@ -4,7 +4,7 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
---- @class PackageStruct: ClassStruct
+--- @class PackageDefinition: ObjectDefinition
 local PackageStruct = {};
 
 --- @param path string

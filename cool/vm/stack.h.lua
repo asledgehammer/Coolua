@@ -4,7 +4,7 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
--- MARK: - Definition
+-- MARK: - Struct
 
 --- @class ClassContext The ClassContext is used to monitor and audit calls for scope-visible methods and fields.
 ---

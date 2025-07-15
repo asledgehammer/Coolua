@@ -4,7 +4,7 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
--- MARK: Definitions
+-- MARK: Struct
 
 --- @class SuperTable
 ---

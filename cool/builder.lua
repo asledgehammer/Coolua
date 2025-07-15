@@ -369,9 +369,9 @@ local function processTypes(e)
             if e.__type__ == 'ClassStruct' or e.__type__ == 'InterfaceStruct' then
                 --- @cast e ClassStruct
                 table.insert(types, e);
-            elseif e.getDefinition then
+            elseif e.getStruct then
                 -- Convert clas to its VM definition and grab its path.
-                table.insert(types, e:getDefinition());
+                table.insert(types, e:getStruct());
             end
             -- Cannot use dictionaries to define types.
         elseif not isArray(e) then

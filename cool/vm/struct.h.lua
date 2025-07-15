@@ -32,11 +32,11 @@
 --- @class (exact) Hierarchical
 --- @field super Hierarchical?
 --- @field sub Hierarchical[]
---- @field children table<string, ClassDefinition> Any classes that are defined within the class's context.
+--- @field children table<string, Struct> Any classes that are defined within the class's context.
 --- @field isChild boolean
 --- @field final boolean (Default: false) If the struct is final and cannot be extended.
 
--- MARK: - Definition
+-- MARK: - Struct
 
 --- @class StructReference A pre-initialized definition that is cross-referenced between class initializations.
 --- @field __type__ 'StructReference'

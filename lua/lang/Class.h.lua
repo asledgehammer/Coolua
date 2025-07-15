@@ -4,10 +4,10 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
---- @class ClassDefinition: ClassStruct
+--- @class ClassDefinition: ObjectDefinition
 local ClassDefinition = {};
 
---- @param def ClassStruct|InterfaceStruct|EnumStruct
+--- @param def Struct
 function ClassDefinition.new(def) end
 
 --- @return Class
@@ -16,7 +16,7 @@ function ClassDefinition:create() end
 --- @class Class: Object
 --- @field pkg string
 --- @field name string
---- @field definition ClassStruct|InterfaceStruct|EnumStruct
+--- @field struct Struct
 ---
 --- @generic T: ObjectDefinition
 local Class = {};
@@ -26,8 +26,8 @@ local Class = {};
 --- @return boolean isAssignable
 function Class:isAssignableFromType(other) end
 
---- @return ClassStruct|InterfaceStruct|EnumStruct
-function Class:getDefinition() end
+--- @return Struct
+function Class:getStruct() end
 
 --- @return boolean
 function Class:isInterface() end

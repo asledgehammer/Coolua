@@ -282,13 +282,13 @@ end
 ---
 --- @return boolean result
 function API.equals(a, b)
-    return a:getClass():getDefinition().__middleMethods['equals'](a, b);
+    return a:getClass():getStruct().__middleMethods['equals'](a, b);
 end
 
 -- For internal / bottom-level classes, this will aid in providing methods for what's needed.
 local function createPseudoClassInstance(def)
     -- Prevent infinite loops.
-    local __class__ = { getDefinition = function() return def; end };
+    local __class__ = { getStruct = function() return def; end };
     local mt = {};
     function mt.__tostring()
         return '(Pseudo-Class): ' .. def.name;

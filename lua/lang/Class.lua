@@ -58,7 +58,7 @@ Class = class 'Class' (public, final) {
         get(public) {},
     },
 
-    field 'definition' (private, final) {
+    field 'struct' (private, final) {
         properties {
             types = {
                 'ClassStruct',
@@ -79,9 +79,8 @@ Class = class 'Class' (public, final) {
         --- @param self Class
         --- @param definition ClassStruct
         body = function(self, definition)
-            self.definition = definition;
+            self.struct = definition;
             self.name = definition.name;
-            -- self.package = VM.getPackage(definition.pkg);
         end
     },
 
@@ -89,7 +88,7 @@ Class = class 'Class' (public, final) {
         parameters({ type = 'any' }),
         returnTypes(Object),
         function(self, ...)
-            return self.definition.new(...);
+            return self.struct.new(...);
         end
     },
 
@@ -102,9 +101,9 @@ Class = class 'Class' (public, final) {
             if not other then
                 return false;
             elseif other.__type__ == 'ClassStruct' then
-                return self:getDefinition():isAssignableFromType(other);
+                return self:getStruct():isAssignableFromType(other);
             else
-                return self:getDefinition():isAssignableFromType(other:getDefinition());
+                return self:getStruct():isAssignableFromType(other:getStruct());
             end
         end
     },
@@ -112,14 +111,14 @@ Class = class 'Class' (public, final) {
     method 'isInterface' (public, final) {
         returnTypes('boolean'),
         function(self)
-            return self.definition.__type__ == 'InterfaceStruct';
+            return self.struct.__type__ == 'InterfaceStruct';
         end
     },
 
     method 'isEnum' (public, final) {
         returnTypes('boolean'),
         function(self)
-            return self.definition.__type__ == 'EnumStruct';
+            return self.struct.__type__ == 'EnumStruct';
         end
     }
 };

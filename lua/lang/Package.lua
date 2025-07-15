@@ -3,22 +3,13 @@
 ---]]
 
 local vm = require 'cool/vm';
+local import = vm.import;
 local newClass = vm.class.newClass;
 
-require 'lua/lang/Object';
+local Object = import 'lua.lang.Object';
 
--- public final class Package {
+local Package = newClass({ scope = 'public', final = true });
 
-local Package = newClass({
-    -- Define these for debugging purposes.
-    path = 'lua.lang',
-    name = 'Package',
-
-    scope = 'public',
-    final = true
-});
-
--- private final string path { get; }
 Package:addField({
     scope = 'private',
     final = true,
@@ -28,7 +19,6 @@ Package:addField({
     get = { scope = 'public' }
 });
 
--- private final string name { get; }
 Package:addField({
     scope = 'private',
     final = true,
@@ -38,7 +28,6 @@ Package:addField({
     get = { scope = 'public' }
 });
 
--- private final Class[] classes; { get; }
 Package:addField({
     scope = 'private',
     final = true,
@@ -48,13 +37,12 @@ Package:addField({
     get = { scope = 'public' }
 });
 
--- private Package(String path)
 Package:addConstructor({
     scope = 'private',
     parameters = {
         { name = 'path', type = 'string' }
     },
-    
+
     --- @param self Package
     super = function(self)
         self:super();
@@ -72,6 +60,6 @@ Package:addConstructor({
     end
 });
 
--- }
+Package:finalize();
 
-return Package:finalize();
+return Package;

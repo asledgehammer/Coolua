@@ -8,7 +8,7 @@ local import = cool.import;
 print('## TEST ##\n');
 
 --- @type DimensionDefinition
-local Dimension = import 'tests/Dimension';
+local Dimension = import 'tests.Dimension';
 
 local dim1 = Dimension.new(5, 5);
 local dim2 = Dimension.new(5, 4);
