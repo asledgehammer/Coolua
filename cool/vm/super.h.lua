@@ -20,7 +20,7 @@ local API = {};
 
 --- SuperTables are created for classes to access superclass fields.
 ---
---- @param cd ClassStructDefinition
+--- @param cd ClassStruct
 ---
 --- @return SuperTable
 function API.createSuperTable(cd) end

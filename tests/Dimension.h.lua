@@ -4,7 +4,7 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
---- @class DimensionDefinition: ClassStructDefinition
+--- @class DimensionDefinition: ClassStruct
 local DimensionDefinition = {};
 
 --- @param width number

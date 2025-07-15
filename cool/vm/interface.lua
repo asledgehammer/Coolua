@@ -499,7 +499,7 @@ function IAPI.finalize(self)
 
     if self.__readonly__ then
         errorf(2, '%s Cannot finalize. (Interface is already finalized!)', errHeader);
-    elseif self.super and (self.super.__type__ == 'ClassStructDefinition' and not self.super.__readonly__) then
+    elseif self.super and (self.super.__type__ == 'ClassStruct' and not self.super.__readonly__) then
         errorf(2, '%s Cannot finalize. (Super-Interface %s is not finalized!)', errHeader, self.path);
     end
 
@@ -600,7 +600,7 @@ end
 
 -- MARK: - Field
 
---- Attempts to resolve a FieldDefinition in the ClassStructDefinition. If the field isn't declared for the class
+--- Attempts to resolve a FieldDefinition in the ClassStruct. If the field isn't declared for the class
 --- level, the super-class(es) are checked.
 ---
 --- @param name string
@@ -614,7 +614,7 @@ function IAPI.getField(self, name)
     return fd;
 end
 
---- Attempts to resolve a FieldDefinition in the ClassStructDefinition. If the field isn't defined in the class, nil
+--- Attempts to resolve a FieldDefinition in the ClassStruct. If the field isn't defined in the class, nil
 --- is returned.
 ---
 --- @param name string
@@ -796,7 +796,7 @@ function API.newInterface(definition, enclosingStruct)
     function id:isAssignableFromType(superStruct)
         -- All other super-structs fail on assignable check.
         if not superStruct or
-            superStruct.__type__ == 'ClassStructDefinition' or
+            superStruct.__type__ == 'ClassStruct' or
             superStruct.__type__ == 'InterfaceStructDefinition' then
             return false;
         end

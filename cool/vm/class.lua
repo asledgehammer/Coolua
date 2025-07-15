@@ -298,7 +298,7 @@ local function createPseudoClassInstance(def)
     return __class__;
 end
 
---- @param definition ClassStructDefinitionParameter|ChildClassStructDefinitionParameter
+--- @param definition ClassStructParameter|ChildClassStructParameter
 --- @param outer StructDefinition?
 function API.newClass(definition, outer)
     local locInfo = vm.struct.calcPathNamePackage(definition, outer);
@@ -390,7 +390,7 @@ function API.newClass(definition, outer)
 
     --- @cast cd any
 
-    cd.__type__ = 'ClassStructDefinition';
+    cd.__type__ = 'ClassStruct';
 
     -- * Struct Properties * --
     cd.pkg = pkg;
@@ -493,7 +493,7 @@ function API.newClass(definition, outer)
         end
     end
 
-    --- @cast cd ClassStructDefinition
+    --- @cast cd ClassStruct
 
     -- MARK: - inner
 
@@ -547,7 +547,7 @@ function API.newClass(definition, outer)
 
         if not cd.__readonly__ then
             cd:finalize();
-            -- errorf(2, '%s Cannot invoke constructor. (ClassStructDefinition is not finalized!)', errHeader);
+            -- errorf(2, '%s Cannot invoke constructor. (ClassStruct is not finalized!)', errHeader);
         end
 
         -- Check and see if the calling code can access the class.
@@ -689,7 +689,7 @@ function API.newClass(definition, outer)
         return args;
     end
 
-    --- Attempts to resolve a FieldDefinition in the ClassStructDefinition. If the field isn't declared for the class
+    --- Attempts to resolve a FieldDefinition in the ClassStruct. If the field isn't declared for the class
     --- level, the super-class(es) are checked.
     ---
     --- @param name string
@@ -703,7 +703,7 @@ function API.newClass(definition, outer)
         return fd;
     end
 
-    --- Attempts to resolve a FieldDefinition in the ClassStructDefinition. If the field isn't defined in the class, nil
+    --- Attempts to resolve a FieldDefinition in the ClassStruct. If the field isn't defined in the class, nil
     --- is returned.
     ---
     --- @param name string
@@ -750,7 +750,7 @@ function API.newClass(definition, outer)
             );
         end
 
-        local errHeader = string.format('ClassStructDefinition(%s):addConstructor():', cd.name);
+        local errHeader = string.format('ClassStruct(%s):addConstructor():', cd.name);
 
         if not constructorDefinition then
             error(
@@ -830,7 +830,7 @@ function API.newClass(definition, outer)
     -- MARK: - Method
 
     function cd:addStaticMethod(methodDefinition)
-        local errHeader = string.format('ClassStructDefinition(%s):addMethod():', cd.name);
+        local errHeader = string.format('ClassStruct(%s):addMethod():', cd.name);
 
         local body = methodDefinition.body;
         local bodyInfo = vm.executable.getExecutableInfo(body);
@@ -893,7 +893,7 @@ function API.newClass(definition, outer)
     end
 
     function cd:addAbstractMethod(methodDefinition)
-        local errHeader = string.format('ClassStructDefinition(%s):addAbstractMethod():', cd.name);
+        local errHeader = string.format('ClassStruct(%s):addAbstractMethod():', cd.name);
 
         local bodyInfo = vm.executable.getExecutableInfo();
 
@@ -956,7 +956,7 @@ function API.newClass(definition, outer)
     function cd:addMethod(methodDefinition)
         local body = methodDefinition.body;
         local bodyInfo = vm.executable.getExecutableInfo(body);
-        local errHeader = string.format('ClassStructDefinition(%s):addMethod():', cd.name);
+        local errHeader = string.format('ClassStruct(%s):addMethod():', cd.name);
         local scope = vm.audit.auditStructPropertyScope(self.scope, methodDefinition.scope, errHeader);
         local name = vm.audit.auditMethodParamName(methodDefinition.name, errHeader);
         local types = vm.audit.auditMethodReturnsProperty(methodDefinition.returnTypes, errHeader);
@@ -1014,7 +1014,7 @@ function API.newClass(definition, outer)
         return md;
     end
 
-    --- Attempts to resolve a MethodDefinition in the ClassStructDefinition. If the method isn't defined in the class,
+    --- Attempts to resolve a MethodDefinition in the ClassStruct. If the method isn't defined in the class,
     --- `nil` is returned.
     ---
     --- @param name string
@@ -1042,7 +1042,7 @@ function API.newClass(definition, outer)
 
     -- MARK: - finalize()
 
-    --- @return ClassStructDefinition class
+    --- @return ClassStruct class
     function cd:finalize()
         local errHeader = string.format('Class(%s):finalize():', cd.path);
 
@@ -1146,8 +1146,8 @@ function API.newClass(definition, outer)
 
     --- (Handles recursively going through sub-classes to see if a class is a sub-class)
     ---
-    --- @param subClass ClassStructDefinition
-    --- @param classToEval ClassStructDefinition
+    --- @param subClass ClassStruct
+    --- @param classToEval ClassStruct
     ---
     --- @return boolean result True if the class to evaluate is a super-class of the subClass.
     local function __recurseSubClass(subClass, classToEval)
@@ -1193,7 +1193,7 @@ function API.newClass(definition, outer)
             return false;
         end
 
-        if superStruct.__type__ == 'ClassStructDefinition' then
+        if superStruct.__type__ == 'ClassStruct' then
             return self == superStruct or self:isSuperClass(superStruct);
         elseif superStruct.__type__ == 'InterfaceStructDefinition' then
             return self:isSuperInterface(superStruct);

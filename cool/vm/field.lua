@@ -32,7 +32,7 @@ local API = {
 
 --- @cast API VMFieldModule
 
---- @param self ClassStructDefinition|InterfaceStructDefinition
+--- @param self ClassStruct|InterfaceStructDefinition
 function API.compileFieldAutoMethods(self)
     for _, fieldDef in pairs(self.declaredFields) do
         local funcName = firstCharToUpper(fieldDef.name);

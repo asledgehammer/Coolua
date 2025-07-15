@@ -61,7 +61,7 @@ Class = class 'Class' (public, final) {
     field 'definition' (private, final) {
         properties {
             types = {
-                'ClassStructDefinition',
+                'ClassStruct',
                 'InterfaceStructDefinition',
                 'EnumStructDefinition'
             }
@@ -73,11 +73,11 @@ Class = class 'Class' (public, final) {
         parameters {
             {
                 name = 'def',
-                types = { 'ClassStructDefinition', 'InterfaceStructDefinition', 'EnumStructDefinition' }
+                types = { 'ClassStruct', 'InterfaceStructDefinition', 'EnumStructDefinition' }
             }
         },
         --- @param self Class
-        --- @param definition ClassStructDefinition
+        --- @param definition ClassStruct
         body = function(self, definition)
             self.definition = definition;
             self.name = definition.name;
@@ -97,11 +97,11 @@ Class = class 'Class' (public, final) {
         parameters({ name = 'other', type = Class }),
         returnTypes('boolean'),
         --- @param self Class
-        --- @param other Class|ClassStructDefinition
+        --- @param other Class|ClassStruct
         function(self, other)
             if not other then
                 return false;
-            elseif other.__type__ == 'ClassStructDefinition' then
+            elseif other.__type__ == 'ClassStruct' then
                 return self:getDefinition():isAssignableFromType(other);
             else
                 return self:getDefinition():isAssignableFromType(other:getDefinition());

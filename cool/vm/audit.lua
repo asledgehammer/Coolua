@@ -234,7 +234,7 @@ function API.auditMethodReturnsProperty(returnTypes, errHeader)
     elseif type(returnTypes) == 'table' then
         --- @cast returnTypes table
         if returnTypes.__type__ then
-            if returnTypes.__type__ ~= 'ClassStructDefinition' and returnTypes.__type__ ~= 'InterfaceStructDefinition' then
+            if returnTypes.__type__ ~= 'ClassStruct' and returnTypes.__type__ ~= 'InterfaceStructDefinition' then
                 errorf(2,
                     '%s The property "returnTypes" is not an array of types, a class or interface.' ..
                     ' {type = %s, value = %s}',

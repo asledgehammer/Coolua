@@ -61,7 +61,7 @@ function dump.userdata(ud) end
 --- @return string
 function dump.object(o) end
 
---- @param c Class|ClassStructDefinition
+--- @param c Class|ClassStruct
 ---
 --- @return string
 function dump.class(c) end

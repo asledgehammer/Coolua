@@ -37,7 +37,7 @@ function API.printMethod(def) end
 --- @return string
 function API.printInterface(def) end
 
---- @param def ClassStructDefinition
+--- @param def ClassStruct
 ---
 --- @return string
 function API.printClass(def) end

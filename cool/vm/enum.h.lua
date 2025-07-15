@@ -82,7 +82,7 @@ function EnumStructDefinition:getDeclaredMethods(name) end
 --- @return MethodDefinition|nil methodDefinition
 function EnumStructDefinition:getDeclaredMethod(name, args) end
 
---- @returns ClassStructDefinition
+--- @returns ClassStruct
 function EnumStructDefinition:finalize() end
 
 -- MARK: - Module

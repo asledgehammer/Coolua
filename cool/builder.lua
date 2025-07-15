@@ -36,7 +36,7 @@ local buildClass, buildInterface, buildFlags;
 --- @param self table
 --- @param enclosingStruct StructDefinition?
 ---
---- @return ClassStructDefinition
+--- @return ClassStruct
 buildClass = function(self, enclosingStruct)
     -- Build the class arguments. --
 
@@ -134,7 +134,7 @@ buildClass = function(self, enclosingStruct)
             for name, innerCls in pairs(self.static.classes) do
                 if innerCls.__type__ == 'ClassTable' then
                     buildClass(innerCls, cls);
-                elseif innerCls.__type__ == 'ClassStructDefinition' then
+                elseif innerCls.__type__ == 'ClassStruct' then
                     cls:addStaticStruct(innerCls);
                     -- innerCls:setOuterStruct(cls);
                 end
@@ -235,7 +235,7 @@ local function buildInterface(self, outerStruct)
             for name, innerCls in pairs(self.static.classes) do
                 if innerCls.__type__ == 'ClassTable' then
                     buildClass(innerCls, interface);
-                elseif innerCls.__type__ == 'ClassStructDefinition' then
+                elseif innerCls.__type__ == 'ClassStruct' then
                     interface:addStaticStruct(innerCls);
                 end
             end
@@ -356,7 +356,7 @@ buildFlags = function(struct, appliedStruct, defaultScope)
     end
 end
 
---- @param e ClassStructDefinition|Class|table|string
+--- @param e ClassStruct|Class|table|string
 local function processTypes(e)
     local types = {};
 
@@ -366,8 +366,8 @@ local function processTypes(e)
         table.insert(types, e);
     elseif te == 'table' then
         if e.__type__ then
-            if e.__type__ == 'ClassStructDefinition' or e.__type__ == 'InterfaceStructDefinition' then
-                --- @cast e ClassStructDefinition
+            if e.__type__ == 'ClassStruct' or e.__type__ == 'InterfaceStructDefinition' then
+                --- @cast e ClassStruct
                 table.insert(types, e);
             elseif e.getDefinition then
                 -- Convert clas to its VM definition and grab its path.
@@ -440,7 +440,7 @@ local function static(body)
                 methods[entry.name] = entry;
             elseif entry.__type__ == 'ClassTable' then
                 classes[entry.name] = entry;
-            elseif entry.__type__ == 'ClassStructDefinition' then
+            elseif entry.__type__ == 'ClassStruct' then
                 classes[entry.name] = entry;
             elseif entry.__type__ == 'InterfaceStructDefinition' then
                 interfaces[entry.name] = entry;
@@ -466,7 +466,7 @@ end
 --- @param self any
 --- @param ... ClassTableBody
 ---
---- @return ClassStructDefinition
+--- @return ClassStruct
 local mt_class_body = function(self, ...)
     local args = { ... };
     for i = 1, #args do
@@ -485,8 +485,8 @@ local mt_class_body = function(self, ...)
                     error('Cannot redefine class implementations.', 2);
                 end
                 self.implements = arg.value;
-            elseif arg.__type__ == 'ClassStructDefinition' then
-                --- @cast arg ClassStructDefinition
+            elseif arg.__type__ == 'ClassStruct' then
+                --- @cast arg ClassStruct
                 self.instanced.classes[arg.name] = arg;
             elseif arg.__type__ == 'InterfaceStructDefinition' then
                 --- @cast arg InterfaceStructDefinition
@@ -550,7 +550,7 @@ local mt_class = {
 
 --- @param name string
 ---
---- @return ClassStructDefinition
+--- @return ClassStruct
 local function class(name)
     local t = {
         __type__ = 'ClassTable',
@@ -934,7 +934,7 @@ end
 
 -- MARK: - Returns
 
---- @param e ClassStructDefinition|Class|table|string
+--- @param e ClassStruct|Class|table|string
 local function returnTypes(e)
     return {
         __type__ = 'ReturnsTable',

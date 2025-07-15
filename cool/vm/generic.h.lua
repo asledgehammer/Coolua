@@ -30,7 +30,7 @@ local API = {};
 
 --- Compiles provided generic parameters for classes and methods.
 ---
---- @param cd ClassStructDefinition
+--- @param cd ClassStruct
 --- @param gdefParam GenericsTypesDefinitionParameter
 ---
 --- @return GenericsTypesDefinition

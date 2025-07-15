@@ -14,9 +14,9 @@ local dim1 = Dimension.new(5, 5);
 local dim2 = Dimension.new(5, 4);
 local dim3 = Dimension.new(5, 5);
 
-print('ClassStructDefinition tests:\n');
-print('\tClassStructDefinition:__tostring()', Dimension);
-print('\tClassStructDefinition:__type__\t\t', Dimension.__type__);
+print('ClassStruct tests:\n');
+print('\tClassStruct:__tostring()', Dimension);
+print('\tClassStruct:__type__\t\t', Dimension.__type__);
 print('\nInstance tests:\n');
 print('\tobject:getWidth(): ', dim1:getWidth());
 print('\tobject:toString(): ', dim1);

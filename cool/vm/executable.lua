@@ -364,13 +364,13 @@ function API.getMethodNames(classDef, methodNames)
     vm.stepIn();
     -- Grab any super-struct declarations.
     if classDef['super'] then
-        --- @cast classDef ClassStructDefinition|InterfaceStructDefinition
+        --- @cast classDef ClassStruct|InterfaceStructDefinition
         API.getMethodNames(classDef.super, methodNames);
     end
 
     -- Grab any interface declarations.
     if classDef['interfaces'] then
-        --- @cast classDef ClassStructDefinition|EnumStructDefinition
+        --- @cast classDef ClassStruct|EnumStructDefinition
         local interfaceLen = #classDef.interfaces;
         if interfaceLen ~= 0 then
             for i = 1, interfaceLen do
@@ -402,12 +402,12 @@ function API.combineAllMethods(def, name, comb)
     vm.stepIn();
     -- Grab all the super-context methods first.
     if def['super'] then
-        --- @cast def ClassStructDefinition|InterfaceStructDefinition
+        --- @cast def ClassStruct|InterfaceStructDefinition
         API.combineAllMethods(def.super, name, comb);
     end
 
     if def['interfaces'] then
-        --- @cast def ClassStructDefinition|EnumStructDefinition
+        --- @cast def ClassStruct|EnumStructDefinition
         -- Copy any interface method array.
         local interfaceLen = #def.interfaces;
         if interfaceLen ~= 0 then
@@ -528,7 +528,7 @@ function API.getDeclaredMethodFromLine(self, path, line)
     return nil;
 end
 
---- @param self ClassStructDefinition|InterfaceStructDefinition
+--- @param self ClassStruct|InterfaceStructDefinition
 --- @param path string
 --- @param line number
 ---
@@ -536,7 +536,7 @@ end
 function API.getExecutableFromLine(self, path, line)
     --- @type ExecutableDefinition|nil
     local ed = API.getDeclaredMethodFromLine(self, path, line);
-    if not ed and self.__type__ == 'ClassStructDefinition' then
+    if not ed and self.__type__ == 'ClassStruct' then
         ed = vm.executable.getConstructorFromLine(self, path, line);
     end
     return ed;

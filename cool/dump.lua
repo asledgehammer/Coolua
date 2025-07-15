@@ -237,7 +237,7 @@ function dump.any(e, cfg, metadata)
     local t = type(e);
     if t == 'table' then
         if e.__type__ then
-            if e.__type__ == 'ClassStructDefinition' then
+            if e.__type__ == 'ClassStruct' then
                 return dump.class(e);
             else
                 return dump.table(e, cfg, metadata);

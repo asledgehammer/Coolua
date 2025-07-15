@@ -9,7 +9,7 @@
 --- @class (exact) FieldDefinition
 --- @field __type__ 'FieldDefinition'
 --- @field audited boolean If true, the struct is audited and verified to be valid.
---- @field class ClassStructDefinition
+--- @field class ClassStruct
 --- @field name string
 --- @field types AllowedType[]
 --- @field scope ClassScope
@@ -55,5 +55,5 @@
 --- @class VMFieldModule: VMModule
 local API = {};
 
---- @param self ClassStructDefinition|InterfaceStructDefinition
+--- @param self ClassStruct|InterfaceStructDefinition
 function API.compileFieldAutoMethods(self) end

@@ -63,7 +63,7 @@
 --- @field __type__ 'ConstructorDefinition'
 ---
 --- @field __super_flag__ boolean Used internally to track calls to super while invoked.
---- @field class ClassStructDefinition
+--- @field class ClassStruct
 --- @field parameters ParameterDefinition[]
 --- @field super fun(o: any, ...) This function is called prior to the body function.
 --- @field superInfo FunctionInfo The super function's information. (line-range and path)
@@ -79,7 +79,7 @@
 --- @field __type__ 'ParameterDefinition'
 ---
 --- @field audited boolean If true, the struct is audited and verified to be valid.
---- @field class ClassStructDefinition
+--- @field class ClassStruct
 --- @field name string
 --- @field types AllowedType[]
 
@@ -152,7 +152,7 @@ function API.resolveMethodDeep(methods, args) end
 --- @return table<string, table<string, MethodDefinition>>
 function API.combineAllMethods(self, name, comb) end
 
---- @param self ClassStructDefinition|InterfaceStructDefinition
+--- @param self ClassStruct|InterfaceStructDefinition
 function API.compileMethods(self) end
 
 --- @param self StructDefinition
@@ -162,7 +162,7 @@ function API.compileMethods(self) end
 --- @return MethodDefinition|nil method
 function API.getDeclaredMethodFromLine(self, path, line) end
 
---- @param self ClassStructDefinition|InterfaceStructDefinition
+--- @param self ClassStruct|InterfaceStructDefinition
 --- @param path string
 --- @param line number
 ---
@@ -174,7 +174,7 @@ function API.getExecutableFromLine(self, path, line) end
 --- @return FunctionInfo
 function API.getExecutableInfo(func) end
 
---- @param classDef ClassStructDefinition
+--- @param classDef ClassStruct
 function API.createMiddleConstructor(classDef) end
 
 --- @param constructors ConstructorDefinition[]

@@ -4,7 +4,7 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
---- @class ObjectDefinition: ClassStructDefinition
+--- @class ObjectDefinition: ClassStruct
 local ObjectDefinition = {};
 
 --- Empty constructor
