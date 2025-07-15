@@ -66,12 +66,12 @@ local ClassStruct = {};
 --- @return ClassInstance
 function ClassStruct:new(...) end
 
---- @param definition FieldStructParameter
+--- @param definition FieldStructInput
 ---
 --- @return FieldStruct
 function ClassStruct:addField(definition) end
 
---- @param definition StaticFieldStructParameter
+--- @param definition StaticFieldStructInput
 ---
 --- @return FieldStruct
 function ClassStruct:addStaticField(definition) end

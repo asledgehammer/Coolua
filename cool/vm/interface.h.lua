@@ -46,7 +46,7 @@ local InterfaceStructParameter = {};
 --- @field static boolean
 local InterfaceStruct = {};
 
---- @param definition FieldStructParameter
+--- @param definition FieldStructInput
 ---
 --- @return FieldStruct
 function InterfaceStruct:addStaticField(definition) end

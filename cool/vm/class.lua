@@ -636,7 +636,7 @@ function API.newClass(definition, outer)
 
     -- MARK: - Field
 
-    --- @param fd FieldStructParameter
+    --- @param fd FieldStructInput
     ---
     --- @return FieldStruct
     function cd:addField(fd)

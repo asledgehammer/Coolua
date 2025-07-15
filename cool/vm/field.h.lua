@@ -20,7 +20,7 @@
 --- @field set FieldSetStruct?
 --- @field assignedOnce boolean This flag is used for final fields. If true, all assignments will fail.
 
---- @class (exact) FieldStructParameter
+--- @class (exact) FieldStructInput
 --- @field name string
 --- @field types AllowedType[]?
 --- @field type AllowedType?
@@ -30,7 +30,7 @@
 --- @field get FieldGetStruct?
 --- @field set FieldSetStruct?
 
---- @class (exact) StaticFieldStructParameter
+--- @class (exact) StaticFieldStructInput
 --- @field name string
 --- @field types AllowedType[]?
 --- @field type AllowedType?

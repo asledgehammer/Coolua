@@ -12,7 +12,7 @@ local EnumStructDefinitionParameter = {};
 --- @class EnumStructDefinition: StructDefinition
 local EnumStructDefinition = {};
 
---- @param definition FieldStructParameter
+--- @param definition FieldStructInput
 ---
 --- @return FieldStruct
 function EnumStructDefinition:addField(definition) end
