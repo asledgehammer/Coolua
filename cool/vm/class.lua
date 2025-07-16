@@ -390,7 +390,7 @@ function API.newClass(classInput, outer)
         end
     });
 
-    --- @cast cd any
+    --- @cast classStruct any
 
     classStruct.__type__ = 'ClassStruct';
 
@@ -573,7 +573,7 @@ function API.newClass(classInput, outer)
         end
 
         local o = {
-            __type__ = 'ClassInstance',
+            __type__ = classStruct.path,
             __class__ = __class__,
         };
 
