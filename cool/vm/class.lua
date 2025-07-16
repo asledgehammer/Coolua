@@ -52,7 +52,8 @@ local function applyStructMetatable(struct)
             element = fieldStruct,
             context = 'field-set',
             line = callInfo.currentLine,
-            path = callInfo.path
+            path = callInfo.path,
+            file = callInfo.file
         });
 
         if not fieldStruct then
@@ -74,7 +75,8 @@ local function applyStructMetatable(struct)
             element = fieldStruct,
             context = 'field-set',
             line = callInfo.currentLine,
-            path = callInfo.path
+            path = callInfo.path,
+            file = callInfo.file
         });
 
         -- Ensure that the class is accessible from the scope.
@@ -188,7 +190,8 @@ local function applyStructMetatable(struct)
             element = fieldStruct,
             context = 'field-set',
             line = callInfo.currentLine,
-            path = callInfo.path
+            path = callInfo.path,
+            file = callInfo.file
         });
 
         -- Ensure that the class is accessible from the scope.

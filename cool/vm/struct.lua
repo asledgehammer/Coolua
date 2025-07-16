@@ -86,7 +86,8 @@ function API.createInstanceMetatable(cd, o)
             element = fieldStruct,
             context = 'field-get',
             line = callInfo.currentLine,
-            path = callInfo.path
+            path = callInfo.path,
+            file = callInfo.file
         });
 
         local scopeAllowed = vm.scope.getScopeForCall(fieldStruct.struct, callInfo);
@@ -157,7 +158,8 @@ function API.createInstanceMetatable(cd, o)
             element = fieldStruct,
             context = 'field-set',
             line = callInfo.currentLine,
-            path = callInfo.path
+            path = callInfo.path,
+            file = callInfo.file
         });
 
         local scopeAllowed = vm.scope.getScopeForCall(fieldStruct.struct, callInfo);

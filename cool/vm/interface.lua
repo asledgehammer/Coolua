@@ -105,7 +105,8 @@ function IAPI.applyStructMetatable(self)
             element = fd,
             context = 'field-set',
             line = callInfo.currentLine,
-            path = callInfo.path
+            path = callInfo.path,
+            file = callInfo.file
         });
 
         local classScopeAllowed = vm.scope.getScopeForCall(self, callInfo);

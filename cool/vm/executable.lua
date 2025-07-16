@@ -199,7 +199,8 @@ function API.createMiddleMethod(cd, name, methods)
             element = md,
             context = 'method',
             line = callInfo.currentLine,
-            path = callInfo.path
+            path = callInfo.path,
+            file = callInfo.file
         });
 
         -- Ensure that the class is accessible from the scope.
@@ -634,7 +635,8 @@ function API.createMiddleConstructor(classDef)
             element = cons,
             context = 'constructor',
             line = callInfo.currentLine,
-            path = callInfo.path
+            path = callInfo.path,
+            file = callInfo.file
         });
 
         -- Ensure that the class is accessible from the scope.

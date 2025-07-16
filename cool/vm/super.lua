@@ -111,7 +111,8 @@ function API.createSuperTable(cd)
             element = constructorStruct,
             context = 'constructor',
             line = callInfo.currentLine,
-            path = callInfo.path
+            path = callInfo.path,
+            file = callInfo.file
         });
 
         local scopeAllowed = vm.scope.getScopeForCall(constructorStruct.struct, callInfo);
@@ -166,7 +167,8 @@ function API.createSuperTable(cd)
             element = methodStruct,
             context = 'method',
             line = callInfo.currentLine,
-            path = callInfo.path
+            path = callInfo.path,
+            file = callInfo.file
         });
 
         local scopeAllowed = vm.scope.getScopeForCall(methodStruct.struct, callInfo);
