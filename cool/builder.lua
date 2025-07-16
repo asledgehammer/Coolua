@@ -1110,6 +1110,8 @@ local mt_constructor_body = function(self, args)
         end
     end
 
+    local functions = {};
+
     for i = 1, #args do
         local arg = args[i];
         local targ = type(arg);
@@ -1129,11 +1131,40 @@ local mt_constructor_body = function(self, args)
                     arg.__type__, dump(arg)
                 );
             end
+        elseif targ == 'function' then
+            -- Implicit functions.
+            table.insert(functions, arg);
         else
             errorf(2, 'Table entry #%i for constructor is unknown. {type = %s, value = %s}',
                 i,
                 targ, dump(arg)
             );
+        end
+    end
+
+    -- Audit implicit functions length.
+    local funcLen = #functions;
+    if funcLen ~= 0 then
+        if funcLen > 2 then
+            error(
+                'Constructor has more than two implicit function bodies.' ..
+                ' (Can only have 1 being body or 2 where the first is super and the second is body)',
+                2
+            );
+        end
+
+        if funcLen >= 1 then
+            if self.body then
+                error('Constructor already has an explicitly-defined body function.', 2);
+            end
+            self.body = functions[1];
+        end
+
+        if funcLen == 2 then
+            if self.super then
+                error('Constructor already has an explicitly-defined super function.', 2);
+            end
+            self.super = functions[2];
         end
     end
 
