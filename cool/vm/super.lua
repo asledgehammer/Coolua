@@ -115,19 +115,20 @@ function API.createSuperTable(cd)
             file = callInfo.file
         });
 
-        local scopeAllowed = vm.scope.getScopeForCall(constructorStruct.struct, callInfo);
-
-        if not vm.scope.canAccessScope(constructorStruct.scope, scopeAllowed) then
-            local errMsg = string.format(
-                'IllegalAccessException: The constructor %s.new(%s) is set as "%s" access level. (Access Level from call: "%s")\n%s',
-                constructorStruct.struct.name, dump(constructorStruct.parameters),
-                constructorStruct.scope, scopeAllowed,
-                vm.stack.printStackTrace()
-            );
-            vm.stack.popContext();
-            print(errMsg);
-            error('', 2);
-            return;
+        if vm.flags.ENABLE_SCOPE then
+            local scopeAllowed = vm.scope.getScopeForCall(constructorStruct.struct, callInfo);
+            if not vm.scope.canAccessScope(constructorStruct.scope, scopeAllowed) then
+                local errMsg = string.format(
+                    'IllegalAccessException: The constructor %s.new(%s) is set as "%s" access level. (Access Level from call: "%s")\n%s',
+                    constructorStruct.struct.name, dump(constructorStruct.parameters),
+                    constructorStruct.scope, scopeAllowed,
+                    vm.stack.printStackTrace()
+                );
+                vm.stack.popContext();
+                print(errMsg);
+                error('', 2);
+                return;
+            end
         end
 
         vm.stepIn();
@@ -171,20 +172,21 @@ function API.createSuperTable(cd)
             file = callInfo.file
         });
 
-        local scopeAllowed = vm.scope.getScopeForCall(methodStruct.struct, callInfo);
-
-        if not vm.scope.canAccessScope(methodStruct.scope, scopeAllowed) then
-            local sMethod = vm.print.printMethod(methodStruct);
-            local errMsg = string.format(
-                'IllegalAccessException: The method %s is set as "%s" access level. (Access Level from call: "%s")\n%s',
-                sMethod,
-                methodStruct.scope, scopeAllowed,
-                vm.stack.printStackTrace()
-            );
-            vm.stack.popContext();
-            print(errMsg);
-            error('', 2);
-            return;
+        if vm.flags.ENABLE_SCOPE then
+            local scopeAllowed = vm.scope.getScopeForCall(methodStruct.struct, callInfo);
+            if not vm.scope.canAccessScope(methodStruct.scope, scopeAllowed) then
+                local sMethod = vm.print.printMethod(methodStruct);
+                local errMsg = string.format(
+                    'IllegalAccessException: The method %s is set as "%s" access level. (Access Level from call: "%s")\n%s',
+                    sMethod,
+                    methodStruct.scope, scopeAllowed,
+                    vm.stack.printStackTrace()
+                );
+                vm.stack.popContext();
+                print(errMsg);
+                error('', 2);
+                return;
+            end
         end
 
         local retVal;

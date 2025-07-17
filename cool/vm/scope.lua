@@ -92,6 +92,17 @@ end
 function API.getRelativeCall()
     local level, relPath = vm.scope.getRelativePath();
     local _, file, folder = vm.scope.getRelativeFile();
+
+    if not vm.flags.ENABLE_SCOPE then
+        return {
+            currentLine = DebugUtils.getCurrentLine(level),
+            file = file,
+            folder = folder,
+            level = level,
+            relPath = relPath,
+        };
+    end
+
     --- @type DetailedCallInfo
     local callInfo = DebugUtils.getCallInfo(level, vm.ROOT_PATH, true);
     callInfo.path = relPath;

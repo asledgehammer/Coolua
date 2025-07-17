@@ -90,19 +90,20 @@ function API.createInstanceMetatable(cd, o)
             file = callInfo.file
         });
 
-        local scopeAllowed = vm.scope.getScopeForCall(fieldStruct.struct, callInfo);
-
-        if not vm.flags.bypassFieldSet and not vm.scope.canAccessScope(fieldStruct.scope, scopeAllowed) then
-            local errMsg = string.format(
-                'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
-                cd.name, fieldStruct.name,
-                fieldStruct.scope, scopeAllowed,
-                vm.stack.printStackTrace()
-            );
-            vm.stack.popContext();
-            print(errMsg);
-            error('', 2);
-            return;
+        if vm.flags.ENABLE_SCOPE then
+            local scopeAllowed = vm.scope.getScopeForCall(fieldStruct.struct, callInfo);
+            if not vm.flags.bypassFieldSet and not vm.scope.canAccessScope(fieldStruct.scope, scopeAllowed) then
+                local errMsg = string.format(
+                    'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
+                    cd.name, fieldStruct.name,
+                    fieldStruct.scope, scopeAllowed,
+                    vm.stack.printStackTrace()
+                );
+                vm.stack.popContext();
+                print(errMsg);
+                error('', 2);
+                return;
+            end
         end
 
         vm.stack.popContext();
@@ -162,19 +163,21 @@ function API.createInstanceMetatable(cd, o)
             file = callInfo.file
         });
 
-        local scopeAllowed = vm.scope.getScopeForCall(fieldStruct.struct, callInfo);
+        if vm.flags.ENABLE_SCOPE then
+            local scopeAllowed = vm.scope.getScopeForCall(fieldStruct.struct, callInfo);
 
-        if not vm.flags.bypassFieldSet and not vm.scope.canAccessScope(fieldStruct.scope, scopeAllowed) then
-            local errMsg = string.format(
-                'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
-                cd.name, fieldStruct.name,
-                fieldStruct.scope, scopeAllowed,
-                vm.stack.printStackTrace()
-            );
-            vm.stack.popContext();
-            print(errMsg);
-            error('', 2);
-            return;
+            if not vm.flags.bypassFieldSet and not vm.scope.canAccessScope(fieldStruct.scope, scopeAllowed) then
+                local errMsg = string.format(
+                    'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
+                    cd.name, fieldStruct.name,
+                    fieldStruct.scope, scopeAllowed,
+                    vm.stack.printStackTrace()
+                );
+                vm.stack.popContext();
+                print(errMsg);
+                error('', 2);
+                return;
+            end
         end
 
         -- (Just in-case)

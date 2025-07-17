@@ -68,8 +68,6 @@ local function applyStructMetatable(struct)
             return;
         end
 
-        local callInfo = vm.scope.getRelativeCall();
-
         vm.stack.pushContext({
             struct = struct,
             element = fieldStruct,
@@ -79,22 +77,24 @@ local function applyStructMetatable(struct)
             file = callInfo.file
         });
 
-        -- Ensure that the class is accessible from the scope.
-        local classScopeAllowed = vm.scope.getScopeForCall(struct, callInfo);
-        if not vm.scope.canAccessScope(struct.scope, classScopeAllowed) then
-            local sClass = struct.path;
-            local errMsg = string.format(
-                'IllegalAccessException: The class "%s" is "%s".' ..
-                ' (Access Level from call: "%s")\n%s',
-                sClass,
-                struct.scope, classScopeAllowed,
-                vm.stack.printStackTrace()
-            );
-            vm.stack.popContext();
-            vm.stepOut();
-            print(errMsg);
-            error(errMsg, 2);
-            return;
+        if vm.flags.ENABLE_SCOPE then
+            -- Ensure that the class is accessible from the scope.
+            local classScopeAllowed = vm.scope.getScopeForCall(struct, callInfo);
+            if not vm.scope.canAccessScope(struct.scope, classScopeAllowed) then
+                local sClass = struct.path;
+                local errMsg = string.format(
+                    'IllegalAccessException: The class "%s" is "%s".' ..
+                    ' (Access Level from call: "%s")\n%s',
+                    sClass,
+                    struct.scope, classScopeAllowed,
+                    vm.stack.printStackTrace()
+                );
+                vm.stack.popContext();
+                vm.stepOut();
+                print(errMsg);
+                error(errMsg, 2);
+                return;
+            end
         end
 
         -- Next, ensure that the field is accessible from the scope.
@@ -134,7 +134,6 @@ local function applyStructMetatable(struct)
     end
 
     mt.__newindex = function(_, field, value)
-
         if field == 'super' or field == '__super__' then
             errorf(2, '%s Cannot set super. (Static context)', struct.printHeader);
             return;
@@ -194,21 +193,23 @@ local function applyStructMetatable(struct)
             file = callInfo.file
         });
 
-        -- Ensure that the class is accessible from the scope.
-        local classScopeAllowed = vm.scope.getScopeForCall(struct, callInfo);
-        if not vm.scope.canAccessScope(struct.scope, classScopeAllowed) then
-            local sClass = struct.path;
-            local errMsg = string.format(
-                'IllegalAccessException: The class "%s" is "%s".' ..
-                ' (Access Level from call: "%s")\n%s',
-                sClass,
-                struct.scope, classScopeAllowed,
-                vm.stack.printStackTrace()
-            );
-            vm.stack.popContext();
-            print(errMsg);
-            error(errMsg, 2);
-            return;
+        if vm.flags.ENABLE_SCOPE then
+            -- Ensure that the class is accessible from the scope.
+            local classScopeAllowed = vm.scope.getScopeForCall(struct, callInfo);
+            if not vm.scope.canAccessScope(struct.scope, classScopeAllowed) then
+                local sClass = struct.path;
+                local errMsg = string.format(
+                    'IllegalAccessException: The class "%s" is "%s".' ..
+                    ' (Access Level from call: "%s")\n%s',
+                    sClass,
+                    struct.scope, classScopeAllowed,
+                    vm.stack.printStackTrace()
+                );
+                vm.stack.popContext();
+                print(errMsg);
+                error(errMsg, 2);
+                return;
+            end
         end
 
         -- Next, ensure that the field is accessible from the scope.
@@ -337,21 +338,23 @@ function API.newClass(classInput, outer)
                     classInput.implements:finalize();
                 end
 
-                -- Check and see if the calling code can access the interface.
-                local scopeCalled = vm.scope.getScopeForCall(classInput.implements, callInfo);
-                if not vm.scope.canAccessScope(classInput.implements.scope, scopeCalled) then
-                    local sClass = path;
-                    local sImplements = classInput.implements.path;
-                    local errMsg = string.format(
-                        'IllegalAccessException: The class "%s" cannot implement "%s". (access is %s).' ..
-                        ' (Access Level from call: "%s")\n%s',
-                        sClass, sImplements,
-                        classInput.implements.scope, scopeCalled,
-                        vm.stack.printStackTrace()
-                    );
-                    print(errMsg);
-                    error(errMsg, 2);
-                    return;
+                if vm.flags.ENABLE_SCOPE then
+                    -- Check and see if the calling code can access the interface.
+                    local scopeCalled = vm.scope.getScopeForCall(classInput.implements, callInfo);
+                    if not vm.scope.canAccessScope(classInput.implements.scope, scopeCalled) then
+                        local sClass = path;
+                        local sImplements = classInput.implements.path;
+                        local errMsg = string.format(
+                            'IllegalAccessException: The class "%s" cannot implement "%s". (access is %s).' ..
+                            ' (Access Level from call: "%s")\n%s',
+                            sClass, sImplements,
+                            classInput.implements.scope, scopeCalled,
+                            vm.stack.printStackTrace()
+                        );
+                        print(errMsg);
+                        error(errMsg, 2);
+                        return;
+                    end
                 end
 
                 table.insert(interfaces, classInput.implements);
@@ -549,18 +552,21 @@ function API.newClass(classInput, outer)
 
         -- Check and see if the calling code can access the class.
         local newCallInfo = vm.scope.getRelativeCall();
-        local scopeCalled = vm.scope.getScopeForCall(classStruct, newCallInfo);
-        if not vm.scope.canAccessScope(classStruct.scope, scopeCalled) then
-            local sClass = vm.print.printClass(classStruct);
-            local errMsg = string.format(
-                'IllegalAccessException: The class %s is set as "%s" access level. (Access Level from call: "%s")\n%s',
-                sClass,
-                classStruct.scope, scopeCalled,
-                vm.stack.printStackTrace()
-            );
-            print(errMsg);
-            error(errMsg, 2);
-            return;
+
+        if vm.flags.ENABLE_SCOPE then
+            local scopeCalled = vm.scope.getScopeForCall(classStruct, newCallInfo);
+            if not vm.scope.canAccessScope(classStruct.scope, scopeCalled) then
+                local sClass = vm.print.printClass(classStruct);
+                local errMsg = string.format(
+                    'IllegalAccessException: The class %s is set as "%s" access level. (Access Level from call: "%s")\n%s',
+                    sClass,
+                    classStruct.scope, scopeCalled,
+                    vm.stack.printStackTrace()
+                );
+                print(errMsg);
+                error(errMsg, 2);
+                return;
+            end
         end
 
         -- TODO: Check if package-class exists.

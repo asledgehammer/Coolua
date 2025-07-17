@@ -109,36 +109,38 @@ function IAPI.applyStructMetatable(self)
             file = callInfo.file
         });
 
-        local classScopeAllowed = vm.scope.getScopeForCall(self, callInfo);
+        if vm.flags.ENABLE_SCOPE then
+            local classScopeAllowed = vm.scope.getScopeForCall(self, callInfo);
 
-        -- Ensure that the interface is accessible from the scope.
-        if not vm.scope.canAccessScope(self.scope, classScopeAllowed) then
-            local sClass = self.path;
-            local errMsg = string.format(
-                'IllegalAccessException: The interface "%s" is "%s".' ..
-                ' (Access Level from call: "%s")\n%s',
-                sClass,
-                self.scope, classScopeAllowed,
-                vm.stack.printStackTrace()
-            );
-            print(errMsg);
-            error(errMsg, 2);
-            return;
-        end
+            -- Ensure that the interface is accessible from the scope.
+            if not vm.scope.canAccessScope(self.scope, classScopeAllowed) then
+                local sClass = self.path;
+                local errMsg = string.format(
+                    'IllegalAccessException: The interface "%s" is "%s".' ..
+                    ' (Access Level from call: "%s")\n%s',
+                    sClass,
+                    self.scope, classScopeAllowed,
+                    vm.stack.printStackTrace()
+                );
+                print(errMsg);
+                error(errMsg, 2);
+                return;
+            end
 
-        -- Next, ensure that the field is accessible from the scope.
-        local fieldScopeAllowed = vm.scope.getScopeForCall(fd.struct, callInfo);
-        if not vm.scope.canAccessScope(fd.scope, fieldScopeAllowed) then
-            local errMsg = string.format(
-                'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
-                self.name, fd.name,
-                fd.scope, fieldScopeAllowed,
-                vm.stack.printStackTrace()
-            );
-            vm.stack.popContext();
-            print(errMsg);
-            error('', 2);
-            return;
+            -- Next, ensure that the field is accessible from the scope.
+            local fieldScopeAllowed = vm.scope.getScopeForCall(fd.struct, callInfo);
+            if not vm.scope.canAccessScope(fd.scope, fieldScopeAllowed) then
+                local errMsg = string.format(
+                    'IllegalAccessException: The field %s.%s is set as "%s" access level. (Access Level from call: "%s")\n%s',
+                    self.name, fd.name,
+                    fd.scope, fieldScopeAllowed,
+                    vm.stack.printStackTrace()
+                );
+                vm.stack.popContext();
+                print(errMsg);
+                error('', 2);
+                return;
+            end
         end
 
         -- (Just in-case)
@@ -279,21 +281,23 @@ function API.newInterface(interfaceInput, outer)
         -- Grab where the call came from.
         local callInfo = vm.scope.getRelativeCall();
 
-        -- Check and see if the calling code can access the class.
-        local scopeCalled = vm.scope.getScopeForCall(extends, callInfo, interfaceStruct);
-        if not vm.scope.canAccessScope(extends.scope, scopeCalled) then
-            local sClass = path;
-            local sSuper = extends.path;
-            local errMsg = string.format(
-                'IllegalAccessException: The interface "%s" cannot extend "%s". (access is %s).' ..
-                ' (Access Level from call: "%s")\n%s',
-                sClass, sSuper,
-                extends.scope, scopeCalled,
-                vm.stack.printStackTrace()
-            );
-            print(errMsg);
-            error(errMsg, 2);
-            return;
+        if vm.flags.ENABLE_SCOPE then
+            -- Check and see if the calling code can access the class.
+            local scopeCalled = vm.scope.getScopeForCall(extends, callInfo, interfaceStruct);
+            if not vm.scope.canAccessScope(extends.scope, scopeCalled) then
+                local sClass = path;
+                local sSuper = extends.path;
+                local errMsg = string.format(
+                    'IllegalAccessException: The interface "%s" cannot extend "%s". (access is %s).' ..
+                    ' (Access Level from call: "%s")\n%s',
+                    sClass, sSuper,
+                    extends.scope, scopeCalled,
+                    vm.stack.printStackTrace()
+                );
+                print(errMsg);
+                error(errMsg, 2);
+                return;
+            end
         end
     end
 

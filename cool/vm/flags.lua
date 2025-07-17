@@ -10,6 +10,8 @@ local API = {
     __type__ = 'VMModule',
 
     -- Field(s)
+    ENABLE_SCOPE = false,
+    
     bypassFieldSet = false,
     canSetAudit = false,
     ignorePushPopContext = false,
