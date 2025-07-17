@@ -31,32 +31,60 @@ local vararg = builder.vararg;
 
 -- MARK: - Builder API
 
--- Create the class.
-local SimpleClassBuilder = class 'SimpleClassBuilder' {
+-- Create the super-class.
+local SuperClass = class 'SuperClass' {
     constructor {
         function()
-            print('Hello from Builder!');
+            print('Hello from SuperClass!');
         end
     }
 };
 
+-- Create the class.
+local SubClass = class 'SubClass' {
+    -- Extend the super-class using this API.
+    extends(SuperClass),
+
+    constructor {
+        function()
+            print('Hello from SubClass!');
+        end
+    }
+};
+
+-- Print out the class structs, showing that the sub-class extends the super-class.
+print(SuperClass);
+print(SubClass);
+
 -- Create an instance of the class.
-local object = SimpleClassBuilder.new();
-print(object);
+SubClass.new();
 
 -- MARK: - Basic API
 
--- Create the class.
-local SimpleClassBasic = cool.newClass {
-    name = 'SimpleClassBasic'
+local SuperClass = cool.newClass {
+    name = 'SuperClass'
 };
 
-SimpleClassBasic:addConstructor {
+SuperClass:addConstructor {
     body = function()
-        print('Hello from Basic!');
+        print('Hello from SuperClass!');
     end
 };
 
+local SubClass = cool.newClass {
+    name = 'SubClass',
+    extends = SuperClass,
+};
+
+SubClass:addConstructor {
+    body = function()
+        print('Hello from SubClass!');
+    end
+};
+
+-- Print out the class structs, showing that the sub-class extends the super-class.
+print(SuperClass);
+print(SubClass);
+
 -- Create an instance of the class.
-local objectBasic = SimpleClassBasic.new();
-print(objectBasic);
+SubClass.new();
