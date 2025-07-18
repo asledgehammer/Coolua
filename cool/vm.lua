@@ -5,6 +5,12 @@
 -- Require this to load injected functions to basic Lua types.
 require 'cool/plus';
 
+-- If in ProjectZomboid environment, load fixes for missing Lua debug instrumentation API.
+_G.INSIDE_PZ = _G['ZombRandFloat'] ~= nil;
+if INSIDE_PZ then
+    pcall(function() require 'cool/pz_fix' end);
+end
+
 local utils = require 'cool/vm/utils';
 
 local PrintPlus = require 'cool/print';
@@ -69,7 +75,13 @@ local debug = require 'cool/vm/debug';
 
 debugf(debug.internal, '\n### VM INIT ###\n');
 
-local ROOT_PATH = getRootPath();
+local ROOT_PATH;
+
+if INSIDE_PZ then
+    ROOT_PATH = '/media/lua/';
+else
+    ROOT_PATH = getRootPath();
+end
 
 vm = {
 

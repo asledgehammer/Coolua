@@ -366,7 +366,6 @@ function API.newClass(classInput, outer)
                 for i = 1, #classInput.implements do
                     local interface = classInput.implements[i];
                     if interface.__type__ ~= 'InterfaceStruct' then
-                        print('interface.__type__ = ', interface.__type__);
                         errorf(2, '%s Implements argument #%i is not a Interface.', path, i);
                     end
 

@@ -23,7 +23,6 @@ Object:addConstructor({
 
     --- @param self Class
     super = function(self)
-        print('Invoke Object super');
         self:super();
     end,
 

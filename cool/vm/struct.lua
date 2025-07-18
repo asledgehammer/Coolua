@@ -2,6 +2,8 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+local dump = require 'cool/dump'.any;
+
 local PrintPlus = require 'cool/print';
 local errorf = PrintPlus.errorf;
 

@@ -114,20 +114,26 @@ end
 function API.getRelativeFile()
     local level = 1;
     local relPath = DebugUtils.getPath(level, vm.ROOT_PATH, false);
+    relPath = string.gsub(relPath, '\\', '/');
 
     while
         relPath == '=[C]' or
         relPath == '=(tail call)' or
-        relPath:startsWith('\\cool/')
+        relPath:startsWith('/cool/') or
+        relPath:startsWith('cool/') or
+        relPath == 'cool.lua'
     do
         level = level + 1;
         relPath = DebugUtils.getPath(level, vm.ROOT_PATH, false);
     end
 
+    if relPath == '(unknown)' then
+        error('Path resolved unknown: ' .. debug.printStack(), 2);
+    end
+
     -- FIX: Level off by one.
     level = level - 1;
 
-    relPath = string.gsub(relPath, '\\', '/');
     local testDot = string.find(relPath, '/', 1, true);
     if testDot == 1 then
         relPath = relPath:sub(2);
@@ -142,15 +148,28 @@ end
 
 function API.getRelativePath()
     local level = 1;
+    local top = 64;
+    if getCallframeTop then
+        top = getCallframeTop(getCurrentCoroutine());
+    end
     local relPath = DebugUtils.getPath(level, vm.ROOT_PATH, true);
 
     while
+        relPath == '(unknown)' or
         relPath == '=[C]' or
         relPath == '=(tail call)' or
-        relPath:startsWith('cool.')
+        relPath == 'cool' or
+        relPath:startsWith('cool.') or
+        relPath:startsWith('cool.lua')
     do
-        level = level + 1;
         relPath = DebugUtils.getPath(level, vm.ROOT_PATH, true);
+        level = level + 1;
+
+        if level == top then break end
+    end
+
+    if relPath == '(unknown)' then
+        error('Path resolved unknown: ' .. debug.printStack(), 2);
     end
 
     -- FIX: Level off by one.
