@@ -4,7 +4,7 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
--- MARK: - Struct
+-- MARK: <input>
 
 --- @class (exact) ClassMethodStructInput
 --- @field scope ClassScope? (Default: public)
@@ -37,6 +37,8 @@
 --- @field abstract boolean? (Default: false)
 --- @field implements InterfaceStruct|InterfaceStruct[]?
 
+-- MARK: <struct>
+
 --- @class (exact) ClassStruct: HierarchicalStruct, Constructable, Staticable, Abstractable, Auditable
 --- @field __type__ 'ClassStruct'
 --- @field __readonly__ boolean
@@ -50,37 +52,51 @@
 --- @field interfaces InterfaceStruct[]
 local ClassStruct = {};
 
+-- MARK: general
+
 --- @return ClassInstance
 function ClassStruct:new(...) end
 
---- @param input FieldStructInput
----
---- @return FieldStruct
-function ClassStruct:addField(input) end
+--- @return ClassStruct
+function ClassStruct:finalize() end
 
---- @param input StaticFieldStructInput
----
---- @return FieldStruct
-function ClassStruct:addStaticField(input) end
+--- @return boolean
+function ClassStruct:isFinalized() end
 
---- Attempts to resolve a FieldStruct in the ClassStruct. If the field isn't declared for the class level, the
---- super-class(es) are checked.
+--- @param class ClassStruct
 ---
---- @param name string
----
---- @return FieldStruct? FieldStruct
-function ClassStruct:getField(name) end
+--- @return boolean
+function ClassStruct:isAssignableFromType(class) end
 
---- @return FieldStruct[]
-function ClassStruct:getFields() end
+-- MARK: hierarchy
 
---- Attempts to resolve a FieldStruct in the ClassStruct. If the field isn't defined in the class, nil
---- is returned.
+--- @param class Hierarchical?
 ---
---- @param name string
+--- @return boolean
+function ClassStruct:isSuperClass(class) end
+
+--- @param class ClassStruct The class to evaulate.
 ---
---- @return FieldStruct? FieldStruct
-function ClassStruct:getDeclaredField(name) end
+--- @return boolean result True if the class to evaluate is a super-class of the subClass.
+function ClassStruct:isSubClass(class) end
+
+--- @param superInterface InterfaceStruct
+---
+--- @return boolean
+function ClassStruct:isSuperInterface(superInterface) end
+
+-- MARK: inner-struct
+
+--- @param struct Struct
+function ClassStruct:addStaticStruct(struct) end
+
+--- @param struct Struct
+function ClassStruct:addInstanceStruct(struct) end
+
+--- @param outer Struct
+function ClassStruct:setOuterStruct(outer) end
+
+-- MARK: constructor
 
 --- @param input ConstructorStructInput
 ---
@@ -96,6 +112,8 @@ function ClassStruct:getConstructor(args) end
 ---
 --- @return ConstructorStruct|nil ConstructorStruct
 function ClassStruct:getDeclaredConstructor(args) end
+
+-- MARK: method
 
 --- @param input ClassMethodStructInput
 ---
@@ -140,42 +158,47 @@ function ClassStruct:getDeclaredMethods(name) end
 --- @return MethodStruct|nil MethodStruct
 function ClassStruct:getDeclaredMethod(name, args) end
 
---- @return ClassStruct
-function ClassStruct:finalize() end
+-- MARK: field
 
---- @return boolean
-function ClassStruct:isFinalized() end
-
---- @param class ClassStruct
+--- @param input FieldStructInput
 ---
---- @return boolean
-function ClassStruct:isAssignableFromType(class) end
+--- @return FieldStruct
+function ClassStruct:addField(input) end
 
---- @param class Hierarchical?
+--- @param input StaticFieldStructInput
 ---
---- @return boolean
-function ClassStruct:isSuperClass(class) end
+--- @return FieldStruct
+function ClassStruct:addStaticField(input) end
 
---- @param class ClassStruct The class to evaulate.
+--- Attempts to resolve a FieldStruct in the ClassStruct. If the field isn't declared for the class level, the
+--- super-class(es) are checked.
 ---
---- @return boolean result True if the class to evaluate is a super-class of the subClass.
-function ClassStruct:isSubClass(class) end
-
---- @param superInterface InterfaceStruct
+--- @param name string
 ---
---- @return boolean
-function ClassStruct:isSuperInterface(superInterface) end
+--- @return FieldStruct? FieldStruct
+function ClassStruct:getField(name) end
 
---- @param struct Struct
-function ClassStruct:addStaticStruct(struct) end
+--- @return FieldStruct[]
+function ClassStruct:getFields() end
 
---- @param struct Struct
-function ClassStruct:addInstanceStruct(struct) end
+--- Attempts to resolve a FieldStruct in the ClassStruct. If the field isn't defined in the class, nil
+--- is returned.
+---
+--- @param name string
+---
+--- @return FieldStruct? FieldStruct
+function ClassStruct:getDeclaredField(name) end
 
---- @param outer Struct
-function ClassStruct:setOuterStruct(outer) end
+--- @class ClassInstance
+---
+--- @field __type__ string The `class:<package>.<name>` identity of the class.
+--- @field __super__ SuperTable
+--- @field __table_id__ string -- For native Lua table identity. Helps prevent infinite loops when checking self literally.
+--- @field __class__ Class The Class-Object wrapper, not the VM Struct.
+--- @field super table|function? This field is dynamically set for each function invocation.
+local ClassInstance = {};
 
--- MARK: - Module
+-- MARK: <module>
 
 --- @class VMClassModule: VMModule
 local API = {};
