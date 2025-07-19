@@ -41,9 +41,10 @@ function VMModule.setVM(vm) end
 --- @field super VMSuperModule
 --- @field field VMFieldModule
 --- @field executable VMExecutableModule
---- @field class VMClassModule
 --- @field struct VMStructModule
+--- @field class VMClassModule
 --- @field interface VMInterfaceModule
+--- @field record VMRecordModule
 ---
 --- * Helper functions
 --- @field isInside fun(): boolean

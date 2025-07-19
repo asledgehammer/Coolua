@@ -107,9 +107,10 @@ vm = {
     super = require 'cool/vm/super',
     field = require 'cool/vm/field',
     executable = require 'cool/vm/executable',
-    class = require 'cool/vm/class',
     struct = require 'cool/vm/struct',
+    class = require 'cool/vm/class',
     interface = require 'cool/vm/interface',
+    record = require 'cool/vm/record',
 
     isInside = function()
         return vm.flags.internal ~= 0;
@@ -144,9 +145,10 @@ vm.stack.setVM(vm);
 vm.super.setVM(vm);
 vm.field.setVM(vm);
 vm.executable.setVM(vm);
-vm.class.setVM(vm);
 vm.struct.setVM(vm);
+vm.class.setVM(vm);
 vm.interface.setVM(vm);
+vm.record.setVM(vm);
 
 function vm.import(path)
     local def = vm.STRUCTS[path];
