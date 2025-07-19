@@ -7,16 +7,22 @@
 -- MARK: - <input>
 
 --- @class (exact) RecordStructInput: StructInput
+--- @field scope ClassScope? (Default: package)
+--- @field name string?
+--- @field static boolean? If the record is defined as static.
 --- @field implements InterfaceStruct|InterfaceStruct[]?
 local RecordStructInput = {};
 
 --- @class (exact) ChildRecordStructInput: StructInput
+--- @field scope ClassScope? (Default: package)
+--- @field name string?
+--- @field static boolean? If the record is defined as static.
 --- @field implements InterfaceStruct|InterfaceStruct[]?
 local ChildRecordStructInput = {};
 
 -- MARK: - <struct>
 
---- @class RecordStruct: Struct
+--- @class RecordStruct: Struct, Constructable, Staticable, Abstractable, Auditable
 ---
 --- @field __type__ 'RecordStruct'
 --- @field __readonly__ boolean
