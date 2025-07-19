@@ -31,13 +31,13 @@ local vararg = 'vararg';
 -- MARK: - build
 
 --- @type function, function, function
-local buildClass, buildInterface, buildFlags;
+local buildClass, buildInterface, buildRecord, buildFlags;
 
 --- @param self table
---- @param enclosingStruct Struct?
+--- @param outer Struct?
 ---
 --- @return ClassStruct
-buildClass = function(self, enclosingStruct)
+buildClass = function(self, outer)
     -- Build the class arguments. --
 
     if not self.name then
@@ -53,7 +53,7 @@ buildClass = function(self, enclosingStruct)
     -- Build class flags.
     buildFlags(self, clsArgs);
 
-    local cls = vm.class.newClass(clsArgs, enclosingStruct);
+    local cls = vm.class.newClass(clsArgs, outer);
 
     -- Build constructors.
     if self.constructors then
@@ -81,6 +81,14 @@ buildClass = function(self, enclosingStruct)
             for name, innerInterface in pairs(self.instanced.interfaces) do
                 innerInterface.static = false;
                 cls:addInstanceStruct(innerInterface);
+            end
+        end
+
+        -- Add instanced record(s).
+        if self.instanced.records then
+            for name, innerRecord in pairs(self.instanced.records) do
+                innerRecord.static = false;
+                cls:addInstanceStruct(innerRecord);
             end
         end
 
@@ -153,6 +161,17 @@ buildClass = function(self, enclosingStruct)
             end
         end
 
+        -- Build static record(s).
+        if self.static.records then
+            for name, innerRecord in pairs(self.static.records) do
+                if innerRecord.__type__ == 'RecordTable' then
+                    buildClass(innerRecord, cls);
+                elseif innerRecord.__type__ == 'RecordStruct' then
+                    cls:addStaticStruct(innerRecord);
+                end
+            end
+        end
+
         -- Build static field(s).
         if self.static.fields then
             for name, field in pairs(self.static.fields) do
@@ -186,10 +205,10 @@ buildClass = function(self, enclosingStruct)
 end
 
 --- @param self table
---- @param outerStruct Struct
+--- @param outer Struct
 ---
 --- @return InterfaceStruct interfaceDef, any table
-local function buildInterface(self, outerStruct)
+local function buildInterface(self, outer)
     if not self.name then
         errorf(2, 'Interface doesn\'t have a name!');
     end
@@ -203,7 +222,7 @@ local function buildInterface(self, outerStruct)
     -- Build class flags.
     buildFlags(self, intArgs);
 
-    local interface = vm.interface.newInterface(intArgs, outerStruct);
+    local interface = vm.interface.newInterface(intArgs, outer);
 
     -- Build methods.
     for name, method in pairs(self.methods) do
@@ -248,6 +267,17 @@ local function buildInterface(self, outerStruct)
                     buildInterface(innerInterface, interface);
                 elseif innerInterface.__type__ == 'InterfaceStruct' then
                     interface:addStaticStruct(innerInterface);
+                end
+            end
+        end
+
+        -- Build static record(s).
+        if self.static.records then
+            for name, innerRecord in pairs(self.static.records) do
+                if innerRecord.__type__ == 'RecordTable' then
+                    buildRecord(innerRecord, interface);
+                elseif innerRecord.__type__ == 'RecordStruct' then
+                    interface:addStaticStruct(innerRecord);
                 end
             end
         end
@@ -313,6 +343,164 @@ local function buildInterface(self, outerStruct)
     debugf(vm.debug.builder, '[BUILDER] :: Built interface: %s', tostring(interface));
 
     return interface, self;
+end
+
+--- @param self table
+--- @param outer Struct?
+---
+--- @return RecordStruct
+buildRecord = function(self, outer)
+    -- Build the record arguments. --
+
+    if not self.name then
+        errorf(2, 'Record doesn\'t have a name!');
+    end
+
+    local recordArgs = {
+        name = self.name,
+        implements = self.implements
+    };
+
+    -- Build class flags.
+    buildFlags(self, recordArgs);
+
+    local record = vm.record.newRecord(recordArgs, outer);
+
+    -- Build constructors.
+    if self.constructors then
+        -- TODO: Adapt to Record rules.
+
+        local constructorLen = #self.constructors;
+        if constructorLen ~= 0 then
+            for i = 1, constructorLen do
+                local consArgs = self.constructors[i];
+                buildFlags(consArgs, consArgs);
+                record:addConstructor(consArgs);
+            end
+        end
+    end
+
+    if self.instanced then
+        -- Add instanced class(es).
+        if self.instanced.classes then
+            for name, innerCls in pairs(self.instanced.classes) do
+                innerCls.static = false;
+                record:addInstanceStruct(innerCls);
+            end
+        end
+
+        -- Add instanced interface(s).
+        if self.instanced.interfaces then
+            for name, innerInterface in pairs(self.instanced.interfaces) do
+                innerInterface.static = false;
+                record:addInstanceStruct(innerInterface);
+            end
+        end
+
+        -- Add instanced record(s).
+        if self.instanced.records then
+            for name, innerRecord in pairs(self.instanced.records) do
+                innerRecord.static = false;
+                record:addInstanceStruct(innerRecord);
+            end
+        end
+
+        -- Build instanced field(s).
+        if self.instanced.fields then
+            for name, field in pairs(self.instanced.fields) do
+                -- TODO: Adapt to Record rules.
+                record:addField(field);
+            end
+        end
+
+        -- Build instanced method(s).
+        if self.instanced.methods then
+            for name, method in pairs(self.instanced.methods) do
+                buildFlags(method, method);
+
+                -- TODO: Adapt to Record rules.
+
+                -- Static struct outside of static block check.
+                if method.static then
+                    errorf(2, 'Cannot define static method outside of static block: %s',
+                        name
+                    );
+                end
+
+                if method.abstract then
+                    record:addAbstractMethod(method);
+                else
+                    record:addMethod(method);
+                end
+            end
+        end
+    end
+
+    if self.static then
+        -- Build static class(es).
+        if self.static.classes then
+            for name, innerCls in pairs(self.static.classes) do
+                if innerCls.__type__ == 'ClassTable' then
+                    buildClass(innerCls, record);
+                elseif innerCls.__type__ == 'ClassStruct' then
+                    record:addStaticStruct(innerCls);
+                end
+            end
+        end
+
+        -- Build static interface(s).
+        if self.static.interfaces then
+            for name, innerInterface in pairs(self.static.interfaces) do
+                if innerInterface.__type__ == 'InterfaceTable' then
+                    buildInterface(innerInterface, record);
+                elseif innerInterface.__type__ == 'InterfaceStruct' then
+                    record:addStaticStruct(innerInterface);
+                end
+            end
+        end
+
+        -- Build static record(s).
+        if self.static.records then
+            for name, innerRecord in pairs(self.static.records) do
+                if innerRecord.__type__ == 'RecordTable' then
+                    buildRecord(innerRecord, record);
+                elseif innerRecord.__type__ == 'RecordStruct' then
+                    record:addStaticStruct(innerRecord);
+                end
+            end
+        end
+
+        -- Build static field(s).
+        if self.static.fields then
+            for name, field in pairs(self.static.fields) do
+                buildFlags(field, field);
+
+                -- Make sure no setters are defined.
+                if field.final and field.set then
+                    errorf(2, 'Cannot define a setter for field: %s (Field is final)',
+                        name
+                    );
+                end
+
+                field.static = true;
+                record:addStaticField(field);
+            end
+        end
+
+        -- Build static method(s).
+        if self.static.methods then
+            for name, method in pairs(self.static.methods) do
+                buildFlags(method, method);
+                -- TODO: Adapt to Record rules.
+                method.static = true;
+                record:addStaticMethod(method);
+            end
+        end
+    end
+
+    debugf(vm.debug.builder, '[BUILDER] :: Built record: %s', tostring(record));
+
+    return record;
 end
 
 --- @param struct table
@@ -412,6 +600,7 @@ local mt_property = {
 local function static(body)
     local classes = {};
     local interfaces = {};
+    local records = {};
     local methods = {};
     local fields = {};
     for i = 1, #body do
@@ -433,6 +622,8 @@ local function static(body)
                 classes[entry.name] = entry;
             elseif entry.__type__ == 'InterfaceStruct' then
                 interfaces[entry.name] = entry;
+            elseif entry.__type__ == 'RecordStruct' then
+                records[entry.name] = entry;
             else
                 errorf(2, 'Entry #%i is an unknown struct. {type = %s, value = %s}',
                     i, entry.__type__, dump(entry)
@@ -445,6 +636,7 @@ local function static(body)
         __type__ = 'StaticTable',
         classes = classes,
         interfaces = interfaces,
+        records = records,
         fields = fields,
         methods = methods,
     };
@@ -652,7 +844,122 @@ local function interface(name)
     }, mt_interface);
 end
 
--- MARK: - Field
+-- MARK: - <record>
+
+--- @param self any
+--- @param ... TableBody
+---
+--- @return RecordStruct
+local mt_record_body = function(self, ...)
+    local args = { ... };
+    for i = 1, #args do
+        local entry = args[i];
+
+        for _, arg in pairs(entry) do
+            if arg.__type__ == 'ExtendsTable' then
+                errorf(2, 'TODO: Document.');
+            elseif arg.__type__ == 'ImplementsTable' then
+                --- @cast arg ImplementsTable
+                if self.implements then
+                    error('Cannot redefine class implementations.', 2);
+                end
+                self.implements = arg.value;
+            elseif arg.__type__ == 'ClassStruct' then
+                --- @cast arg ClassStruct
+                self.instanced.classes[arg.name] = arg;
+            elseif arg.__type__ == 'InterfaceStruct' then
+                --- @cast arg InterfaceStruct
+                self.instanced.interfaces[arg.name] = arg;
+            elseif arg.__type__ == 'RecordStruct' then
+                --- @cast arg RecordStruct
+                self.instanced.records[arg.name] = arg;
+            elseif arg.__type__ == 'EntryTable' then
+                --- @cast arg EntryTable
+                self.instanced.fields[arg.name] = arg;
+            elseif arg.__type__ == 'MethodTable' then
+                --- @cast arg MethodTable
+                self.instanced.methods[arg.name] = arg;
+            elseif arg.__type__ == 'ConstructorTable' then
+                table.insert(self.constructors, arg);
+            elseif arg.__type__ == 'StaticTable' then
+                --- @cast arg StaticTable
+                -- Static inner class(es)
+                for name, class in pairs(arg.classes) do
+                    self.static.classes[name] = class;
+                end
+                -- Static inner interface(s)
+                for name, interface in pairs(arg.interfaces) do
+                    self.static.interfaces[name] = interface;
+                end
+                -- Static inner record(s)
+                for name, record in pairs(arg.records) do
+                    self.static.records[name] = record;
+                end
+                -- Static field(s)
+                for name, field in pairs(arg.fields) do
+                    self.static.fields[name] = field;
+                end
+                -- Static method(s)
+                for name, method in pairs(arg.methods) do
+                    self.static.methods[name] = method;
+                end
+            else
+                error('Unknown type: ' .. tostring(arg.__type__), 2);
+            end
+        end
+    end
+
+    return buildRecord(self);
+end;
+
+--- @type fun(flagsOrBody: ModifierFlag[]|TableBody)
+local mt_record = {
+    __call = function(self, ...)
+        local args = { ... };
+        local argLen = #args;
+
+        -- This isn't a flag-argument. Move to body definition.
+        if argLen == 1 and type(args[1]) == 'table' and isArray(args[1]) then
+            return mt_record_body(self, ...);
+        end
+
+        for i = 1, #args do
+            table.insert(self.flags, args[i]);
+        end
+        return setmetatable(self, {
+            __call = mt_record_body,
+            __tostring = mt_tostring
+        });
+    end,
+    __tostring = mt_tostring
+};
+
+--- @param name string
+---
+--- @return RecordStruct
+local function record(name)
+    local t = {
+        __type__ = 'RecordTable',
+        name = name,
+        flags = {},
+        instanced = {
+            classes = {},
+            interfaces = {},
+            fields = {},
+            methods = {},
+        },
+        static = {
+            classes = {},
+            interfaces = {},
+            fields = {},
+            methods = {},
+        },
+        constructors = {},
+    };
+    return setmetatable(t, mt_record);
+end
+
+-- MARK: - <field>
 
 local mt_field_body = function(self, ...)
     local args = { ... };
@@ -736,6 +1043,28 @@ local function field(name)
         name = name,
         flags = {},
     }, mt_field);
+end
+
+-- MARK: - <entry>
+
+local mt_entry_body = function(self, ...)
+    self.types = { ... };
+    return self;
+end;
+
+local mt_entry = {
+    __call = mt_entry_body,
+    __tostring = mt_tostring
+};
+
+--- @param name string
+---
+--- @return EntryTable
+local function entry(name)
+    return setmetatable({
+        __type__ = 'EntryTable',
+        name = name,
+    }, mt_entry);
 end
 
 -- MARK: - Get / Set
@@ -1234,24 +1563,32 @@ return {
 
     import = vm.import,
 
+    -- * Structs * --
     class = class,
     interface = interface,
-    extends = extends,
-    implements = implements,
+    record = record,
     static = static,
+
+    -- * Fields * --
     field = field,
+    entry = entry,
+
+    -- * Executables * --
     constructor = constructor,
     method = method,
+
+    -- * Preset Methods * --
+    equals = equals,
+    toString = toString,
+
+    -- * Modifiers * --
+    extends = extends,
+    implements = implements,
     properties = properties,
     parameters = parameters,
     returnTypes = returnTypes,
     get = get,
     set = set,
-    createMethodTemplate = createMethodTemplate,
-
-    -- * Preset Methods * --
-    equals = equals,
-    toString = toString,
 
     -- * Element Flags * --
     private = private,
@@ -1260,4 +1597,7 @@ return {
     final = final,
     abstract = abstract,
     vararg = vararg,
+
+    -- * Utility * --
+    createMethodTemplate = createMethodTemplate,
 };

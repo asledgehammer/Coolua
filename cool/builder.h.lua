@@ -42,26 +42,22 @@
 --- @field __type__ 'ImplementsTable'
 --- @field value InterfaceStruct[]
 
--- MARK: - static
+-- MARK: static
 
 --- @class StaticTable: BuilderTable
 --- @field __type__ 'StaticTable'
 --- @field classes table<string, ClassStruct>
 --- @field interfaces table<string, InterfaceStruct>
+--- @field records table<string, RecordStruct>
 --- @field fields table<string, FieldTable>
 --- @field methods table<string, MethodTable>
 
--- MARK: - class
+-- MARK: <class>
 
---- @class ClassTableInstanced
+--- @class ClassTableContents
 --- @field classes table<string, ClassStruct>
 --- @field interfaces table<string, InterfaceStruct>
---- @field fields table<string, FieldTable>
---- @field methods table<string, MethodTable>
-
---- @class ClassTableStatic
---- @field classes table<string, ClassStruct>
---- @field interfaces table<string, InterfaceStruct>
+--- @field records table<string, RecordStruct>
 --- @field fields table<string, FieldTable>
 --- @field methods table<string, MethodTable>
 
@@ -72,7 +68,37 @@
 ---
 --- @field name string
 --- @field flags string[]
---- @field instanced ClassTableInstanced
---- @field static ClassTableStatic
+--- @field instanced ClassTableContents
+--- @field static ClassTableContents
 --- @field constructors ConstructorTable[]
 local ClassTable = {};
+
+-- MARK: <record>
+
+--- @class RecordTableContents
+--- @field classes table<string, ClassStruct>
+--- @field interfaces table<string, InterfaceStruct>
+--- @field records table<string, RecordStruct>
+--- @field fields table<string, FieldTable>
+--- @field methods table<string, MethodTable>
+
+--- @class RecordTableInstancedContents: RecordTableContents
+--- @field fields table<string, EntryTable>
+
+--- @class RecordTable
+--- @field __type__ 'RecordTable'
+---
+--- @field name string
+--- @field flags string[]
+--- @field instanced RecordTableInstancedContents
+--- @field static RecordTableContents
+--- @field constructors ConstructorTable[]
+local RecordTable = {};
+
+-- MARK: <entry>
+
+--- @class EntryTable Aliased `private final` field for RecordTable. get is enforced and set is not allowed.
+--- @field __type__ 'EntryTable'
+--- @field name string
+--- @field types any[]
+local EntryTable = {};

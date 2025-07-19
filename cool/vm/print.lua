@@ -70,6 +70,19 @@ function API.printConstructor(def)
     return string.format('%s:%s', def.struct.name, def.signature);
 end
 
+function API.printStruct(def)
+    if def.__type__ == 'ClassStruct' then
+        return API.printClass(def);
+    elseif def.__type__ == 'InterfaceStruct' then
+        return API.printInterface(def);
+    elseif def.__type__ == 'RecordStruct' then
+        return API.printRecord(def);
+    end
+
+    errorf(2, 'Unknown Struct type: %s', def.__type__);
+    return nil;
+end
+
 function API.printInterface(def)
     local sScope = def.scope .. ' ';
     local sStatic = '';
@@ -89,17 +102,6 @@ function API.printInterface(def)
     return string.format('%s%sinterface %s%s%s',
         sScope, sStatic, sPkg, sName, sExtends
     );
-end
-
-function API.printStruct(def)
-    if def.__type__ == 'ClassStruct' then
-        return API.printClass(def);
-    elseif def.__type__ == 'InterfaceStruct' then
-        return API.printInterface(def);
-    end
-
-    errorf(2, 'Unknown Struct type: %s', def.__type__);
-    return nil;
 end
 
 function API.printClass(def)
@@ -139,6 +141,38 @@ function API.printClass(def)
 
     return string.format('%s%s%s%sclass %s%s%s',
         sScope, sStatic, sAbstract, sFinal, sPath, sExtends, sImplements
+    );
+end
+
+function API.printRecord(def)
+    local sScope = '';
+    local sStatic = '';
+    local sPath = def.path;
+    local sImplements = '';
+
+    if def.scope ~= 'package' then sScope = def.scope .. ' ' end
+    if def.static then sStatic = 'static ' end
+
+
+    if def.interfaces then
+        for i = 1, #def.interfaces do
+            local interface = def.interfaces[i];
+            local sInterfacePkg = '';
+            if interface.pkg then sInterfacePkg = interface.pkg .. '.' end
+            local sInterface = string.format('%s%s', sInterfacePkg, interface.path);
+            if sImplements == '' then
+                sImplements = sInterface;
+            else
+                sImplements = sImplements .. ', ' .. sInterface;
+            end
+        end
+        if sImplements ~= '' then
+            sImplements = ' implements ' .. sImplements;
+        end
+    end
+
+    return string.format('%s%srecord %s%s',
+        sScope, sStatic, sPath, sImplements
     );
 end
 

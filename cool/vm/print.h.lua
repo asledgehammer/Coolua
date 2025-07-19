@@ -12,11 +12,6 @@ local API = {};
 --- @return string explodedArgsString
 function API.argsToString(args) end
 
---- @param def Struct
----
---- @return string
-function API.printStruct(def) end
-
 --- @param def ExecutableStruct
 ---
 --- @return string
@@ -32,12 +27,22 @@ function API.printConstructor(def) end
 --- @return string
 function API.printMethod(def) end
 
---- @param def InterfaceStruct
+--- @param def Struct
 ---
 --- @return string
-function API.printInterface(def) end
+function API.printStruct(def) end
 
 --- @param def ClassStruct
 ---
 --- @return string
 function API.printClass(def) end
+
+--- @param def InterfaceStruct
+---
+--- @return string
+function API.printInterface(def) end
+
+--- @param def RecordStruct
+--- 
+--- @return string
+function API.printRecord(def) end
