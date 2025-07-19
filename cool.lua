@@ -8,6 +8,7 @@ local builder = require 'cool/builder';
 local cool = {
     newClass = vm.class.newClass,
     newInterface = vm.interface.newInterface,
+    newRecord = vm.record.newRecord,
     builder = builder,
     import = vm.import,
     packages = vm.package.packages
