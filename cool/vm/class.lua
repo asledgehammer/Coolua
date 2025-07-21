@@ -1169,9 +1169,6 @@ function API.newClass(classInput, outer)
         return false;
     end
 
-    --- @param superInterface InterfaceStruct
-    ---
-    --- @return boolean
     function classStruct:isSuperInterface(superInterface)
         for i = 1, #self.interfaces do
             local interface = self.interfaces[i];
@@ -1188,14 +1185,13 @@ function API.newClass(classInput, outer)
     end
 
     function classStruct:isAssignableFromType(superStruct)
-        if not superStruct then return false end
-
         if superStruct.__type__ == 'ClassStruct' then
+            --- @cast superStruct ClassStruct
             return self == superStruct or self:isSuperClass(superStruct);
         elseif superStruct.__type__ == 'InterfaceStruct' then
+            --- @cast superStruct InterfaceStruct
             return self:isSuperInterface(superStruct);
         end
-
         return false;
     end
 
