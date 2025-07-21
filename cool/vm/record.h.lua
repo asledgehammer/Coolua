@@ -63,7 +63,7 @@ function RecordStruct:finalize() end
 --- @return boolean
 function RecordStruct:isFinalized() end
 
---- @param class ClassStruct
+--- @param class any
 ---
 --- @return boolean
 function RecordStruct:isAssignableFromType(class) end
@@ -181,6 +181,11 @@ function RecordStruct:getStaticFields() end
 ---
 --- @return FieldStruct? FieldStruct
 function RecordStruct:getDeclaredStaticField(name) end
+
+--- @param superInterface InterfaceStruct
+---
+--- @return boolean
+function RecordStruct:isSuperInterface(superInterface) end
 
 -- MARK: - <instance>
 

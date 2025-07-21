@@ -692,10 +692,10 @@ function API.newRecord(recordInput, outer)
     --- @param fieldName string
     ---
     --- @return FieldStruct? FieldStruct
-    function recordStruct:getField(fieldName)
-        local fd = recordStruct:getDeclaredField(fieldName);
+    function recordStruct:getStaticField(fieldName)
+        local fd = recordStruct:getDeclaredStaticField(fieldName);
         if not fd and recordStruct.super then
-            return recordStruct.super:getField(fieldName);
+            return recordStruct.super:getStaticField(fieldName);
         end
         return fd;
     end
@@ -706,11 +706,11 @@ function API.newRecord(recordInput, outer)
     --- @param fieldName string
     ---
     --- @return FieldStruct? FieldStruct
-    function recordStruct:getDeclaredField(fieldName)
+    function recordStruct:getDeclaredStaticField(fieldName)
         return recordStruct.declaredFields[fieldName];
     end
 
-    function recordStruct:getFields()
+    function recordStruct:getStaticFields()
         --- @type FieldStruct[]
         local array = {};
 
@@ -1060,7 +1060,9 @@ function API.newRecord(recordInput, outer)
         end
 
         -- If any auto-methods are defined for fields (get, set), create them before compiling record methods.
-        vm.field.compileFieldAutoMethods(self);
+        -- vm.field.compileFieldAutoMethods(self);
+
+        -- TODO: Generate auto-methods for all entries.
 
         -- TODO: Audit everything.
 
@@ -1076,24 +1078,24 @@ function API.newRecord(recordInput, outer)
 
         -- Change add methods.
         self.addMethod = function() errorf(2, '%s Cannot add methods. (Record is final!)', errHeader) end
-        self.addField = function() errorf(2, '%s Cannot add fields. (Record is final!)', errHeader) end
+        self.addEntry = function() errorf(2, '%s Cannot add entries. (Record is final!)', errHeader) end
+        self.addStaticField = function() errorf(2, '%s Cannot add static fields. (Record is final!)', errHeader) end
         self.addConstructor = function() errorf(2, '%s Cannot add constructors. (Record is final!)', errHeader) end
 
         -- Set default value(s) for recordes.
-        for iname, icd in pairs(recordStruct.inner) do
+        for _, icd in pairs(recordStruct.inner) do
             if icd.static then
                 recordStruct[name] = icd;
             end
         end
 
         -- Set default value(s) for static fields.
-        for name, fd in pairs(recordStruct.declaredFields) do
+        for _, fd in pairs(recordStruct.declaredFields) do
             if fd.static then
                 recordStruct[name] = fd.value;
             end
         end
 
-        self.__supertable__ = vm.super.createSuperTable(recordStruct);
         vm.executable.createMiddleMethods(self);
         applyStructMetatable(self);
 
@@ -1131,43 +1133,6 @@ function API.newRecord(recordInput, outer)
         return recordStruct;
     end
 
-    function recordStruct:isSuperRecord(record)
-        --- @type Hierarchical|nil
-        local next = self.super;
-        while next do
-            if next == record then return true end
-            next = next.super;
-        end
-        return false;
-    end
-
-    --- (Handles recursively going through sub-recordes to see if a record is a sub-record)
-    ---
-    --- @param subRecord RecordStruct
-    --- @param recordToEval RecordStruct
-    ---
-    --- @return boolean result True if the record to evaluate is a super-record of the subRecord.
-    local function __recurseSubRecord(subRecord, recordToEval)
-        local subLen = #recordStruct.sub;
-        for i = 1, subLen do
-            local next = recordStruct.sub[i];
-            if next:isAssignableFromType(recordToEval) or __recurseSubRecord(next, recordToEval) then
-                return true;
-            end
-        end
-        return false;
-    end
-
-    function recordStruct:isSubRecord(record)
-        if __recurseSubRecord(recordStruct, record) then
-            return true;
-        end
-        return false;
-    end
-
-    --- @param superInterface InterfaceStruct
-    ---
-    --- @return boolean
     function recordStruct:isSuperInterface(superInterface)
         for i = 1, #self.interfaces do
             local interface = self.interfaces[i];
@@ -1184,14 +1149,10 @@ function API.newRecord(recordInput, outer)
     end
 
     function recordStruct:isAssignableFromType(superStruct)
-        if not superStruct then return false end
-
-        if superStruct.__type__ == 'RecordStruct' then
-            return self == superStruct or self:isSuperRecord(superStruct);
-        elseif superStruct.__type__ == 'InterfaceStruct' then
+        if superStruct.__type__ == 'InterfaceStruct' then
+            --- @cast superStruct InterfaceStruct
             return self:isSuperInterface(superStruct);
         end
-
         return false;
     end
 
