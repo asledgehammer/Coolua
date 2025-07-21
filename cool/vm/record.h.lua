@@ -33,6 +33,25 @@ local ChildRecordStructInput = {};
 --- @field interfaces InterfaceStruct[]
 local RecordStruct = {};
 
+-- MARK: - <entry>
+
+--- @class (exact) EntryStruct
+--- @field __type__ 'EntryStruct'
+--- @field audited boolean If true, the struct is audited and verified to be valid.
+--- @field struct Struct
+--- @field name string
+--- @field types AllowedType[]
+--- @field value any
+--- @field assignedOnce boolean This flag is used for final fields. If true, all assignments will fail.
+local EntryStruct = {};
+
+--- @class (exact) EntryStructInput
+--- @field name string
+--- @field types AllowedType[]?
+--- @field type AllowedType?
+--- @field final boolean?
+local EntryStructInput = {};
+
 -- MARK: general
 
 --- @return RecordInstance
@@ -119,10 +138,10 @@ function RecordStruct:getDeclaredMethod(name, args) end
 
 -- MARK: field
 
---- @param input FieldStructInput
+--- @param input EntryStructInput
 ---
---- @return FieldStruct
-function RecordStruct:addField(input) end
+--- @return EntryStruct
+function RecordStruct:addEntry(input) end
 
 --- @param input StaticFieldStructInput
 ---
@@ -134,17 +153,34 @@ function RecordStruct:addStaticField(input) end
 --- @param name string
 ---
 --- @return FieldStruct? FieldStruct
-function RecordStruct:getField(name) end
+function RecordStruct:getEntry(name) end
 
 --- @return FieldStruct[]
-function RecordStruct:getFields() end
+function RecordStruct:getEntries() end
 
 --- Attempts to resolve a FieldStruct in the RecordStruct.
 ---
 --- @param name string
 ---
 --- @return FieldStruct? FieldStruct
-function RecordStruct:getDeclaredField(name) end
+function RecordStruct:getDeclaredEntry(name) end
+
+--- Attempts to resolve a FieldStruct in the RecordStruct.
+---
+--- @param name string
+---
+--- @return FieldStruct? FieldStruct
+function RecordStruct:getStaticField(name) end
+
+--- @return FieldStruct[]
+function RecordStruct:getStaticFields() end
+
+--- Attempts to resolve a FieldStruct in the RecordStruct.
+---
+--- @param name string
+---
+--- @return FieldStruct? FieldStruct
+function RecordStruct:getDeclaredStaticField(name) end
 
 -- MARK: - <instance>
 

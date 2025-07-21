@@ -36,6 +36,10 @@ function API.auditStructPropertyScope(structScope, propertyScope, errHeader) end
 --- @return string[]
 function API.auditMethodReturnsProperty(returnTypes, errHeader) end
 
+--- @param rd ClassStruct
+--- @param ed EntryStruct
+function API.auditEntry(rd, ed) end
+
 --- @param cd ClassStruct
 --- @param fd FieldStruct
 function API.auditField(cd, fd) end
@@ -48,3 +52,7 @@ function API.auditFinalFields(classDef, o) end
 
 --- @param consDef ConstructorStruct
 function API.auditConstructor(consDef) end
+
+--- @param name any
+--- @param errHeader any
+function API.auditName(name, errHeader) end

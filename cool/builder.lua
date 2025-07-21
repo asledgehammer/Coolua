@@ -426,12 +426,7 @@ buildRecord = function(self, outer)
                         name
                     );
                 end
-
-                if method.abstract then
-                    record:addAbstractMethod(method);
-                else
-                    record:addMethod(method);
-                end
+                record:addMethod(method);
             end
         end
     end

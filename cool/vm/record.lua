@@ -301,6 +301,11 @@ local function createPseudoRecordInstance(def)
     return __record__;
 end
 
+--- @param struct RecordStruct
+local function createImplicitConstructor(struct)
+
+end
+
 --- @param recordInput RecordStructInput|ChildRecordStructInput
 --- @param outer Struct?
 function API.newRecord(recordInput, outer)
@@ -422,6 +427,7 @@ function API.newRecord(recordInput, outer)
 
     recordStruct.type = recordStruct.path;
     recordStruct.printHeader = string.format('record (%s):', recordStruct.path);
+    recordStruct.declaredEntries = {};
     recordStruct.declaredFields = {};
     recordStruct.declaredMethods = {};
     recordStruct.declaredConstructors = {};
@@ -629,35 +635,31 @@ function API.newRecord(recordInput, outer)
         return o;
     end
 
-    -- MARK: - Field
+    -- MARK: - <entry>
 
-    --- @param fieldInput FieldStructInput
+    --- @param entryInput EntryStructInput
     ---
-    --- @return FieldStruct
-    function recordStruct:addField(fieldInput)
-        --- @type FieldStruct
-        local fieldStruct = {
-            __type__ = 'FieldStruct',
+    --- @return EntryStruct
+    function recordStruct:addEntry(entryInput)
+        --- @type EntryStruct
+        local entryStruct = {
+            __type__ = 'EntryStruct',
             audited = false,
             struct = recordStruct,
-            types = fieldInput.types,
-            type = fieldInput.type,
-            name = fieldInput.name,
-            scope = fieldInput.scope or 'package',
-            static = false,
-            final = fieldInput.final or false,
-            value = fieldInput.value or vm.constants.UNINITIALIZED_VALUE,
-            get = fieldInput.get,
-            set = fieldInput.set,
+            types = entryInput.types,
+            type = entryInput.type,
+            name = entryInput.name,
             assignedOnce = false,
         };
 
-        vm.audit.auditField(self, fieldStruct);
+        vm.audit.auditEntry(self, entryStruct);
 
-        self.declaredFields[fieldStruct.name] = fieldStruct;
+        self.declaredEntries[entryStruct.name] = entryStruct;
 
-        return fieldStruct;
+        return entryStruct;
     end
+
+    -- MARK: - <field>
 
     function recordStruct:addStaticField(fieldInput)
         --- @type FieldStruct

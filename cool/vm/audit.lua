@@ -28,24 +28,93 @@ local API = {
 
 -- --- @cast API VMAuditModule
 
+function API.auditEntry(rd, ed)
+    local errHeader = string.format('Record(%s):addEntry():', rd.name);
+
+    API.auditName(ed.name, errHeader);
+
+    if rd.declaredFields[ed.name] then
+        errorf(2, '%s record already exists: %s', errHeader, ed.name);
+    end
+
+    -- Validate types:
+    if not ed.types and not ed.type then
+        errorf(2, '%s array property "types" or simplified string property "type" are not provided.', errHeader);
+    elseif ed.types then
+        if type(ed.types) ~= 'table' or not isArray(ed.types) then
+            errorf(2, 'types is not an array. {type=%s, value=%s}',
+                errHeader, type(ed.types), tostring(ed.types)
+            );
+        elseif #ed.types == 0 then
+            errorf(2, '%s types is empty. (min=1)', errHeader);
+        elseif arrayContainsDuplicates(ed.types) then
+            errorf(2, '%s types contains duplicate types.', errHeader);
+        end
+
+        for i = 1, #ed.types do
+            local tType = type(ed.types[i]);
+            if tType == 'table' then
+                if not ed.type['__type__'] then
+                    errorf(2, '%s types[%i] is a table without a "string __type__" property.', errHeader, i);
+                elseif type(ed.type['__type__']) ~= 'string' then
+                    errorf(2, '%s types[%i].__type__ is not a string.');
+                end
+                ed.types[i] = type['__type__'];
+            elseif tType == 'string' then
+                if ed.types[i] == '' then
+                    errorf(2, '%s types[%i] is an empty string.', errHeader, i);
+                end
+            else
+                errorf(2, '%s: types[%i] is not a string or { __type__: string }. {type=%s, value=%s}',
+                    errHeader, i, type(ed.type), tostring(ed.type)
+                );
+            end
+        end
+    else
+        local tType = type(ed.type);
+        if tType == 'table' then
+            if not ed.type['__type__'] then
+                errorf(2, '%s property "type" is a table without a "string __type__" property.', errHeader);
+            elseif type(ed.type['__type__']) ~= 'string' then
+                errorf(2, '%s type.__type__ is not a string.');
+            end
+            ed.type = ed.type['__type__'];
+        elseif tType == 'string' then
+            if ed.type == '' then
+                errorf(2, '%s property "type" is an empty string.', errHeader);
+            end
+        else
+            errorf(2, '%s: property "type" is not a string. {type=%s, value=%s}',
+                errHeader, type(ed.type), tostring(ed.type)
+            );
+        end
+
+        -- Set the types array and remove the simplified form.
+        ed.types = { ed.type };
+        ed.type = nil;
+    end
+
+    -- Validate value:
+    if ed.value ~= vm.constants.UNINITIALIZED_VALUE then
+        if not vm.type.isAssignableFromType(ed.value, ed.types) then
+            errorf(2,
+                '%s property "value" is not assignable from "types". {types = %s, value = {type = %s, value = %s}}',
+                errHeader, dump(ed.types), type(ed.value), tostring(ed.value)
+            );
+        end
+        ed.assignedOnce = true;
+    else
+        ed.assignedOnce = false;
+    end
+end
+
 function API.auditField(cd, fd)
     local errHeader = string.format('Class(%s):addField():', cd.name);
 
     -- Validate name.
-    if not fd.name then
-        errorf(2, '%s string property "name" is not provided.', errHeader);
-    elseif type(fd.name) ~= 'string' then
-        errorf(2, '%s property "name" is not a valid string. {type=%s, value=%s}',
-            errHeader, type(fd.name), tostring(fd.name)
-        );
-    elseif fd.name == '' then
-        errorf(2, '%s property "name" is an empty string.', errHeader);
-    elseif not isValidName(fd.name) then
-        errorf(2,
-            '%s property "name" is invalid. (value = %s) (Should only contain A-Z, a-z, 0-9, _, or $ characters)',
-            errHeader, fd.name
-        );
-    elseif cd.declaredFields[fd.name] then
+    API.auditName(fd.name, errHeader);
+
+    if cd.declaredFields[fd.name] then
         errorf(2, '%s field already exists: %s', errHeader, fd.name);
     end
 
@@ -173,11 +242,7 @@ function API.auditParameter(parameter, i, errHeader)
     end
 
     -- Validate parameter name.
-    if not parameter.name and not vm.executable.isVararg(parameter.types[1]) then
-        errorf(2, '%s Parameter #%i doesn\'t have a defined name string.', errHeader, i);
-    elseif parameter.name == '' then
-        errorf(2, '%s Parameter #%i has an empty name string.', errHeader, i);
-    end
+    API.auditName(parameter.name, errHeader);
 end
 
 function API.auditParameters(parameters, errHeader)
@@ -234,24 +299,10 @@ function API.auditMethodReturnsProperty(returnTypes, errHeader)
 end
 
 function API.auditMethodParamName(name, errHeader)
-    -- Validate name.
-    if not name then
-        errorf(2, '%s string property "name" is not provided.', errHeader);
-    elseif type(name) ~= 'string' then
-        errorf(2, '%s property "name" is not a valid string. {type=%s, value=%s}',
-            errHeader, type(name), tostring(name)
-        );
-    elseif name == '' then
-        errorf(2, '%s property "name" is an empty string.', errHeader);
-    elseif not isValidName(name) then
-        errorf(2,
-            '%s property "name" is invalid. (value = %s) (Should only contain A-Z, a-z, 0-9, _, or $ characters)',
-            errHeader, name
-        );
-    elseif name == 'super' then
+    API.auditName(name, errHeader);
+    if name == 'super' then
         errorf(2, '%s cannot name method "super".', errHeader);
     end
-
     return name;
 end
 
@@ -265,24 +316,30 @@ function API.auditStructPropertyScope(structScope, propertyScope, errHeader)
             return 'package';
         end
     end
-
-    -- NOTE: Not consistent with Java rules.
-    --
-    -- local invalid = false;
-    -- if structScope == 'package' and propertyScope == 'public' then
-    --     invalid = true;
-    -- elseif structScope == 'protected' and propertyScope == 'public' or propertyScope == 'package' then
-    --     invalid = true;
-    -- elseif structScope == 'private' and propertyScope ~= 'private' then
-    --     invalid = true;
-    -- end
-    -- if invalid then
-    --     errorf(2, '%s Property scope is invalid: {structScope = %s, propertyScope = %s}',
-    --         errHeader, structScope, propertyScope
-    --     );
-    -- end
-
     return propertyScope;
+end
+
+--- Audits and ensures that entities with name-contexts follows the Lua naming rules on characters, also checking for
+--- empty, other-types, or missing definitions.
+---
+--- @param name string|nil
+--- @param errHeader string
+function API.auditName(name, errHeader)
+    -- Validate name.
+    if not name then
+        errorf(2, '%s string property "name" is not provided.', errHeader);
+    elseif type(name) ~= 'string' then
+        errorf(2, '%s property "name" is not a valid string. {type=%s, value=%s}',
+            errHeader, type(name), tostring(name)
+        );
+    elseif name == '' then
+        errorf(2, '%s property "name" is an empty string.', errHeader);
+    elseif not isValidName(name) then
+        errorf(2,
+            '%s property "name" is invalid. (value = %s) (Should only contain A-Z, a-z, 0-9, or _ characters, and cannot start with numbers)',
+            errHeader, name
+        );
+    end
 end
 
 return API;
