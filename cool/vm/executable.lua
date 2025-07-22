@@ -38,23 +38,6 @@ end
 
 --- @cast API VMExecutableModule
 
---- @param name string The name of the method called.
---- @param args any[] The arguments passed to the middle-function.
----
---- @return string callSignature The simulated method signature.
-function API.createCallSignature(name, args)
-    local tArgs = API.argsToTypes(args);
-    local s = '';
-    for i = 1, #args do
-        if s == '' then
-            s = tArgs[i];
-        else
-            s = s .. ', ' .. tArgs[i];
-        end
-    end
-    return string.format('%s(%s)', name, s);
-end
-
 function API.argsToTypes(args)
     local tArgs = {};
     for i = 1, #args do
@@ -185,12 +168,14 @@ function API.createMiddleMethod(cd, name, methods)
         local args = { ... };
         local md = API.resolveMethod(cd, name, methods, args);
 
-        local errHeader = string.format('Class(%s):%s():', cd.name, name);
+        local errHeader = string.format('Class(%s):%s():', cd.path, name);
 
         if not md then
             errorf(2, '%s No method signature exists: %s', errHeader, vm.print.argsToString(args));
             return;
         end
+
+        errHeader = string.format('Class(%s):%s():', cd.path, md.signature);
 
         local callInfo = vm.scope.getRelativeCall();
 
@@ -282,11 +267,13 @@ function API.createMiddleMethod(cd, name, methods)
         end
 
         -- Audit return-type methods.
-        if not vm.type.isAssignableFromType(retVal, md.returnTypes) then
-            errMsg = string.format('%s: Invalid type for returned value: {type = %s, value = %s} (Allowed type(s): %s)',
+
+        if not vm.type.isAssignableFromTypes(retVal, md.returnTypes) then
+            errMsg = string.format('%s: Invalid type for returned value: {type = "%s", value = %s}'
+                .. ' (Allowed type(s): %s)',
                 md.signature,
                 type(retVal),
-                tostring(retVal),
+                dump(retVal),
                 dump(md.returnTypes)
             );
             print(errMsg);
@@ -301,50 +288,21 @@ function API.createMiddleMethod(cd, name, methods)
     end;
 end
 
-function API.createSignature(definition)
-    local name;
+function API.createParameterSignatureFragment(parameters)
+    local parameterLen = #parameters;
+    if parameterLen == 0 then return '()' end
 
-    if definition.__type__ == 'ConstructorStruct' then
-        name = 'new';
-    else
-        name = definition.name;
-    end
-
-    local parameterLen = #definition.parameters;
-    if parameterLen ~= 0 then
-        local s = '';
-        for i = 1, parameterLen do
-            local parameter = definition.parameters[i];
-
-            local sParameter = '';
-            for i = 1, #parameter.types do
-                local next = parameter.types[i];
-                local sNext;
-                if type(next) == 'table' then
-                    --- @cast next Struct
-                    sNext = next.path;
-                elseif type(next) == 'string' then
-                    sNext = next;
-                end
-
-                if sParameter == '' then
-                    sParameter = sNext;
-                else
-                    sParameter = sParameter .. '|' .. sNext;
-                end
-            end
-
-            -- local sParameter = table.concat(parameter.types, '|');
-            if s == '' then
-                s = sParameter;
-            else
-                s = s .. ', ' .. sParameter;
-            end
+    local s = '';
+    for i = 1, parameterLen do
+        local sParameter = API.combineParameterTypes(parameters[i]);
+        if s == '' then
+            s = sParameter;
+        else
+            s = string.format('%s, %s', s, sParameter);
         end
-        return string.format('%s(%s)', name, s);
     end
 
-    return name .. '()';
+    return string.format('(%s)', s);
 end
 
 function API.getDeclaredMethodNames(struct, array)
@@ -392,7 +350,7 @@ end
 
 --- @param def Struct
 --- @param name string
---- @param comb table<string, table<MethodStruct>>
+--- @param comb table<string, MethodStruct[]>
 function API.combineAllMethods(def, name, comb)
     comb = comb or {};
 
@@ -515,13 +473,8 @@ function API.compileMethods(self)
     debugf(vm.debug.method, '[METHOD] :: %s Compiled %i method(s).', self.printHeader, count);
 end
 
---- @param self Struct
---- @param path string
---- @param line integer
----
---- @return MethodStruct|nil method
-function API.getDeclaredMethodFromLine(self, path, line)
-    for _, mCluster in pairs(self.declaredMethods) do
+function API.getDeclaredMethodFromLine(struct, path, line)
+    for _, mCluster in pairs(struct.declaredMethods) do
         for _, md in pairs(mCluster) do
             if path == md.bodyInfo.path and line >= md.bodyInfo.start and line <= md.bodyInfo.stop then
                 return md;
@@ -531,20 +484,120 @@ function API.getDeclaredMethodFromLine(self, path, line)
     return nil;
 end
 
---- @param self ClassStruct|InterfaceStruct
+--- @param struct ClassStruct|InterfaceStruct
 --- @param path string
 --- @param line number
 ---
 --- @return ExecutableStruct|nil
-function API.getExecutableFromLine(self, path, line)
+function API.getExecutableFromLine(struct, path, line)
     --- @type ExecutableStruct|nil
-    local ed = API.getDeclaredMethodFromLine(self, path, line);
-    if not ed and self.__type__ == 'ClassStruct' then
-        ed = vm.executable.getConstructorFromLine(self, path, line);
+    local ed = API.getDeclaredMethodFromLine(struct, path, line);
+    if not ed and struct.__type__ == 'ClassStruct' then
+        ed = vm.executable.getConstructorFromLine(struct, path, line);
     end
     return ed;
 end
 
+--- @param self Object
+function API.defaultSuperFunc(self)
+    self:super();
+end
+
+function API.checkArguments(executable, args)
+    local argsLen = #args;
+    local valid = true;
+
+    -- Try to find the method without varargs first.
+    local parameters = executable.parameters;
+    local paramLen = #parameters;
+    local parameter;
+    local arg;
+
+    if executable.vararg then
+        local lastParameter;
+        local varArgTypes;
+
+        parameters = executable.parameters;
+        paramLen = #parameters;
+        if paramLen ~= 0 then
+            lastParameter = parameters[paramLen];
+            -- Subtract 1 because varargs can be empty.
+            if paramLen - 1 > argsLen then
+                valid = false;
+            else
+                varArgTypes = lastParameter.types;
+
+                -- Check normal parameters.
+                for p = 1, paramLen - 1 do
+                    arg = args[p];
+                    parameter = parameters[p];
+                    if not vm.type.isAssignableFromTypes(arg, parameter.types) then
+                        valid = false;
+                        break;
+                    end
+                end
+
+                -- Check vararg parameters.
+                if valid then
+                    for p = paramLen, argsLen do
+                        arg = args[p];
+                        if not vm.type.isAssignableFromTypes(arg, varArgTypes) then
+                            valid = false;
+                            break;
+                        end
+                    end
+                end
+            end
+        end
+    else
+        if argsLen == paramLen then
+            for p = 1, paramLen do
+                arg = args[p];
+                parameter = parameters[p];
+                if not vm.type.isAssignableFromTypes(arg, parameter.types) then
+                    valid = false;
+                    break;
+                end
+            end
+        else
+            valid = false;
+        end
+    end
+
+    if vm.debug.executable then
+        vm.stepIn();
+        -- All this does is compile useful debug arguments array as a string.
+        local argsS = '';
+        for i = 1, argsLen do
+            arg = args[i];
+            local argS;
+            if arg.__class__ then
+                argS = '<ClassInstance:' .. arg.__class__.definition.path .. '>';
+            elseif arg.__type__ then
+                argS = '<' .. arg.__type__ .. ':' .. arg.__type__ .. '>';
+            else
+                argS = tostring(arg);
+            end
+            if argsS == '' then
+                argsS = argS;
+            else
+                argsS = argsS .. ', ' .. argS;
+            end
+        end
+        argsS = '[' .. argsS .. ']';
+        vm.stepOut();
+        PrintPlus.printf('[EXECUTABLE] :: executable.checkArguments(%s, %s) = %s',
+            vm.print.printExecutable(executable), argsS, tostring(valid)
+        );
+    end
+
+
+    return valid;
+end
+
+-- MARK: - <constructor>
+
+-- TODO: Rewrite to support current varargs model.
 function API.resolveConstructor(cons, args)
     local argsLen = #args;
 
@@ -561,7 +614,7 @@ function API.resolveConstructor(cons, args)
             for p = 1, paramLen do
                 local arg = args[p];
                 local parameter = parameters[p];
-                if not vm.type.isAssignableFromType(arg, parameter.types) then
+                if not vm.type.isAssignableFromTypes(arg, parameter.types) then
                     consDef = nil;
                     break;
                 end
@@ -581,18 +634,20 @@ function API.resolveConstructor(cons, args)
             if paramLen ~= 0 then
                 local lastParameter = parameters[paramLen];
                 local lastType = lastParameter.types[i];
+                -- TODO: Look into this.
                 if not vm.executable.isVararg(lastType) then
                     consDef = nil;
                     -- If the varArg range doesn't match.
                 elseif paramLen > argsLen then
                     consDef = nil;
                 else
+                    -- TODO: Look into this.
                     local varArgTypes = vm.executable.getVarargTypes(lastType);
                     -- Check normal parameters.
                     for p = 1, paramLen - 1 do
                         local arg = args[p];
                         local parameter = parameters[p];
-                        if not vm.type.isAssignableFromType(arg, parameter.types) then
+                        if not vm.type.isAssignableFromTypes(arg, parameter.types) then
                             consDef = nil;
                             break;
                         end
@@ -600,7 +655,7 @@ function API.resolveConstructor(cons, args)
                     -- Check vararg parameters.
                     for p = paramLen, argsLen do
                         local arg = args[p];
-                        if not vm.type.isAssignableFromType(arg, varArgTypes) then
+                        if not vm.type.isAssignableFromTypes(arg, varArgTypes) then
                             consDef = nil;
                             break;
                         end
@@ -785,6 +840,71 @@ function API.getConstructorFromLine(self, path, line)
     return nil;
 end
 
+-- MARK: - <signature>
+
+function API.createCallSignature(name, args)
+    local tArgs = API.argsToTypes(args);
+    local s = '';
+    for i = 1, #args do
+        if s == '' then
+            s = tArgs[i];
+        else
+            s = string.format('%s, %s', s, tArgs[i]);
+        end
+    end
+    return string.format('%s(%s)', name, s);
+end
+
+function API.createSignature(definition)
+    -- Process name.
+    local name;
+    if definition.__type__ == 'ConstructorStruct' then
+        name = 'new';
+    else
+        name = definition.name;
+    end
+
+    -- Process parameter(s).
+    local parameters = definition.parameters;
+    local parameterLen = #parameters;
+
+    if parameterLen == 0 then
+        return string.format('%s()', name);
+    end
+
+    local s = '';
+    for i = 1, parameterLen do
+        local sParameter = API.combineParameterTypes(parameters[i]);
+        if s == '' then
+            s = sParameter;
+        else
+            s = string.format('%s, %s', s, sParameter);
+        end
+    end
+    return string.format('%s(%s)', name, s);
+end
+
+function API.combineParameterTypes(parameter)
+    local s = '';
+    local types = parameter.types;
+    for i = 1, #types do
+        local type = types[i];
+        local sType = vm.type.getType(type);
+        if sType == 'string' then
+            --- @cast type string
+            sType = type;
+        end
+        if s == '' then
+            s = sType;
+        else
+            s = string.format('%s|%s', s, sType);
+        end
+    end
+    return s;
+end
+
+-- MARK: <parameter>
+
 --- @param paramsA ParameterStruct[]
 --- @param paramsB ParameterStruct[]
 ---
@@ -805,19 +925,6 @@ function API.areCompatible(paramsA, paramsB)
 
     return true;
 end
-
--- function API.getVarargTypes(arg)
---     if not API.isVararg(arg) then
---         errorf(2, 'Type is not vararg: %s', arg);
---     end
---     return arg:sub(1, #arg - 3):split('|');
--- end
-
--- function API.isVararg(arg)
---     local len = #arg;
---     if len < 3 then return false end
---     return string.sub(arg, len - 2, len) == '...';
--- end
 
 function API.compile(def)
     local defParams = def.parameters;
@@ -852,107 +959,6 @@ function API.compile(def)
     end
 
     return defParams;
-end
-
---- @param self Object
-function API.defaultSuperFunc(self)
-    self:super();
-end
-
---- @param ed ExecutableStruct
---- @param args any[]
----
---- @return boolean matches
-function API.checkArguments(ed, args)
-    local argsLen = #args;
-    local valid = true;
-
-    -- Try to find the method without varargs first.
-    local parameters = ed.parameters;
-    local paramLen = #parameters;
-    local parameter;
-    local arg;
-
-    if ed.vararg then
-        local lastParameter;
-        local varArgTypes;
-
-        parameters = ed.parameters;
-        paramLen = #parameters;
-        if paramLen ~= 0 then
-            lastParameter = parameters[paramLen];
-            -- Subtract 1 because varargs can be empty.
-            if paramLen - 1 > argsLen then
-                valid = false;
-            else
-                varArgTypes = lastParameter.types;
-
-                -- Check normal parameters.
-                for p = 1, paramLen - 1 do
-                    arg = args[p];
-                    parameter = parameters[p];
-                    if not vm.type.isAssignableFromType(arg, parameter.types) then
-                        valid = false;
-                        break;
-                    end
-                end
-
-                -- Check vararg parameters.
-                if valid then
-                    for p = paramLen, argsLen do
-                        arg = args[p];
-                        if not vm.type.isAssignableFromType(arg, varArgTypes) then
-                            valid = false;
-                            break;
-                        end
-                    end
-                end
-            end
-        end
-    else
-        if argsLen == paramLen then
-            for p = 1, paramLen do
-                arg = args[p];
-                parameter = parameters[p];
-                if not vm.type.isAssignableFromType(arg, parameter.types) then
-                    valid = false;
-                    break;
-                end
-            end
-        else
-            valid = false;
-        end
-    end
-
-    if vm.debug.executable then
-        vm.stepIn();
-        -- All this does is compile useful debug arguments array as a string.
-        local argsS = '';
-        for i = 1, argsLen do
-            arg = args[i];
-            local argS;
-            if arg.__class__ then
-                argS = '<ClassInstance:' .. arg.__class__.definition.path .. '>';
-            elseif arg.__type__ then
-                argS = '<' .. arg.__type__ .. ':' .. arg.__type__ .. '>';
-            else
-                argS = tostring(arg);
-            end
-            if argsS == '' then
-                argsS = argS;
-            else
-                argsS = argsS .. ', ' .. argS;
-            end
-        end
-        argsS = '[' .. argsS .. ']';
-        vm.stepOut();
-        debugf(vm.debug.executable, '[EXECUTABLE] :: executable.checkArguments(%s, %s) = %s',
-            vm.print.printExecutable(ed), argsS, tostring(valid)
-        );
-    end
-
-
-    return valid;
 end
 
 return API;

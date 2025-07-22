@@ -17,4 +17,5 @@
 --- @field builder boolean
 --- @field executable boolean
 --- @field executableCache boolean
+--- @field type boolean
 local API = {};

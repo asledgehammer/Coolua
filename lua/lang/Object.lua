@@ -3,7 +3,10 @@
 ---]]
 
 local vm = require 'cool/vm';
+local import = vm.import;
 local newClass = vm.class.newClass;
+
+-- local Class = import 'lua.lang.Class';
 
 vm.flags.ignorePushPopContext = true;
 
@@ -36,7 +39,7 @@ Object:addMethod({
     final = true,
     name = 'instanceOf',
     parameters = {
-        { name = 'class', type = 'lua.lang.Class' }
+        { name = 'class', type = 'any' }
     },
     returnTypes = 'boolean',
 
@@ -53,7 +56,7 @@ Object:addMethod({
     scope = 'public',
     name = 'equals',
     parameters = {
-        { name = 'other', type = 'any' }
+        { name = 'other', type = 'lua.lang.Class' }
     },
     returnTypes = 'boolean',
 

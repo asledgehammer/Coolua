@@ -21,9 +21,9 @@
 
 --- @class (exact) Methodable Any struct that supports methods.
 --- @field __middleMethods table<string, function> All middle functables for methods.
---- @field declaredMethods table<string, table<string, MethodStruct>> All compiled methods for the class.
---- @field methods table<string, table<string, MethodStruct>> All compiled methods. If the struct is extendable then all directly-accessable methods from super-classes are assigned here.
---- @field methodCache table<string, MethodStruct> Cache all method call signatures with their resolved method definitions. This is used to optimize method routing.
+--- @field declaredMethods MethodClusters All compiled methods for the class.
+--- @field methods MethodClusters All compiled methods. If the struct is extendable then all directly-accessable methods from super-classes are assigned here.
+--- @field methodCache MethodCluster Cache all method call signatures with their resolved method definitions. This is used to optimize method routing.
 
 --- @class (exact) Fieldable Any struct that supports fields.
 --- @field declaredFields table<string, FieldStruct>

@@ -82,7 +82,6 @@ local Dimension = class 'Dimension' (public) {
     toString {
         --- @param self Dimension
         function(self)
-            print('width', self:getWidth(), 'height', self:getHeight())
             return string.format('Dimension(width = %.4f, height = %.4f)',
                 self:getWidth(), self:getHeight()
             );

@@ -73,6 +73,14 @@ function vm.forName(path) end
 --- @return T
 function vm.import(path) end
 
+--- @generic T: Struct|StructReference
+--- @param path string
+--- @param tryRequire boolean If true, the import will attempt to require the location of the class definition.
+---
+--- @return T
+function vm.import(path, tryRequire) end
+
+
 --- @param path string
 ---
 --- @return Package

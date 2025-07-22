@@ -406,10 +406,11 @@ buildRecord = function(self, outer)
         end
 
         -- Build instanced field(s).
-        if self.instanced.fields then
-            for name, field in pairs(self.instanced.fields) do
+        if self.instanced.entries then
+            for i=1, #self.instanced.entries do
+                local entry = self.instanced.entries[i];
                 -- TODO: Adapt to Record rules.
-                record:addField(field);
+                record:addEntry(entry);
             end
         end
 
@@ -870,7 +871,7 @@ local mt_record_body = function(self, ...)
                 self.instanced.records[arg.name] = arg;
             elseif arg.__type__ == 'EntryTable' then
                 --- @cast arg EntryTable
-                self.instanced.fields[arg.name] = arg;
+                table.insert(self.instanced.entries, arg);
             elseif arg.__type__ == 'MethodTable' then
                 --- @cast arg MethodTable
                 self.instanced.methods[arg.name] = arg;
@@ -940,7 +941,7 @@ local function record(name)
         instanced = {
             classes = {},
             interfaces = {},
-            fields = {},
+            entries = {},
             methods = {},
         },
         static = {

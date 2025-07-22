@@ -22,8 +22,8 @@ local final = builder.final;
 local vararg = builder.vararg;
 -- ------------------------------------ --
 
-local Object = import 'lua.lang.Object';
-local Package = import 'lua.lang.Package';
+local Object = import('lua.lang.Object', false);
+local Package = import('lua.lang.Package', false);
 
 -- NOTE: We create a placeholder of class and then define it because of references to itself.
 local Class = import 'lua.lang.Class';

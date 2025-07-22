@@ -379,18 +379,14 @@ function API.newClass(classInput, outer)
         end
     end
 
-    -- Here we check to see if anything has referenced the class prior to initialization. We graft to that reference.
-    local classStruct = vm.STRUCTS[path];
-
-    if not classStruct then
-        vm.STRUCTS[path] = classStruct;
-    end
-
-    classStruct = setmetatable({}, {
+    -- Grab reference table (If made), and adapt it to a full struct.
+    local classStruct = vm.STRUCTS[path] or {};
+    setmetatable(classStruct, {
         __tostring = function(self)
             return vm.print.printClass(self);
         end
     });
+    vm.STRUCTS[path] = classStruct;
 
     --- @cast classStruct any
 
@@ -960,7 +956,7 @@ function API.newClass(classInput, outer)
         local errHeader = string.format('ClassStruct(%s):addMethod():', classStruct.name);
         local scope = vm.audit.auditStructPropertyScope(self.scope, methodInput.scope, errHeader);
         local name = vm.audit.auditMethodParamName(methodInput.name, errHeader);
-        local types = vm.audit.auditMethodReturnsProperty(methodInput.returnTypes, errHeader);
+        local returnTypes = vm.audit.auditMethodReturnsProperty(methodInput.returnTypes, errHeader);
         local parameters = vm.audit.auditParameters(methodInput.parameters, errHeader);
 
         local methodStruct = {
@@ -970,7 +966,7 @@ function API.newClass(classInput, outer)
             -- Base properties. --
             struct = classStruct,
             name = name,
-            returnTypes = types,
+            returnTypes = returnTypes,
             parameters = parameters,
             body = body,
             bodyInfo = bodyInfo,
@@ -1185,18 +1181,28 @@ function API.newClass(classInput, outer)
     end
 
     function classStruct:isAssignableFromType(superStruct)
+        local result = false;
         if superStruct.__type__ == 'ClassStruct' then
             --- @cast superStruct ClassStruct
-            return self == superStruct or self:isSuperClass(superStruct);
+            result = self == superStruct or self:isSuperClass(superStruct);
         elseif superStruct.__type__ == 'InterfaceStruct' then
             --- @cast superStruct InterfaceStruct
-            return self:isSuperInterface(superStruct);
+            result = self:isSuperInterface(superStruct);
         end
-        return false;
+        debugf(vm.debug.type, '[TYPE] :: %s:isAssignableFromType(%s) = %s',
+            tostring(self.path),
+            tostring(superStruct.__type__),
+            tostring(result)
+        );
+        return result;
     end
 
     function classStruct:isFinalized()
         return self.__readonly__;
+    end
+
+    function classStruct:getStruct()
+        return self;
     end
 
     return classStruct;

@@ -6,7 +6,7 @@ local vm = require 'cool/vm';
 local import = vm.import;
 local newClass = vm.class.newClass;
 
-import 'lua.lang.Object';
+import('lua.lang.Object', false);
 
 local Package = newClass({ scope = 'public', final = true });
 

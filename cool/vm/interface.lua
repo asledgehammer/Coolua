@@ -675,6 +675,10 @@ function API.newInterface(interfaceInput, outer)
         return self.__readonly__;
     end
 
+    function interfaceStruct:getStruct()
+        return self;
+    end
+
     IAPI.applyStructMetatable(interfaceStruct);
 
     return interfaceStruct;

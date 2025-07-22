@@ -96,7 +96,7 @@ function API.auditEntry(rd, ed)
 
     -- Validate value:
     if ed.value ~= vm.constants.UNINITIALIZED_VALUE then
-        if not vm.type.isAssignableFromType(ed.value, ed.types) then
+        if not vm.type.isAssignableFromTypes(ed.value, ed.types) then
             errorf(2,
                 '%s property "value" is not assignable from "types". {types = %s, value = {type = %s, value = %s}}',
                 errHeader, dump(ed.types), type(ed.value), tostring(ed.value)
@@ -177,7 +177,7 @@ function API.auditField(cd, fd)
 
     -- Validate value:
     if fd.value ~= vm.constants.UNINITIALIZED_VALUE then
-        if not vm.type.isAssignableFromType(fd.value, fd.types) then
+        if not vm.type.isAssignableFromTypes(fd.value, fd.types) then
             errorf(2,
                 '%s property "value" is not assignable from "types". {types = %s, value = {type = %s, value = %s}}',
                 errHeader, dump(fd.types), type(fd.value), tostring(fd.value)

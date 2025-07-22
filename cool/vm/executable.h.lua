@@ -4,6 +4,9 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+--- @alias MethodCluster table<string, MethodStruct> A dictionary of all methods sharing the same name, identified by their call-signatures.
+--- @alias MethodClusters table<string, MethodCluster> A dictionary of all methods, identified by the name of each MethodCluster as a key.
+
 -- MARK: - Struct
 
 --- @class (exact) Parameterable
@@ -67,9 +70,9 @@
 --- @class (exact) ConstructorStruct: ExecutableStruct
 ---
 --- @field __type__ 'ConstructorStruct'
----
 --- @field __super_flag__ boolean Used internally to track calls to super while invoked.
---- @field struct ClassStruct
+---
+--- @field struct Struct
 --- @field parameters ParameterStruct[]
 --- @field super fun(o: any, ...) This function is called prior to the body function.
 --- @field superInfo FunctionInfo The super function's information. (line-range and path)
@@ -100,12 +103,14 @@
 --- @field defaultSuperFuncInfo FunctionInfo
 local API = {};
 
+-- MARK: <method>
+
 --- @param struct Struct
 function API.createMiddleMethods(struct) end
 
 --- @param classDef Struct
 --- @param name string
---- @param methods table<string, MethodStruct>
+--- @param methods MethodCluster
 ---
 --- @return fun(o: ClassInstance, ...): (any?)
 function API.createMiddleMethod(classDef, name, methods) end
@@ -121,31 +126,20 @@ function API.getDeclaredMethodNames(classDef, array) end
 --- @return string[] methodNames
 function API.getMethodNames(classDef, methodNames) end
 
---- @param definition MethodStruct
----
---- @return string
-function API.createSignature(definition) end
-
 --- @param struct Struct Used to cache results at class-level.
 --- @param name string
---- @param methods table<string, MethodStruct>
+--- @param methods MethodCluster
 --- @param args any[]
 ---
 --- @return MethodStruct|nil
 function API.resolveMethod(struct, name, methods, args) end
-
---- @param name string
---- @param args string[]
----
---- @return string methodSignature
-function API.createCallSignature(name, args) end
 
 --- @param args any[]
 ---
 --- @return string[] argsAsTypes
 function API.argsToTypes(args) end
 
---- @param methods table<string, MethodStruct>
+--- @param methods MethodCluster
 --- @param args any[]
 ---
 --- @return MethodStruct|nil
@@ -153,32 +147,45 @@ function API.resolveMethodDeep(methods, args) end
 
 --- @param self Struct
 --- @param name string
---- @param comb table<string, table<MethodStruct>>
+--- @param comb table<string, MethodStruct[]>
 ---
 --- @return table<string, table<string, MethodStruct>>
 function API.combineAllMethods(self, name, comb) end
 
---- @param self ClassStruct|InterfaceStruct
+--- @param self Struct
 function API.compileMethods(self) end
 
---- @param self Struct
+--- @param struct Struct
 --- @param path string
 --- @param line integer
 ---
 --- @return MethodStruct|nil method
-function API.getDeclaredMethodFromLine(self, path, line) end
+function API.getDeclaredMethodFromLine(struct, path, line) end
 
---- @param self ClassStruct|InterfaceStruct
+--- @param struct Struct
 --- @param path string
 --- @param line number
 ---
 --- @return ExecutableStruct
-function API.getExecutableFromLine(self, path, line) end
+function API.getExecutableFromLine(struct, path, line) end
 
 --- @param func function?
 ---
 --- @return FunctionInfo
 function API.getExecutableInfo(func) end
+
+--- Used to fill-in for missing super function blocks for constructors.
+---
+--- @param super SuperTable
+function API.defaultSuperFunc(super) end
+
+--- @param executable ExecutableStruct
+--- @param args any[]
+---
+--- @return boolean matches
+function API.checkArguments(executable, args) end
+
+-- MARK: <constructor>
 
 --- @param classDef ClassStruct
 function API.createMiddleConstructor(classDef) end
@@ -189,17 +196,42 @@ function API.createMiddleConstructor(classDef) end
 --- @return ConstructorStruct|nil
 function API.resolveConstructor(constructors, args) end
 
---- @param definition ConstructorStruct
----
---- @return string
-function API.createSignature(definition) end
-
 --- @param self Constructable
 --- @param path string
 --- @param line integer
 ---
 --- @return ConstructorStruct|nil method
 function API.getConstructorFromLine(self, path, line) end
+
+-- MARK: <signature>
+
+--- @param definition ConstructorStruct
+---
+--- @return string
+function API.createSignature(definition) end
+
+--- @param parameters ParameterStruct[]
+---
+--- @return string
+function API.createParameterSignatureFragment(parameters) end
+
+--- @param definition MethodStruct
+---
+--- @return string
+function API.createSignature(definition) end
+
+--- @param name string The name of the method called.
+--- @param args any[] The arguments passed to the middle-function.
+---
+--- @return string callSignature The simulated method signature.
+function API.createCallSignature(name, args) end
+
+--- @param parameter ParameterStruct
+---
+--- @return string
+function API.combineParameterTypes(parameter) end
+
+-- MARK: <parameter>
 
 --- @param paramsA ParameterStruct[]
 --- @param paramsB ParameterStruct[]
@@ -211,12 +243,3 @@ function API.areCompatible(paramsA, paramsB) end
 ---
 --- @return ParameterStruct[]
 function API.compile(def) end
-
---- Used to fill-in for missing super function blocks for constructors.
----
---- @param super SuperTable
-function API.defaultSuperFunc(super) end
-
---- @param struct ExecutableStruct
---- @param args any[]
-function API.checkArguments(struct, args) end

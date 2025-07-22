@@ -10,10 +10,16 @@
 local API = {};
 
 --- @param value any
---- @param typeOrTypes string[]|string
+--- @param types any[]|string
 ---
 --- @return boolean
-function API.isAssignableFromType(value, typeOrTypes) end
+function API.isAssignableFromTypes(value, types) end
+
+--- @param value any
+--- @param type any
+---
+--- @return boolean
+function API.isAssignableFromType(value, type) end
 
 --- @param from any[]
 --- @param to any[]

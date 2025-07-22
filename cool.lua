@@ -20,6 +20,7 @@ vm.stepIn();
 require 'lua/lang/Object';
 require 'lua/lang/Package';
 require 'lua/lang/Class';
+require 'lua/lang/Record';
 
 -- Language-util-level
 local StackTraceElement = require 'lua/lang/StackTraceElement';

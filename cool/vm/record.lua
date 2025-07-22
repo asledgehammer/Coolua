@@ -37,7 +37,7 @@ local function applyStructMetatable(struct)
     mt.__tostring = function() return vm.print.printRecord(struct) end
 
     mt.__index = function(_, field)
-        if vm.isInside() or field == 'super' then
+        if vm.isInside() then
             return __properties[field];
         end
 
@@ -134,18 +134,13 @@ local function applyStructMetatable(struct)
     end
 
     mt.__newindex = function(_, field, value)
-        if field == 'super' or field == '__super__' then
-            errorf(2, '%s Cannot set super. (Static context)', struct.printHeader);
-            return;
-        end
-
         -- Post-finalize assignment.
         if field == 'recordObj' and not __properties['recordObj'] then
             __properties['recordObj'] = value;
             return;
         end
 
-        local fieldStruct = struct:getField(field);
+        local fieldStruct = struct:getStaticField(field);
 
         -- Internal bypass for struct construction.
         if vm.isInside() then
@@ -164,7 +159,7 @@ local function applyStructMetatable(struct)
         -- Inner record invocation.
         if struct.inner[field] then
             if vm.isOutside() then
-                errorf(2, 'Cannot set inner record explicitly. Use the API.');
+                errorf(2, 'Cannot set inner struct explicitly. Use the API.');
             end
             __properties[field] = value;
             return;
@@ -303,7 +298,73 @@ end
 
 --- @param struct RecordStruct
 local function createImplicitConstructor(struct)
+    -- TODO: Implement.
 
+    --- @type ParameterStruct[]
+    local parameters = {};
+
+    local super = function(o, ...)
+        -- (Call to 'lua.lang.Object.new()')
+        o:super();
+    end
+
+    local body = function(o, ...)
+        -- Grab the record-entries list.
+        local entries = o.declaredEntriesOrdered;
+        local entriesLen = #entries;
+
+        -- Package the provided arguments.
+        local args = { ... };
+        local argLen = #args;
+
+        -- Sanity-check length of arguments. Arguments-length MUST match entries-length.
+        if entriesLen ~= argLen then
+            errorf(2,
+                'IllegalArgumentException: Number of arguments doesn\'t match record-entries.' ..
+                ' {#entries=%i, #args=%i)',
+                entriesLen, argLen
+            );
+        end
+
+        -- Iterate over arguments, audit them and assign them.
+        for i = 1, argLen do
+            local entry = struct.declaredEntriesOrdered[i];
+            local arg = args[i];
+
+            -- Sanity-check argument type.
+            if not vm.type.isAssignableFromTypes(arg, entry.types) then
+                errorf(2, 'IllegalArgumentException: Argument #%i is not assignable to type(s): ' ..
+                    '{arg = %s, types = %s}',
+                    dump.any(arg), dump.any(entry.types)
+                );
+            end
+
+            -- Set the entry-value.
+            o[entry.name] = arg;
+        end
+    end
+
+    local superInfo = vm.executable.getExecutableInfo(super);
+    local bodyInfo = vm.executable.getExecutableInfo(body);
+
+    --- @type ConstructorStruct
+    local consDef = {
+        __type__ = 'ConstructorStruct',
+        __super_flag__ = false,
+
+        struct = struct,
+        audited = false,
+        vararg = false,
+        scope = 'public',
+        parameters = parameters,
+        super = vm.executable.defaultSuperFunc,
+        superInfo = superInfo,
+        body = body,
+        bodyInfo = bodyInfo,
+
+    };
+
+    consDef.signature = vm.executable.createSignature(consDef);
 end
 
 --- @param recordInput RecordStructInput|ChildRecordStructInput
@@ -318,14 +379,6 @@ function API.newRecord(recordInput, outer)
 
     -- Grab where the call came from.
     local callInfo = vm.scope.getRelativeCall();
-
-    local super = recordInput.extends;
-    if super and super.final then
-        errorf(2, 'Record cannot extend final Super-Record: %s extends final %s',
-            path, super.path
-        );
-        return;
-    end
 
     -- Prepare & validate interfaces array.
     --- @type InterfaceStruct[]
@@ -378,18 +431,14 @@ function API.newRecord(recordInput, outer)
         end
     end
 
-    -- Here we check to see if anything has referenced the record prior to initialization. We graft to that reference.
-    local recordStruct = vm.STRUCTS[path];
-
-    if not recordStruct then
-        vm.STRUCTS[path] = recordStruct;
-    end
-
-    recordStruct = setmetatable({}, {
+    -- Grab reference table (If made), and adapt it to a full struct.
+    local recordStruct = vm.STRUCTS[path] or {};
+    setmetatable(recordStruct, {
         __tostring = function(self)
             return vm.print.printRecord(self);
         end
     });
+    vm.STRUCTS[path] = recordStruct;
 
     --- @cast recordStruct any
 
@@ -408,10 +457,6 @@ function API.newRecord(recordInput, outer)
     -- * Scopable Properties * --
     recordStruct.scope = recordInput.scope or 'package';
 
-    -- * Hierarchical Properties * --
-    recordStruct.super = super;
-    recordStruct.sub = {};
-
     -- * Enclosurable Properties * --
     recordStruct.outer = outer;
     recordStruct.inner = {};
@@ -428,6 +473,7 @@ function API.newRecord(recordInput, outer)
     recordStruct.type = recordStruct.path;
     recordStruct.printHeader = string.format('record (%s):', recordStruct.path);
     recordStruct.declaredEntries = {};
+    recordStruct.declaredEntriesOrdered = {};
     recordStruct.declaredFields = {};
     recordStruct.declaredMethods = {};
     recordStruct.declaredConstructors = {};
@@ -435,12 +481,13 @@ function API.newRecord(recordInput, outer)
 
     recordStruct.__middleConstructor = vm.executable.createMiddleConstructor(recordStruct);
 
-    if not recordStruct.super and recordStruct.path ~= 'lua.lang.Object' then
-        recordStruct.super = vm.getStruct('lua.lang.Object');
-        if not recordStruct.super then
-            errorf(2, '%s lua.lang.Object not defined!', recordStruct.printHeader);
-        end
+    -- All records extends `lua.lang.Record`.
+    local super = vm.STRUCTS['lua.lang.Record'];
+    print('super: ', super);
+    if not super then
+        errorf(2, '%s lua.lang.Record not defined!', recordStruct.printHeader);
     end
+    recordStruct.super = super;
 
     if outer then
         outer.inner[recordStruct.name] = recordStruct;
@@ -453,25 +500,6 @@ function API.newRecord(recordInput, outer)
     vm.stepIn();
     vm.package.addToPackageStruct(recordStruct);
     vm.stepOut();
-
-    if super then
-        -- Check and see if the calling code can access the record.
-        local scopeCalled = vm.scope.getScopeForCall(super, callInfo, recordStruct);
-        if not vm.scope.canAccessScope(super.scope, scopeCalled) then
-            local sRecord = path;
-            local sSuper = super.path;
-            local errMsg = string.format(
-                'IllegalAccessException: The record "%s" cannot extend "%s". (access is %s).' ..
-                ' (Access Level from call: "%s")\n%s',
-                sRecord, sSuper,
-                super.scope, scopeCalled,
-                vm.stack.printStackTrace()
-            );
-            print(errMsg);
-            error(errMsg, 2);
-            return;
-        end
-    end
 
     for i = 1, #recordStruct.interfaces do
         local interface = recordStruct.interfaces[i];
@@ -650,11 +678,13 @@ function API.newRecord(recordInput, outer)
             type = entryInput.type,
             name = entryInput.name,
             assignedOnce = false,
+            value = vm.constants.UNINITIALIZED_VALUE,
         };
 
         vm.audit.auditEntry(self, entryStruct);
 
         self.declaredEntries[entryStruct.name] = entryStruct;
+        table.insert(self.declaredEntriesOrdered, entryStruct);
 
         return entryStruct;
     end
@@ -686,26 +716,10 @@ function API.newRecord(recordInput, outer)
         return fieldStruct;
     end
 
-    --- Attempts to resolve a FieldStruct in the RecordStruct. If the field isn't declared for the record
-    --- level, the super-record(es) are checked.
-    ---
-    --- @param fieldName string
-    ---
-    --- @return FieldStruct? FieldStruct
     function recordStruct:getStaticField(fieldName)
-        local fd = recordStruct:getDeclaredStaticField(fieldName);
-        if not fd and recordStruct.super then
-            return recordStruct.super:getStaticField(fieldName);
-        end
-        return fd;
+        return recordStruct:getDeclaredStaticField(fieldName);
     end
 
-    --- Attempts to resolve a FieldStruct in the RecordStruct. If the field isn't defined in the record, nil
-    --- is returned.
-    ---
-    --- @param fieldName string
-    ---
-    --- @return FieldStruct? FieldStruct
     function recordStruct:getDeclaredStaticField(fieldName)
         return recordStruct.declaredFields[fieldName];
     end
@@ -713,15 +727,9 @@ function API.newRecord(recordInput, outer)
     function recordStruct:getStaticFields()
         --- @type FieldStruct[]
         local array = {};
-
-        local next = recordStruct;
-        while next do
-            for _, fieldStruct in pairs(next.declaredFields) do
-                table.insert(array, fieldStruct);
-            end
-            next = next.super;
+        for _, fieldStruct in pairs(self.declaredFields) do
+            table.insert(array, fieldStruct);
         end
-
         return array;
     end
 
@@ -735,9 +743,7 @@ function API.newRecord(recordInput, outer)
         local body = constructorInput.body;
         if not body then body = function() end end
 
-        -- If the super-call is not there, then write
-        local _super = constructorInput.super;
-        if not _super then _super = vm.executable.defaultSuperFunc end
+        local _super = vm.executable.defaultSuperFunc;
 
         -- Friendly check for implementation.
         if not self or type(constructorInput) == 'function' then
@@ -809,11 +815,7 @@ function API.newRecord(recordInput, outer)
     ---
     --- @return ConstructorStruct|nil constructorStruct
     function recordStruct:getConstructor(args)
-        local constructor = self:getDeclaredConstructor(args);
-        if not constructor and self.super then
-            constructor = self.super:getConstructor(args);
-        end
-        return constructor;
+        return self:getDeclaredConstructor(args);
     end
 
     --- @param args any[]
@@ -889,67 +891,6 @@ function API.newRecord(recordInput, outer)
         return methodStruct;
     end
 
-    function recordStruct:addAbstractMethod(methodInput)
-        local errHeader = string.format('RecordStruct(%s):addAbstractMethod():', recordStruct.name);
-
-        local bodyInfo = vm.executable.getExecutableInfo();
-
-        local scope = vm.audit.auditStructPropertyScope(self.scope, methodInput.scope, errHeader);
-        local name = vm.audit.auditMethodParamName(methodInput.name, errHeader);
-        local types = vm.audit.auditMethodReturnsProperty(methodInput.returnTypes, errHeader);
-        local parameters = vm.audit.auditParameters(methodInput.parameters, errHeader);
-
-        local methodStruct = {
-            __type__ = 'MethodStruct',
-
-            -- Base properties. --
-            struct = recordStruct,
-            name = name,
-            returnTypes = types,
-            parameters = parameters,
-            body = nil,
-            bodyInfo = bodyInfo,
-            scope = scope,
-
-            -- General method flags --
-            static = false,
-            final = false,
-            abstract = true,
-
-            -- Compiled method flags --
-            audited = false,
-            override = false,
-            super = nil,
-
-            -- Always falsify interface flags in record method structs. --
-            interface = false,
-            default = false,
-        };
-
-        methodStruct.signature = vm.executable.createSignature(methodStruct);
-
-        --- @cast methodStruct MethodStruct
-
-        if vm.debug.method then
-            local callSyntax = ':';
-            if methodStruct.static then callSyntax = '.' end
-            debugf(vm.debug.method, '[METHOD] :: %s Adding abstract method: %s%s%s',
-                self.printHeader,
-                self.name, callSyntax, methodStruct.signature
-            );
-        end
-
-        -- Add the struct to the cluster array for the method's name.
-        local methodCluster = self.declaredMethods[methodStruct.name];
-        if not methodCluster then
-            methodCluster = {};
-            self.declaredMethods[methodStruct.name] = methodCluster;
-        end
-        methodCluster[methodStruct.signature] = methodStruct;
-
-        return methodStruct;
-    end
-
     function recordStruct:addMethod(methodInput)
         local body = methodInput.body;
         local bodyInfo = vm.executable.getExecutableInfo(body);
@@ -980,7 +921,6 @@ function API.newRecord(recordInput, outer)
             -- Compiled method flags --
             audited = false,
             override = false,
-            super = nil,
 
             -- Always falsify interface flags in record method structs. --
             interface = false,
@@ -1011,28 +951,14 @@ function API.newRecord(recordInput, outer)
         return methodStruct;
     end
 
-    --- Attempts to resolve a MethodStruct in the RecordStruct. If the method isn't defined in the record,
-    --- `nil` is returned.
-    ---
-    --- @param methodName string
-    ---
-    --- @return MethodStruct[]? methods
-    function recordStruct:getDeclaredMethods(methodName)
-        return recordStruct.declaredMethods[methodName];
-    end
-
-    --- @param methodName string
-    --- @param args any[]
-    ---
-    --- @return MethodStruct|nil MethodStruct
     function recordStruct:getMethod(methodName, args)
         return vm.executable.resolveMethod(self, methodName, self.methods[methodName], args);
     end
 
-    --- @param methodName string
-    --- @param args any[]
-    ---
-    --- @return MethodStruct|nil MethodStruct
+    function recordStruct:getDeclaredMethods(methodName)
+        return recordStruct.declaredMethods[methodName];
+    end
+
     function recordStruct:getDeclaredMethod(methodName, args)
         return vm.executable.resolveMethod(self, methodName, self.declaredMethods[methodName], args);
     end
@@ -1045,11 +971,6 @@ function API.newRecord(recordInput, outer)
 
         if self.__readonly__ then
             errorf(2, '%s Cannot finalize. (Record is already finalized!)', errHeader);
-        end
-
-        -- Finalize superrecord.
-        if recordStruct.super and not recordStruct.super.__readonly__ then
-            recordStruct.super:finalize();
         end
 
         -- Finalize any interface(s).
@@ -1118,11 +1039,6 @@ function API.newRecord(recordInput, outer)
         self.__readonly__ = true;
         vm.STRUCTS[recordStruct.path] = recordStruct;
 
-        -- Set record as child.
-        if recordStruct.super then
-            table.insert(recordStruct.super.sub, recordStruct);
-        end
-
         -- Add a reference for global package and static code.
         if outer then
             vm.stepIn();
@@ -1140,11 +1056,6 @@ function API.newRecord(recordInput, outer)
                 return true;
             end
         end
-
-        if recordStruct.super then
-            return recordStruct.super:isSuperInterface(superInterface);
-        end
-
         return false;
     end
 
@@ -1158,6 +1069,10 @@ function API.newRecord(recordInput, outer)
 
     function recordStruct:isFinalized()
         return self.__readonly__;
+    end
+
+    function recordStruct:getStruct()
+        return self;
     end
 
     return recordStruct;

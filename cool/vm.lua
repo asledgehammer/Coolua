@@ -150,10 +150,12 @@ vm.class.setVM(vm);
 vm.interface.setVM(vm);
 vm.record.setVM(vm);
 
-function vm.import(path)
+function vm.import(path, tryRequire)
+    tryRequire = tryRequire or true;
+
     local def = vm.STRUCTS[path];
 
-    if not def then
+    if not def and tryRequire then
         pcall(function()
             def = require(string.gsub(path, '%.', '/'));
         end);
@@ -183,7 +185,9 @@ function vm.forName(path)
         local def = vm.STRUCTS[path];
         if def and (
                 def.__type__ == 'ClassStruct' or
-                def.__type__ == 'InterfaceStruct'
+                def.__type__ == 'InterfaceStruct' or
+                def.__type__ == 'RecordStruct' or
+                def.__type__ == 'EnumStruct'
             ) then
             --- @cast def ClassStruct|InterfaceStruct
 
@@ -199,6 +203,7 @@ function vm.forName(path)
 end
 
 function vm.getPackage(path)
+    print('getPackage');
     local pkg = vm.PACKAGES[path];
     if not pkg then
         local pkgTable = vm.package.getPackage(path);

@@ -4,6 +4,25 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+-- MARK: - <entry>
+
+--- @class (exact) EntryStruct
+--- @field __type__ 'EntryStruct'
+--- @field audited boolean If true, the struct is audited and verified to be valid.
+--- @field struct Struct
+--- @field name string
+--- @field types AllowedType[]
+--- @field value any
+--- @field assignedOnce boolean This flag is used for final fields. If true, all assignments will fail.
+local EntryStruct = {};
+
+--- @class (exact) EntryStructInput
+--- @field name string
+--- @field types AllowedType[]?
+--- @field type AllowedType?
+--- @field final boolean?
+local EntryStructInput = {};
+
 -- MARK: - <input>
 
 --- @class (exact) RecordStructInput: StructInput
@@ -31,26 +50,9 @@ local ChildRecordStructInput = {};
 --- @field type string
 --- @field classObj Class?
 --- @field interfaces InterfaceStruct[]
+--- @field declaredEntries table<string, EntryStruct>
+--- @field declaredEntriesOrdered EntryStruct[] Used to create the implicit constructor.
 local RecordStruct = {};
-
--- MARK: - <entry>
-
---- @class (exact) EntryStruct
---- @field __type__ 'EntryStruct'
---- @field audited boolean If true, the struct is audited and verified to be valid.
---- @field struct Struct
---- @field name string
---- @field types AllowedType[]
---- @field value any
---- @field assignedOnce boolean This flag is used for final fields. If true, all assignments will fail.
-local EntryStruct = {};
-
---- @class (exact) EntryStructInput
---- @field name string
---- @field types AllowedType[]?
---- @field type AllowedType?
---- @field final boolean?
-local EntryStructInput = {};
 
 -- MARK: general
 
@@ -136,17 +138,12 @@ function RecordStruct:getDeclaredMethods(name) end
 --- @return MethodStruct|nil MethodStruct
 function RecordStruct:getDeclaredMethod(name, args) end
 
--- MARK: field
+-- MARK: <entry>
 
 --- @param input EntryStructInput
 ---
 --- @return EntryStruct
 function RecordStruct:addEntry(input) end
-
---- @param input StaticFieldStructInput
----
---- @return FieldStruct
-function RecordStruct:addStaticField(input) end
 
 --- Attempts to resolve a FieldStruct in the RecordStruct.
 ---
@@ -164,6 +161,13 @@ function RecordStruct:getEntries() end
 ---
 --- @return FieldStruct? FieldStruct
 function RecordStruct:getDeclaredEntry(name) end
+
+-- MARK: <field>
+
+--- @param input StaticFieldStructInput
+---
+--- @return FieldStruct
+function RecordStruct:addStaticField(input) end
 
 --- Attempts to resolve a FieldStruct in the RecordStruct.
 ---

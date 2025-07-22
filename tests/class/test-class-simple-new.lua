@@ -7,20 +7,30 @@ local import = cool.import;
 
 print('## TEST ##\n');
 
---- @type DimensionDefinition
-local Dimension = import 'tests.Dimension';
+local function errorHandler(message)
+    print(debug.traceback(message, 2));
+    return "";
+end
 
-local dim1 = Dimension.new(5, 5);
-local dim2 = Dimension.new(5, 4);
-local dim3 = Dimension.new(5, 5);
+local result, errMsg = xpcall(function()
+    --- @type DimensionDefinition
+    local Dimension = import 'tests.Dimension';
 
-print('ClassStruct tests:\n');
-print('\tClassStruct:__tostring()', Dimension);
-print('\tClassStruct:__type__\t\t', Dimension.__type__);
-print('\nInstance tests:\n');
-print('\tobject:getWidth(): ', dim1:getWidth());
-print('\tobject:toString(): ', dim1);
-print('\tdim1 == dim2 (false): ', dim1 == dim2);
-print('\tdim1 == dim3 (true): ', dim1 == dim3);
+    local dim1 = Dimension.new(5, 5);
+    local dim2 = Dimension.new(5, 4);
+    local dim3 = Dimension.new(5, 5);
 
-print('\tdim1:getClass() = ', dim1:getClass());
+    print('ClassStruct tests:\n');
+    print('\tClassStruct:__tostring()', Dimension);
+    print('\tClassStruct:__type__\t\t', Dimension.__type__);
+    print('\nInstance tests:\n');
+    print('\tobject:getWidth(): ', dim1:getWidth());
+    print('\tobject:toString(): ', dim1);
+    print('\tdim1 == dim2 (false): ', dim1 == dim2);
+    print('\tdim1 == dim3 (true): ', dim1 == dim3);
+    print('\tdim1:getClass() = ', dim1:getClass());
+end, errorHandler);
+
+if not result then
+    error(errMsg);
+end

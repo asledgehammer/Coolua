@@ -9,6 +9,20 @@ local errorf = PrintPlus.errorf;
 
 local DebugUtils = require 'cool/debug';
 
+local bypassFields = {
+    '__type__',
+    '__class__',
+    '__readonly__',
+    'super'
+};
+
+local function isBypassField(name)
+    for i = 1, #bypassFields do
+        if bypassFields[i] == name then return true end
+    end
+    return false;
+end
+
 --- @type VM
 local vm;
 
@@ -66,10 +80,8 @@ function API.createInstanceMetatable(cd, o)
             return instancedStructs[field];
         end
 
-        -- Super is to be treated differently / internally.
-        if field == 'super' then
-            return fields[field];
-        elseif field == '__class__' then
+        -- Some fields needs bypassing.
+        if isBypassField(field) then
             return fields[field];
         end
 
