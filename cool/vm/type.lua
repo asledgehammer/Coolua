@@ -148,7 +148,7 @@ function API.isAssignableFromType(value, _type)
                 value.__type__ == 'InterfaceStruct' or
                 value.__type__ == 'RecordStruct' or
                 value.__type__ == 'EnumStruct';
-            print('>>>>> SSS: ', result, value.__type__);
+            -- print('>>>>> S: ', result, value.__type__);
         end
 
         -- print('>>>>> K');

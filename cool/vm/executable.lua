@@ -56,7 +56,7 @@ function API.resolveMethod(struct, name, methods, args)
     md = struct.methodCache[callSignature];
     if md then return md end
 
-    debugf(vm.debug.executableCache, '[EXECUTABLE_CACHE] :: %s No cache found for method %s call signature: %s',
+    debugf(vm.debug.executableCache, '[EXECUTABLE_CACHE] :: %s NO cache found for method %s call signature: %s',
         struct.printHeader,
         name,
         callSignature
@@ -164,10 +164,13 @@ function API.createMiddleMethod(cd, name, methods)
         end
 
         local args = { ... };
+
         local md = API.resolveMethod(cd, name, methods, args);
         if not md then
-            local insArgs = { o, unpack(args) };
-            md = API.resolveMethod(cd, name, methods, insArgs);
+            if #args ~= 0 and o.__table_id__ == args[1].__table_id__ then
+                table.remove(args, 1);
+                md = API.resolveMethod(cd, name, methods, args);
+            end
         end
 
         local errHeader = string.format('Class(%s):%s():', cd.path, name);
@@ -656,7 +659,6 @@ function API.resolveConstructor(struct, constructors, args)
 end
 
 function API.resolveConstructorDeep(constructors, args)
-
     local argsLen = #args;
 
     --- @type ConstructorStruct?

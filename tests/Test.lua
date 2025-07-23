@@ -1,8 +1,6 @@
 local PrintPlus = require 'cool/print';
 local printf = PrintPlus.printf;
-local errorf = PrintPlus.errorf;
 
-local dump = require 'cool/dump'.any;
 local cool = require 'cool';
 
 -- BUILDER API ----------- --
@@ -91,7 +89,9 @@ Test = class 'Test' (public, final) {
             end, function(errMsg)
                 self:print();
                 self:printf('Result: FAILURE');
-                print(debug.traceback(errMsg, 2));
+                if not Test.silent then
+                    print(debug.traceback(errMsg, 2));
+                end
             end);
 
             if result then

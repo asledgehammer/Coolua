@@ -290,10 +290,7 @@ local function createPseudoClassInstance(def)
             return false;
         end
     };
-    local mt = {};
-    function mt.__tostring()
-        return '(Pseudo-Class): ' .. def.name;
-    end
+    local mt = { __tostring = '(Pseudo-Class): ' .. def.name };
 
     setmetatable(__class__, mt);
     return __class__;
@@ -529,7 +526,6 @@ function API.newClass(classInput, outer)
         if outerStruct then
             outerStruct.inner[self.name] = self;
             if self.static then
-                PrintPlus.printf('outer[%s] = %s', self.name, tostring(self));
                 outerStruct[self.name] = self;
             end
         end

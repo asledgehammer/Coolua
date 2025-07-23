@@ -6,9 +6,15 @@ local Test = import 'tests.Test';
 
 --- @type Test[]
 local tests = {
+    -- tests/class
     require 'tests/class/simple',
+    require 'tests/class/super-class',
     require 'tests/class/abstract-basic',
-    require 'tests/class/abstract-builder'
+    require 'tests/class/abstract-builder',
+
+    -- tests/struct
+    require 'tests/struct/struct-inner-instanced',
+    require 'tests/struct/struct-inner-static'
 };
 
 print('[TEST] :: Warming up VM..');
