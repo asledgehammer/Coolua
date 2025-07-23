@@ -1272,9 +1272,6 @@ local function processMethodArg(self, arg)
         end
         if arg.__type__ == 'ReturnsTable' then
             self.returnTypes = arg.value;
-        elseif arg.__type__ == 'PropertiesTable' then
-            -- TODO: Implement method properties. - Jab
-            error('Properties block in methods is not supported.', 2);
         elseif arg.__type__ == 'ParametersTable' then
             self.parameters = arg.value;
         else
@@ -1545,7 +1542,7 @@ local mt_constructor_body = function(self, args)
             end
             -- Apply parameters.
             if arg.__type__ == 'ParametersTable' then
-                self.parameters = arg;
+                self.parameters = arg.value;
             else
                 errorf(2, 'Unknown Table entry for constructor. {type = %s, value = %s}',
                     arg.__type__, dump(arg)
