@@ -90,6 +90,7 @@ function API.printInterface(def)
     local sName = def.name;
     local sExtends = '';
 
+    if def.scope == 'package' then sScope = '' end
     if def.static then sStatic = 'static ' end
     if sPkg ~= '' then sPkg = sPkg .. '.' end
 

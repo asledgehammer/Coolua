@@ -15,26 +15,28 @@ local abstract = builder.abstract;
 --- @type TestDefinition
 local Test = import 'tests.Test';
 
+local AbstractClass = class 'AbstractClass2' (abstract) {
+    method 'aMethod' (public, abstract) {}
+};
+
+-- Create a method template for the abstract method that'll be implemented.
+local aMethod = createMethodTemplate(AbstractClass, 'aMethod');
+
+local ImplementedClass = class 'ImplementedClass2' (abstract) {
+    extends(AbstractClass),
+
+    aMethod {
+        function()
+            if not Test.silent then
+                print('[TEST][AbstractClass-Builder] :: Running from implemented abstract class!');
+            end
+        end
+    }
+};
+
 local test = Test.new('AbstractClass-Builder',
     --- @param self Test
     function(self)
-        local AbstractClass = class 'AbstractClass' (abstract) {
-            method 'aMethod' (public, abstract) {}
-        };
-
-        -- Create a method template for the abstract method that'll be implemented.
-        local aMethod = createMethodTemplate(AbstractClass, 'aMethod');
-
-        local ImplementedClass = class 'ImplementedClass' (abstract) {
-            extends(AbstractClass),
-
-            aMethod {
-                function()
-                    self:print('Running from implemented abstract class!');
-                end
-            }
-        };
-
         local o = ImplementedClass:new();
         o:aMethod();
 

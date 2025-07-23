@@ -221,6 +221,11 @@ function API.newInterface(interfaceInput, outer)
 
     --- @type any
     local interfaceStruct = vm.STRUCTS[path] or {};
+    if interfaceStruct.__type__ and interfaceStruct.__type__ ~= 'StructReference' then
+        errorf(2, 'Interface already defined: %s', path);
+    end
+
+    vm.STRUCTS[path] = interfaceStruct;
 
     local extends = interfaceInput.extends;
 

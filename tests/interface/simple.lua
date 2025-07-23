@@ -3,6 +3,7 @@
 ---]]
 
 local cool = require 'cool';
+local import = cool.import;
 
 local PrintPlus = require 'cool/print';
 local printf = PrintPlus.printf;
@@ -21,6 +22,9 @@ local parameters = builder.parameters;
 
 local public = builder.public;
 -- ------------------------------------ --
+
+--- @type TestDefinition
+local Test = import 'tests.Test';
 
 --- Java example:
 --- ```java
@@ -48,14 +52,18 @@ local SimpleInterface = interface 'SimpleInterface' (public) {
 
     method 'bMethod' {
         function()
-            print('Hello from bMethod!');
+            if not Test.silent then
+                print('[TEST][Interface-Simple] :: Hello from bMethod!');
+            end
         end
     },
 
     static {
         method 'aStaticMethod' (public) {
             function()
-                print('Hello from a static interface method!');
+                if not Test.silent then
+                    print('[TEST][Interface-Simple] :: Hello from a static interface method!');
+                end
             end
         }
     }
@@ -88,17 +96,26 @@ local SimpleImplementation = class 'SimpleImplementation' (public) {
 
     aMethod {
         function(self, str)
-            printf('Hello %s from aMethod!', str);
+            if not Test.silent then
+                printf('[TEST][Interface-Simple] :: Hello %s from aMethod!', str);
+            end
         end
     }
 };
 
-print('## TEST ##\n');
-print('Interface: \t' .. tostring(SimpleInterface));
-print('Class: \t' .. tostring(SimpleImplementation));
+local test = Test.new('Interface-Simple',
+    function(self)
+        self:printf('Interface: %s', tostring(SimpleInterface));
+        self:printf('    Class: %s', tostring(SimpleImplementation));
 
-local o = SimpleImplementation.new();
-o:bMethod();
-o:aMethod('Jab');
+        local o = SimpleImplementation.new();
+        o:bMethod();
+        o:aMethod('Jab');
 
-SimpleInterface.aStaticMethod();
+        SimpleInterface.aStaticMethod();
+
+        return true;
+    end
+);
+
+return test;

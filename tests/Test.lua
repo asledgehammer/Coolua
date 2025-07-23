@@ -80,25 +80,23 @@ Test = class 'Test' (public, final) {
         function(self)
             local timeStarted, timeStopped = 0, 0;
             self:printf('Running..');
-            self:print();
+            local printedResult = false;
             local result = xpcall(function()
                 timeStarted = os.clock();
                 local retVal = self:getBody(self)(self);
                 timeStopped = os.clock();
                 return retVal;
             end, function(errMsg)
-                self:print();
                 self:printf('Result: FAILURE');
                 if not Test.silent then
                     print(debug.traceback(errMsg, 2));
                 end
+                printedResult = true;
             end);
 
             if result then
-                self:print();
                 self:printf('Result: SUCCESS (%i ms)', (timeStopped - timeStarted) * 1000);
-            else
-                self:print();
+            elseif not printedResult then
                 self:printf('Result: FAILURE');
             end
         end
@@ -120,7 +118,7 @@ Test = class 'Test' (public, final) {
                 return;
             end
             --- Repackage first argument to have the header.
-            args[1] = string.format('%s :: %s', self.header, args[1]);
+            args[1] = string.format('%s :: %s', self.header, tostring(args[1]));
             print(unpack(args));
         end
     },

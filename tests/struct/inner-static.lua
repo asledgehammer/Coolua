@@ -18,25 +18,25 @@ local public = builder.public;
 --- @type TestDefinition
 local Test = import 'tests.Test';
 
+--- Java Example:
+--- ```java
+--- public class EnclosingClass {
+---   public static class EnclosedClass {}
+--- }
+--- ```
+local EnclosingClass2 = class 'EnclosingClass2' (public) {
+    static {
+        class 'EnclosedClass2' (public) {}
+    }
+};
+
 local test = Test.new('Struct-Inner-Static',
     --- @param self Test
     function(self)
-        --- Java Example:
-        --- ```java
-        --- public class EnclosingClass {
-        ---   public static class EnclosedClass {}
-        --- }
-        --- ```
-        local EnclosingClass = class 'EnclosingClass' (public) {
-            static {
-                class 'EnclosedClass' (public) {}
-            }
-        };
-
-        self:printf('outer-struct: %s', dump(EnclosingClass));
-        self:printf('inner-struct: %s', dump(EnclosingClass.EnclosedClass));
+        self:printf('outer-struct: %s', dump(EnclosingClass2));
+        self:printf('inner-struct: %s', dump(EnclosingClass2.EnclosedClass2));
         self:printf('Explicit package-call to enclosed class: %s',
-            dump(packages.tests.struct.EnclosingClass.EnclosedClass)
+            dump(packages.tests.struct.EnclosingClass2.EnclosedClass2)
         );
 
         return true;

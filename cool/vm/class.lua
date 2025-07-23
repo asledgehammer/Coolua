@@ -376,6 +376,10 @@ function API.newClass(classInput, outer)
 
     -- Grab reference table (If made), and adapt it to a full struct.
     local classStruct = vm.STRUCTS[path] or {};
+    if classStruct.__type__ and classStruct.__type__ ~= 'StructReference' then
+        errorf(2, 'Class already defined: %s', path);
+    end
+
     setmetatable(classStruct, {
         __tostring = function(self)
             return vm.print.printClass(self);
