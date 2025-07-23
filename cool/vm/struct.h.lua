@@ -107,3 +107,6 @@ function API.newReference(path) end
 --- @param classDef ClassStruct
 --- @param o Object
 function API.createInstanceMetatable(classDef, o) end
+
+--- @param struct Struct
+function API.compileFieldAutoMethods(struct) end

@@ -39,7 +39,6 @@ function VMModule.setVM(vm) end
 --- @field package VMPackageModule
 --- @field stack VMStackModule
 --- @field super VMSuperModule
---- @field field VMFieldModule
 --- @field executable VMExecutableModule
 --- @field struct VMStructModule
 --- @field class VMClassModule

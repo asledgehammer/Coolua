@@ -100,7 +100,7 @@ local Test = class 'Test' (public, final) {
 
         --- @param self Test
         --- @param ... any?
-        function(self, message, ...)
+        function(self, ...)
             local args = { ... };
             local argLen = #args;
             if argLen == 0 then

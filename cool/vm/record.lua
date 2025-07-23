@@ -982,9 +982,6 @@ function API.newRecord(recordInput, outer)
             end
         end
 
-        -- If any auto-methods are defined for fields (get, set), create them before compiling record methods.
-        -- vm.field.compileFieldAutoMethods(self);
-
         -- TODO: Generate auto-methods for all entries.
 
         -- TODO: Audit everything.

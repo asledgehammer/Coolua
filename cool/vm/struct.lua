@@ -2,10 +2,9 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
-local dump = require 'cool/dump'.any;
-
 local PrintPlus = require 'cool/print';
 local errorf = PrintPlus.errorf;
+local debugf = PrintPlus.debugf;
 
 local DebugUtils = require 'cool/debug';
 
@@ -21,6 +20,15 @@ local function isBypassField(name)
         if bypassFields[i] == name then return true end
     end
     return false;
+end
+
+--- Converts the first character to upper. (Used for get-set shorthand)
+---
+--- @param str string
+---
+--- @return string firstCharUpperString
+local function firstCharToUpper(str)
+    return string.upper(string.sub(str, 1, 1)) .. string.sub(str, 2);
 end
 
 --- @type VM
@@ -258,6 +266,139 @@ function API.createInstanceMetatable(cd, o)
     end
 
     setmetatable(o, mt);
+end
+
+function API.compileFieldAutoMethods(struct)
+    for _, fieldDef in pairs(struct.declaredFields) do
+        local funcName = firstCharToUpper(fieldDef.name);
+        local tGet = type(fieldDef.get);
+        local tSet = type(fieldDef.set);
+
+        --- @type function, function
+        local fGet, fSet;
+
+        if tGet ~= 'nil' then
+            local name = fieldDef.get.name or ('get' .. funcName);
+            local mGetDef = {
+                name = name,
+                scope = fieldDef.scope,
+                returnTypes = fieldDef.types
+            };
+
+            -- (Instance getter method(s) passes their instance as the first argument)
+            if not fieldDef.static then
+                mGetDef.parameters = {
+                    { name = 'self', type = struct }
+                };
+            end
+
+            if tGet == 'boolean' then
+
+            elseif tGet == 'table' then
+                if fieldDef.get.scope then
+                    mGetDef.scope = fieldDef.get.scope;
+                end
+                if fieldDef.get.body then
+                    if type(fieldDef.get.body) ~= 'function' then
+                        errorf(2,
+                            '%s The getter method definition for field "%s" is not a function; {type = %s, value = %s}',
+                            struct.printHeader,
+                            name,
+                            vm.type.getType(fieldDef.get.body),
+                            tostring(fieldDef.get.body)
+                        );
+                    end
+
+                    fGet = fieldDef.get.body;
+                else
+                    if fieldDef.static then
+                        fGet = function()
+                            return struct[fieldDef.name];
+                        end
+                    else
+                        fGet = function(ins)
+                            return ins[fieldDef.name];
+                        end;
+                    end
+                end
+            end
+
+            mGetDef.body = fGet;
+
+            debugf(vm.debug.method, '[METHOD] :: %s Creating auto-method: %s:%s()',
+                struct.printHeader,
+                struct.name, mGetDef.name
+            );
+
+            struct:addMethod(mGetDef);
+        end
+
+        if tSet ~= 'nil' then
+            if fieldDef.final then
+                errorf(2, '%s Cannot add setter to final field: %s',
+                    struct.printHeader,
+                    fieldDef.name
+                );
+            end
+            local name = fieldDef.set.name or ('set' .. funcName);
+            local mSetDef = {
+                name = name,
+                scope = fieldDef.scope,
+                parameters = {
+                    { name = 'value', types = fieldDef.types }
+                }
+            };
+
+            -- (Instance setter method(s) passes their instance as the first argument)
+            if not fieldDef.static then
+                mSetDef.parameters = {
+                    { name = 'self', type = struct }
+                };
+            end
+
+            if tSet == 'table' then
+                if fieldDef.set.scope then
+                    mSetDef.scope = fieldDef.set.scope;
+                end
+                if fieldDef.set.body then
+                    if type(fieldDef.get.body) ~= 'function' then
+                        errorf(2,
+                            '%s The setter method definition for field "%s" is not a function; {type = %s, value = %s}',
+                            struct.printHeader,
+                            name,
+                            vm.type.getType(fieldDef.get.body),
+                            tostring(fieldDef.get.body)
+                        );
+                    end
+                    fSet = fieldDef.set.body;
+                else
+                    if fieldDef.static then
+                        fSet = function()
+                            return struct[fieldDef.name];
+                        end
+                    else
+                        fSet = function(ins)
+                            return ins[fieldDef.name];
+                        end;
+                    end
+                end
+            end
+
+            mSetDef.body = fSet;
+
+            debugf(vm.debug.method, '[METHOD] :: %s Creating auto-method: %s(...)',
+                struct.printHeader,
+                mSetDef.name
+            );
+
+            local md = struct:addMethod(mSetDef);
+
+            debugf(vm.debug.method, '[METHOD] :: %s Created auto-method: %s',
+                struct.printHeader,
+                md.signature
+            );
+        end
+    end
 end
 
 function API.calcPathNamePackage(definition, enclosingDefinition)

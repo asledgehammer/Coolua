@@ -343,7 +343,7 @@ function API.newInterface(interfaceInput, outer)
         end
 
         -- If any auto-methods are defined for fields (get, set), create them before compiling class methods.
-        vm.field.compileFieldAutoMethods(self);
+        vm.struct.compileFieldAutoMethods(self);
 
         -- TODO: Audit everything.
 

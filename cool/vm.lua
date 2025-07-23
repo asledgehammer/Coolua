@@ -105,7 +105,6 @@ vm = {
     package = require 'cool/vm/package',
     stack = require 'cool/vm/stack',
     super = require 'cool/vm/super',
-    field = require 'cool/vm/field',
     executable = require 'cool/vm/executable',
     struct = require 'cool/vm/struct',
     class = require 'cool/vm/class',
@@ -143,7 +142,6 @@ vm.audit.setVM(vm);
 vm.package.setVM(vm);
 vm.stack.setVM(vm);
 vm.super.setVM(vm);
-vm.field.setVM(vm);
 vm.executable.setVM(vm);
 vm.struct.setVM(vm);
 vm.class.setVM(vm);
