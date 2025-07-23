@@ -74,8 +74,6 @@ function API.resolveMethod(struct, name, methods, args)
 
         -- Cache the result.
         struct.methodCache[callSignature] = md;
-
-        return md;
     end
 
     -- If the method still isn't identified, look into each argument and match.
@@ -575,10 +573,12 @@ function API.checkArguments(executable, args)
         for i = 1, argsLen do
             arg = args[i];
             local argS;
-            if arg.__class__ then
-                argS = '<ClassInstance:' .. arg.__class__.definition.path .. '>';
-            elseif arg.__type__ then
-                argS = '<' .. arg.__type__ .. ':' .. arg.__type__ .. '>';
+            if type(arg) == 'table' then
+                if arg.__struct__ then
+                    argS = '<ClassInstance:' .. arg.__struct__.path .. '>';
+                elseif arg.__type__ then
+                    argS = '<' .. arg.__type__ .. ':' .. arg.__type__ .. '>';
+                end
             else
                 argS = tostring(arg);
             end
@@ -601,17 +601,71 @@ end
 
 -- MARK: - <constructor>
 
--- TODO: Rewrite to support current varargs model.
-function API.resolveConstructor(cons, args)
+--- @param struct Struct
+--- @param constructors ConstructorStruct[]
+--- @param args any[]
+---
+--- @return ConstructorStruct|nil
+function API.resolveConstructor(struct, constructors, args)
+    local callSignature = vm.executable.createCallSignature('(constructor)', args);
+
+    --- @type ConstructorStruct|nil
+    local cd;
+
+    -- Check the cache.
+    cd = struct.methodCache[callSignature];
+    if cd then return cd end
+
+    debugf(vm.debug.executableCache, '[EXECUTABLE_CACHE] :: %s No cache found for call signature: %s',
+        struct.printHeader,
+        '(constructor)',
+        callSignature
+    );
+
+    -- Attempt to resolve the method using exact method signature checks.
+    --- @type ConstructorStruct?
+    cd = constructors[callSignature];
+    if cd then
+        debugf(vm.debug.executableCache, '[EXECUTABLE_CACHE] :: %s Caching exact constructor %s call signature: %s',
+            struct.printHeader,
+            vm.print.printConstructor(cd),
+            callSignature
+        );
+
+        -- Cache the result.
+        struct.methodCache[callSignature] = cd;
+    end
+
+    -- If the method still isn't identified, look into each argument and match.
+    if not cd then
+        cd = API.resolveConstructorDeep(constructors, args);
+    end
+
+    if cd then
+        debugf(vm.debug.executableCache, '[EXECUTABLE_CACHE] :: %s Caching constructor %s call signature: %s',
+            struct.printHeader,
+            vm.print.printConstructor(cd),
+            callSignature
+        );
+
+        -- Cache the result.
+        struct.methodCache[callSignature] = cd;
+    end
+
+    return cd;
+end
+
+function API.resolveConstructorDeep(constructors, args)
+
     local argsLen = #args;
 
     --- @type ConstructorStruct?
     local consDef = nil;
 
     -- Try to find the method without varargs first.
-    for i = 1, #cons do
+    for i = 1, #constructors do
         if consDef then break end
-        consDef = cons[i];
+        consDef = constructors[i];
         local parameters = consDef.parameters or {};
         local paramLen = #parameters;
         if argsLen == paramLen then
@@ -630,23 +684,20 @@ function API.resolveConstructor(cons, args)
 
     -- Check and see if a vararg method exists.
     if not consDef then
-        for i = 1, #cons do
+        for i = 1, #constructors do
             if consDef then break end
-            consDef = cons[i];
+            consDef = constructors[i];
             local parameters = consDef.parameters or {};
             local paramLen = #parameters;
             if paramLen ~= 0 then
                 local lastParameter = parameters[paramLen];
-                local lastType = lastParameter.types[i];
-                -- TODO: Look into this.
-                if not vm.executable.isVararg(lastType) then
+                if not consDef.vararg then
                     consDef = nil;
                     -- If the varArg range doesn't match.
                 elseif paramLen > argsLen then
                     consDef = nil;
                 else
-                    -- TODO: Look into this.
-                    local varArgTypes = vm.executable.getVarargTypes(lastType);
+                    local varArgTypes = lastParameter.types;
                     -- Check normal parameters.
                     for p = 1, paramLen - 1 do
                         local arg = args[p];
@@ -678,6 +729,7 @@ function API.createMiddleConstructor(classDef)
         end
 
         local args = { ... } or {};
+
         local cons = classDef:getDeclaredConstructor(args);
 
         if not cons then

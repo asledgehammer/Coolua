@@ -822,7 +822,7 @@ function API.newClass(classInput, outer)
     --- @return ConstructorStruct|nil ConstructorStruct
     function classStruct:getDeclaredConstructor(args)
         args = args or vm.constants.EMPTY_TABLE;
-        return vm.executable.resolveConstructor(self.declaredConstructors, args);
+        return vm.executable.resolveConstructor(self, self.declaredConstructors, args);
     end
 
     -- MARK: - Method

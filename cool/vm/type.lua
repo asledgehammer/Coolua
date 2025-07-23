@@ -142,13 +142,22 @@ function API.isAssignableFromType(value, _type)
 
     -- (string-struct check) (NOTE: Can be accurate only after inspecting string-literal struct-type references)
     if not result and type(_type) == 'string' then
+        -- All-struct type.
+        if _type == 'struct' then
+            result = value.__type__ == 'ClassStruct' or
+                value.__type__ == 'InterfaceStruct' or
+                value.__type__ == 'RecordStruct' or
+                value.__type__ == 'EnumStruct';
+            print('>>>>> SSS: ', result, value.__type__);
+        end
+
         -- print('>>>>> K');
         -- (hierarchical Struct type-check)
         local typeStruct = vm.STRUCTS[_type];
         if typeStruct then
             local valueStruct = value;
             if valueStruct then
-                if typeStruct.__type__ == 'ClassStruct' then
+                if not result and typeStruct.__type__ == 'ClassStruct' then
                     result = typeStruct == valueStruct.__struct__ or typeStruct:isSuperClass(valueStruct);
                     -- print('>>>>> K2: ', result);
                 elseif typeStruct.__type__ == 'InterfaceStruct' then

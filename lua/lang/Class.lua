@@ -2,6 +2,8 @@
 --- @author asledgehammer, JabDoesThings 2025
 ---]]
 
+local dump = require 'cool/dump';
+
 local vm = require 'cool/vm';
 local import = vm.import;
 
@@ -65,15 +67,12 @@ Class = class 'Class' (public, final) {
         get(public) {}
     },
 
-    constructor(private) {
+    constructor (private) {
         parameters {
-            {
-                name = 'def',
-                types = { 'ClassStruct', 'InterfaceStruct' }
-            }
+            { name = 'def', types = { 'struct' } }
         },
         --- @param self Class
-        --- @param definition ClassStruct
+        --- @param definition Struct
         body = function(self, definition)
             self.struct = definition;
             self.name = definition.name;
@@ -112,5 +111,9 @@ Class = class 'Class' (public, final) {
     },
 
 };
+
+Class:finalize();
+
+-- print(dump.table(Class.declaredConstructors[1], {pretty = true, label = true}));
 
 return Class;

@@ -813,7 +813,7 @@ function API.newRecord(recordInput, outer)
     --- @return ConstructorStruct|nil ConstructorStruct
     function recordStruct:getDeclaredConstructor(args)
         args = args or vm.constants.EMPTY_TABLE;
-        return vm.executable.resolveConstructor(self.declaredConstructors, args);
+        return vm.executable.resolveConstructor(self, self.declaredConstructors, args);
     end
 
     -- MARK: - Method

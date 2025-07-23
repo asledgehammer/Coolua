@@ -190,11 +190,18 @@ function API.checkArguments(executable, args) end
 --- @param classDef ClassStruct
 function API.createMiddleConstructor(classDef) end
 
+--- @param struct Struct
 --- @param constructors ConstructorStruct[]
 --- @param args table
 ---
 --- @return ConstructorStruct|nil
-function API.resolveConstructor(constructors, args) end
+function API.resolveConstructor(struct, constructors, args) end
+
+--- @param constructors ConstructorStruct[]
+--- @param args any[]
+---
+--- @return ConstructorStruct|nil
+function API.resolveConstructorDeep(constructors, args) end
 
 --- @param self Constructable
 --- @param path string
