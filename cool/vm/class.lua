@@ -775,6 +775,8 @@ function API.newClass(classInput, outer)
             bodyInfo = vm.executable.getExecutableInfo(body),
             super = _super,
             superInfo = vm.executable.getExecutableInfo(_super),
+            vararg = constructorInput.vararg or false
+
         };
 
         constructorStruct.signature = vm.executable.createSignature(constructorStruct);
@@ -826,16 +828,16 @@ function API.newClass(classInput, outer)
 
     -- MARK: - Method
 
-    function classStruct:addStaticMethod(MethodStruct)
+    function classStruct:addStaticMethod(methodInput)
         local errHeader = string.format('ClassStruct(%s):addMethod():', classStruct.name);
 
-        local body = MethodStruct.body;
+        local body = methodInput.body;
         local bodyInfo = vm.executable.getExecutableInfo(body);
 
-        local scope = vm.audit.auditStructPropertyScope(self.scope, MethodStruct.scope, errHeader);
-        local methodName = vm.audit.auditMethodParamName(MethodStruct.name, errHeader);
-        local types = vm.audit.auditMethodReturnsProperty(MethodStruct.returnTypes, errHeader);
-        local parameters = vm.audit.auditParameters(MethodStruct.parameters, errHeader);
+        local scope = vm.audit.auditStructPropertyScope(self.scope, methodInput.scope, errHeader);
+        local methodName = vm.audit.auditMethodParamName(methodInput.name, errHeader);
+        local types = vm.audit.auditMethodReturnsProperty(methodInput.returnTypes, errHeader);
+        local parameters = vm.audit.auditParameters(methodInput.parameters, errHeader);
 
         local methodStruct = {
 
@@ -863,6 +865,7 @@ function API.newClass(classInput, outer)
             -- Always falsify interface flags in class method structs. --
             interface = false,
             default = false,
+            vararg = methodInput.vararg or false
         };
 
         methodStruct.signature = vm.executable.createSignature(methodStruct);
@@ -924,6 +927,7 @@ function API.newClass(classInput, outer)
             -- Always falsify interface flags in class method structs. --
             interface = false,
             default = false,
+            vararg = methodInput.vararg or false
         };
 
         methodStruct.signature = vm.executable.createSignature(methodStruct);
@@ -985,6 +989,7 @@ function API.newClass(classInput, outer)
             -- Always falsify interface flags in class method structs. --
             interface = false,
             default = false,
+            vararg = methodInput.vararg or false
         };
 
         methodStruct.signature = vm.executable.createSignature(methodStruct);

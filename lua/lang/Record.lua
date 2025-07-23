@@ -17,8 +17,6 @@ import 'lua.lang.Object';
 --- @type RecordDefinition
 local Record = class 'Record' (public) {
     -- TODO: Implement.
-}
-
-print(Record);
+};
 
 return Record;

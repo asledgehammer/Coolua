@@ -497,18 +497,18 @@ function API.newInterface(interfaceInput, outer)
     end
 
     --- @param self InterfaceStruct
-    --- @param MethodStruct InterfaceMethodStructInput
+    --- @param methodInput InterfaceMethodStructInput
     ---
     --- @return MethodStruct
-    function interfaceStruct:addMethod(MethodStruct)
+    function interfaceStruct:addMethod(methodInput)
         local errHeader = string.format('InterfaceStruct(%s):addMethod():', self.name);
 
-        local body = MethodStruct.body;
+        local body = methodInput.body;
         local bodyInfo = vm.executable.getExecutableInfo(body);
 
-        local name = vm.audit.auditMethodParamName(MethodStruct.name, errHeader);
-        local types = vm.audit.auditMethodReturnsProperty(MethodStruct.returnTypes, errHeader);
-        local parameters = vm.audit.auditParameters(MethodStruct.parameters, errHeader);
+        local name = vm.audit.auditMethodParamName(methodInput.name, errHeader);
+        local types = vm.audit.auditMethodReturnsProperty(methodInput.returnTypes, errHeader);
+        local parameters = vm.audit.auditParameters(methodInput.parameters, errHeader);
 
         local md = {
 
@@ -540,6 +540,8 @@ function API.newInterface(interfaceInput, outer)
 
             -- Always falsify class flags in class method definitions. --
             abstract = false,
+            vararg = methodInput.vararg or false
+
         };
 
         md.signature = vm.executable.createSignature(md);
@@ -597,6 +599,8 @@ function API.newInterface(interfaceInput, outer)
 
             -- Always falsify class flags in class method structs. --
             abstract = false,
+            vararg = methodInput.vararg or false
+
         };
 
         methodStruct.signature = vm.executable.createSignature(methodStruct);

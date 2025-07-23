@@ -828,16 +828,16 @@ function API.newRecord(recordInput, outer)
 
     -- MARK: - Method
 
-    function recordStruct:addStaticMethod(MethodStruct)
+    function recordStruct:addStaticMethod(methodInput)
         local errHeader = string.format('RecordStruct(%s):addMethod():', recordStruct.name);
 
-        local body = MethodStruct.body;
+        local body = methodInput.body;
         local bodyInfo = vm.executable.getExecutableInfo(body);
 
-        local scope = vm.audit.auditStructPropertyScope(self.scope, MethodStruct.scope, errHeader);
-        local methodName = vm.audit.auditMethodParamName(MethodStruct.name, errHeader);
-        local types = vm.audit.auditMethodReturnsProperty(MethodStruct.returnTypes, errHeader);
-        local parameters = vm.audit.auditParameters(MethodStruct.parameters, errHeader);
+        local scope = vm.audit.auditStructPropertyScope(self.scope, methodInput.scope, errHeader);
+        local methodName = vm.audit.auditMethodParamName(methodInput.name, errHeader);
+        local types = vm.audit.auditMethodReturnsProperty(methodInput.returnTypes, errHeader);
+        local parameters = vm.audit.auditParameters(methodInput.parameters, errHeader);
 
         local methodStruct = {
 
@@ -865,6 +865,7 @@ function API.newRecord(recordInput, outer)
             -- Always falsify interface flags in record method structs. --
             interface = false,
             default = false,
+            vararg = methodInput.vararg or false
         };
 
         methodStruct.signature = vm.executable.createSignature(methodStruct);
@@ -925,6 +926,7 @@ function API.newRecord(recordInput, outer)
             -- Always falsify interface flags in record method structs. --
             interface = false,
             default = false,
+            vararg = methodInput.vararg or false
         };
 
         methodStruct.signature = vm.executable.createSignature(methodStruct);

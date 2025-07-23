@@ -9,7 +9,7 @@ local printf = PrintPlus.printf;
 
 -- Builder API ------------------------ --
 local builder = cool.builder;
-local methodTemplate = builder.createMethodTemplate;
+local createMethodTemplate = builder.createMethodTemplate;
 
 local interface = builder.interface;
 local class = builder.class;
@@ -21,12 +21,6 @@ local parameters = builder.parameters;
 
 local public = builder.public;
 -- ------------------------------------ --
-
--- NOTE: To make things a lot easier on implementing classes, create a template of the method that only requires a
---       function-body.
-local aMethod = methodTemplate('aMethod', { public }, {
-    parameters { 'string' }
-});
 
 --- Java example:
 --- ```java
@@ -66,6 +60,12 @@ local SimpleInterface = interface 'SimpleInterface' (public) {
         }
     }
 };
+
+-- NOTE: To make things a lot easier on implementing classes, create a template of the method that only requires a
+--       function-body.
+local aMethod = createMethodTemplate(SimpleInterface, 'aMethod', { public }, {
+    parameters { 'string' }
+});
 
 --- Java example:
 --- ```java

@@ -50,6 +50,13 @@ function API.compileFieldAutoMethods(struct)
                 returnTypes = fieldDef.types
             };
 
+            -- (Instance getter method(s) passes their instance as the first argument)
+            if not fieldDef.static then
+                mGetDef.parameters = {
+                    { name = 'self', type = struct }
+                };
+            end
+
             if tGet == 'boolean' then
 
             elseif tGet == 'table' then
@@ -106,6 +113,13 @@ function API.compileFieldAutoMethods(struct)
                     { name = 'value', types = fieldDef.types }
                 }
             };
+
+            -- (Instance setter method(s) passes their instance as the first argument)
+            if not fieldDef.static then
+                mSetDef.parameters = {
+                    { name = 'self', type = struct }
+                };
+            end
 
             if tSet == 'table' then
                 if fieldDef.set.scope then

@@ -230,7 +230,7 @@ end
 function API.auditParameter(parameter, i, errHeader)
     -- Validate parameter type(s).
     if not parameter.type and not parameter.types then
-        errorf(2, '%s Parameter #%i doesn\'t have a defined type string or types string[]. (name = %s)',
+        errorf(2, '%s Parameter #%i doesn\'t have a defined type or types array. (name = %s)',
             errHeader, i, parameter.name
         );
     else

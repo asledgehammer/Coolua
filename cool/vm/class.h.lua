@@ -6,7 +6,7 @@
 
 -- MARK: <input>
 
---- @class (exact) ClassMethodStructInput
+--- @class (exact) ClassMethodStructInput: ParameterableInput
 --- @field scope ClassScope? (Default: public)
 --- @field final boolean? (Default: false)
 --- @field name string
@@ -14,7 +14,7 @@
 --- @field returnTypes AllowedType[]|AllowedType
 --- @field body function
 
---- @class (exact) ClassAbstractMethodStructInput
+--- @class (exact) ClassAbstractMethodStructInput: ParameterableInput
 --- @field scope ClassScope? (Default: public)
 --- @field final boolean? (Default: false)
 --- @field name string

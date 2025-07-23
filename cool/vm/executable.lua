@@ -167,6 +167,10 @@ function API.createMiddleMethod(cd, name, methods)
 
         local args = { ... };
         local md = API.resolveMethod(cd, name, methods, args);
+        if not md then
+            local insArgs = { o, unpack(args) };
+            md = API.resolveMethod(cd, name, methods, insArgs);
+        end
 
         local errHeader = string.format('Class(%s):%s():', cd.path, name);
 

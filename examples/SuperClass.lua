@@ -19,6 +19,7 @@ local returnTypes = builder.returnTypes;
 local get = builder.get;
 local set = builder.set;
 local createMethodTemplate = builder.createMethodTemplate;
+local getMethodTemplate = builder.getMethodTemplate;
 local equals = builder.equals;
 local toString = builder.toString;
 local private = builder.private;

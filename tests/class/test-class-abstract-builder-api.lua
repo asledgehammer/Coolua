@@ -17,13 +17,12 @@ local public = builder.public;
 local abstract = builder.abstract;
 -- ------------------------------------ --
 
--- Create a method template for the abstract method that'll be implemented.
-local aMethod = createMethodTemplate('aMethod', { public }, {
-});
-
 local AbstractClass = class 'AbstractClass' (abstract) {
     method 'aMethod' (public, abstract) {}
 };
+
+-- Create a method template for the abstract method that'll be implemented.
+local aMethod = createMethodTemplate(AbstractClass, 'aMethod', { public }, {});
 
 local ImplementedClass = class 'ImplementedClass' (abstract) {
     extends(AbstractClass),

@@ -7,6 +7,7 @@ require 'cool/plus';
 local PrintPlus = require 'cool/print';
 local errorf = PrintPlus.errorf;
 local debugf = PrintPlus.debugf;
+local printf = PrintPlus.printf;
 
 local dump = require 'cool/dump'.any;
 
@@ -27,6 +28,9 @@ local final = 'final';
 --- @type VoidType
 local void = 'void';
 local vararg = 'vararg';
+
+--- @type MethodTemplateDictionary
+local templates = {};
 
 -- MARK: - build
 
@@ -1377,9 +1381,20 @@ local function getPresetMethodBody(funcName, t)
     return t[1];
 end
 
---- @return fun(t: MethodTableBody): MethodTable
-local function createMethodTemplate(name, flags, properties)
-    return function(t)
+--- @param structOrPath Struct|string
+--- @param name string
+--- @param flags string[]? (Default: {public})
+--- @param properties MethodTableBodyInput? (Default: {parameters = {}, returnTypes = {'void'})
+---
+--- @return fun(t: MethodTableBody|function[]): MethodTable
+local function createMethodTemplate(structOrPath, name, flags, properties)
+    flags = flags or { public };
+    properties = properties or {
+        parameters {},
+        returnTypes 'void'
+    };
+
+    local template = function(t)
         local t2 = {
             __type__ = 'MethodTable',
             name = name,
@@ -1389,18 +1404,98 @@ local function createMethodTemplate(name, flags, properties)
         processMethodArgs(t2, properties);
         return setmetatable(t2, mt_method_preset);
     end
+
+    local path;
+    local targ = type(structOrPath);
+    if targ == 'table' then
+        if not structOrPath.path then
+            errorf(2, 'Invalid type for path: {type = %s, value = %s}',
+                targ,
+                tostring(structOrPath)
+            );
+        end
+        path = structOrPath.path;
+    elseif targ == 'string' then
+        path = structOrPath;
+    else
+        errorf(2, 'Invalid type for path: {type = %s, value = %s}',
+            targ,
+            tostring(structOrPath)
+        );
+    end
+
+    -- Add the template to the struct dictionary.
+    local structCluster = templates[path];
+    if not structCluster then
+        structCluster = {};
+        templates[path] = structCluster;
+    end
+    structCluster[name] = template;
+
+    if vm.debug.builder then
+        -- Grab parameters array.
+        local parameters;
+        for i = 1, #properties do
+            local next = properties[i];
+            if next.__type__ and next.__type__ == 'ParametersTable' then
+                parameters = next.value;
+                break;
+            end
+        end
+
+        printf('[BUILDER] :: Created method-template: %s:%s%s',
+            path,
+            name,
+            vm.executable.createParameterSignatureFragment(parameters)
+        );
+    end
+
+    return template;
+end
+
+--- @param structOrPath Struct|string
+--- @param methodName string
+---
+--- @return MethodTemplate
+local function getMethodTemplate(structOrPath, methodName)
+    local path;
+    local targ = type(structOrPath);
+    if targ == 'table' then
+        if not structOrPath.path then
+            errorf(2, 'Invalid type for path: {type = %s, value = %s}',
+                targ,
+                tostring(structOrPath)
+            );
+        end
+        path = structOrPath.path;
+    elseif targ == 'string' then
+        path = structOrPath;
+    else
+        errorf(2, 'Invalid type for path: {type = %s, value = %s}',
+            targ,
+            tostring(structOrPath)
+        );
+    end
+
+    local structCluster = templates[path];
+    if structCluster then
+        return structCluster[methodName];
+    end
+    errorf(2, 'Method-template not found: %s:%s',
+        path, methodName
+    );
 end
 
 --- @return MethodTable
-local equals = createMethodTemplate('equals', { public }, {
+local equals = createMethodTemplate('lua.lang.Object', 'equals', { public }, {
     parameters {
         { name = 'other', type = 'any' }
     },
     returnTypes = 'boolean',
 });
 
-local toString = createMethodTemplate('toString', { public }, {
-    parameters = {},
+local toString = createMethodTemplate('lua.lang.Object', 'toString', { public }, {
+    parameters {},
     returnTypes = 'string',
 });
 
@@ -1596,4 +1691,5 @@ return {
 
     -- * Utility * --
     createMethodTemplate = createMethodTemplate,
+    getMethodTemplate = getMethodTemplate
 };

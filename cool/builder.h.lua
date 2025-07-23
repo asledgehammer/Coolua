@@ -14,6 +14,9 @@
 
 --- @alias TableBody {__type__: string}[]
 
+--- @alias MethodTemplate fun(tbl: table): MethodTable
+--- @alias MethodTemplateDictionary table<Struct, table<string, MethodTemplate>>
+
 --- @class BuilderTable
 --- @field __type__ string
 
@@ -29,10 +32,22 @@
 --- @field name string
 --- @field body MethodTableBody
 
+--- @class MethodTableBodyInput
+--- @field parameters Parameterable[]?
+--- @field returnTypes ReturnsTable?
+--- @field body function?
+
 --- @class MethodTableBody
+--- @field __type__ 'MethodTableBody'
+--- 
+--- @field parameters Parameterable[]
+--- @field returnTypes ReturnsTable
+--- @field body function
 
 --- @class ConstructorTable: BuilderTable
 --- @field __type__ 'ConstructorTable'
+
+--- @class ReturnsTable
 
 --- @class ExtendsTable: BuilderTable
 --- @field __type__ 'ExtendsTable'
