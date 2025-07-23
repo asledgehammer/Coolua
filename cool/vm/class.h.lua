@@ -193,8 +193,9 @@ function ClassStruct:getDeclaredField(name) end
 ---
 --- @field __type__ string The `class:<package>.<name>` identity of the class.
 --- @field __super__ SuperTable
---- @field __table_id__ string -- For native Lua table identity. Helps prevent infinite loops when checking self literally.
 --- @field __class__ Class The Class-Object wrapper, not the VM Struct.
+--- @field __struct__ Struct
+--- @field __table_id__ string -- For native Lua table identity. Helps prevent infinite loops when checking self literally.
 --- @field super table|function? This field is dynamically set for each function invocation.
 local ClassInstance = {};
 
@@ -202,15 +203,6 @@ local ClassInstance = {};
 
 --- @class VMClassModule: VMModule
 local API = {};
-
---- Defined for all classes so that __eq actually fires.
---- Reference: http://lua-users.org/wiki/MetatableEvents
----
---- @param a Object
---- @param b any
----
---- @return boolean result
-function API.equals(a, b) end
 
 --- @param input ClassStructInput
 ---

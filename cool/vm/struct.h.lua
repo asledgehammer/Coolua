@@ -110,3 +110,12 @@ function API.createInstanceMetatable(classDef, o) end
 
 --- @param struct Struct
 function API.compileFieldAutoMethods(struct) end
+
+--- Defined for all classes so that __eq actually fires.
+--- Reference: http://lua-users.org/wiki/MetatableEvents
+---
+--- @param a Object
+--- @param b any
+---
+--- @return boolean result
+function API.equals(a, b) end

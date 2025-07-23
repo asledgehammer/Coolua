@@ -107,16 +107,16 @@ function API.isAssignableFromType(value, _type)
             local valueStruct = value;
             if valueStruct then
                 if typeStruct.__type__ == 'ClassStruct' then
-                    result = typeStruct == valueStruct.__class__:getStruct() or typeStruct:isSuperClass(valueStruct);
+                    result = typeStruct == valueStruct.__struct__ or typeStruct:isSuperClass(valueStruct);
                     -- print('>>>>> H2: ', result);
                 elseif typeStruct.__type__ == 'InterfaceStruct' then
-                    result = typeStruct == valueStruct.__class__:getStruct() or typeStruct:isSuperInterface(valueStruct);
+                    result = typeStruct == valueStruct.__struct__ or typeStruct:isSuperInterface(valueStruct);
                     -- print('>>>>> H3: ', result);
                 elseif typeStruct.__type__ == 'RecordStruct' then
-                    result = typeStruct == valueStruct.__class__:getStruct();
+                    result = typeStruct == valueStruct.__struct__;
                     -- print('>>>>> H4: ', result);
                 elseif typeStruct.__type__ == 'EnumStruct' then
-                    result = typeStruct == valueStruct.__class__:getStruct();
+                    result = typeStruct == valueStruct.__struct__;
                     -- print('>>>>> H5: ', result);
                 end
             else
@@ -149,16 +149,16 @@ function API.isAssignableFromType(value, _type)
             local valueStruct = value;
             if valueStruct then
                 if typeStruct.__type__ == 'ClassStruct' then
-                    result = typeStruct == valueStruct.__class__:getStruct() or typeStruct:isSuperClass(valueStruct);
+                    result = typeStruct == valueStruct.__struct__ or typeStruct:isSuperClass(valueStruct);
                     -- print('>>>>> K2: ', result);
                 elseif typeStruct.__type__ == 'InterfaceStruct' then
-                    result = typeStruct == valueStruct.__class__:getStruct() or typeStruct:isSuperInterface(valueStruct);
+                    result = typeStruct == valueStruct.__struct__ or typeStruct:isSuperInterface(valueStruct);
                     -- print('>>>>> K3: ', result);
                 elseif typeStruct.__type__ == 'RecordStruct' then
-                    result = typeStruct == valueStruct.__class__:getStruct();
+                    result = typeStruct == valueStruct.__struct__;
                     -- print('>>>>> K4: ', result);
                 elseif typeStruct.__type__ == 'EnumStruct' then
-                    result = typeStruct == valueStruct.__class__:getStruct();
+                    result = typeStruct == valueStruct.__struct__;
                     -- print('>>>>> K5: ', result);
                 end
             end

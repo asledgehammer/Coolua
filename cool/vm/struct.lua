@@ -11,6 +11,7 @@ local DebugUtils = require 'cool/debug';
 local bypassFields = {
     '__type__',
     '__class__',
+    '__struct__',
     '__readonly__',
     'super'
 };
@@ -46,6 +47,20 @@ local API = {
         vm.moduleCount = vm.moduleCount + 1;
     end
 };
+
+--- Defined for all classes so that __eq actually fires.
+--- Reference: http://lua-users.org/wiki/MetatableEvents
+---
+--- @param a Object
+--- @param b any
+---
+--- @return boolean result
+function API.equals(a, b)
+    vm.stepIn();
+    local result = a.__struct__.methods['equals']['equals(any)'].body(a, b);
+    vm.stepOut();
+    return result;
+end
 
 function API.createInstanceMetatable(cd, o)
     local mt = getmetatable(o) or {};
@@ -258,7 +273,7 @@ function API.createInstanceMetatable(cd, o)
         fieldStruct.value = value;
     end
 
-    mt.__eq = vm.class.equals;
+    mt.__eq = vm.struct.equals;
 
     --- @return string text
     mt.__tostring = function()

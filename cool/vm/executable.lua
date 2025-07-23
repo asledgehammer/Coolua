@@ -53,8 +53,8 @@ function API.resolveMethod(struct, name, methods, args)
     local md;
 
     -- Check the cache.
-    -- md = struct.methodCache[callSignature];
-    -- if md then return md end
+    md = struct.methodCache[callSignature];
+    if md then return md end
 
     debugf(vm.debug.executableCache, '[EXECUTABLE_CACHE] :: %s No cache found for method %s call signature: %s',
         struct.printHeader,

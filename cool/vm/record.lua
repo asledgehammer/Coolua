@@ -272,17 +272,6 @@ end
 
 --- @cast API VMRecordModule
 
---- Defined for all recordes so that __eq actually fires.
---- Reference: http://lua-users.org/wiki/MetatableEvents
----
---- @param a Object
---- @param b any
----
---- @return boolean result
-function API.equals(a, b)
-    return a:getClass():getStruct().__middleMethods['equals'](a, b);
-end
-
 -- For internal / bottom-level recordes, this will aid in providing methods for what's needed.
 local function createPseudoRecordInstance(def)
     -- Prevent infinite loops.
@@ -608,6 +597,7 @@ function API.newRecord(recordInput, outer)
         local o = {
             __type__ = recordStruct.path,
             __record__ = __record__,
+            __struct__ = recordStruct
         };
 
         -- For native Lua table identity. Helps prevent infinite loops when checking self literally.

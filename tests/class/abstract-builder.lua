@@ -15,7 +15,7 @@ local abstract = builder.abstract;
 --- @type TestDefinition
 local Test = import 'tests.Test';
 
-local test = Test.new('AbstractClass',
+local test = Test.new('AbstractClass-Builder',
     --- @param self Test
     function(self)
         local AbstractClass = class 'AbstractClass' (abstract) {
@@ -41,7 +41,5 @@ local test = Test.new('AbstractClass',
         return true;
     end
 );
-
-test:run();
 
 return test;

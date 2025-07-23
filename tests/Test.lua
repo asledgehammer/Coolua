@@ -9,6 +9,7 @@ local cool = require 'cool';
 local builder = cool.builder;
 local import = builder.import;
 local class = builder.class;
+local static = builder.static;
 local implements = builder.implements;
 local constructor = builder.constructor;
 local parameters = builder.parameters;
@@ -30,8 +31,18 @@ local Runnable = import 'lua.lang.Runnable';
 local run = getMethodTemplate(Runnable, 'run');
 
 --- @type TestDefinition
-local Test = class 'Test' (public, final) {
+local Test;
+Test = class 'Test' (public, final) {
     implements(Runnable),
+
+    static {
+        field 'silent' (public) {
+            properties {
+                type = 'boolean',
+                value = false
+            }
+        }
+    },
 
     field 'name' (private, final) {
         properties {
@@ -101,6 +112,7 @@ local Test = class 'Test' (public, final) {
         --- @param self Test
         --- @param ... any?
         function(self, ...)
+            if Test.silent then return end
             local args = { ... };
             local argLen = #args;
             if argLen == 0 then
@@ -123,6 +135,7 @@ local Test = class 'Test' (public, final) {
         --- @param message string?
         --- @param ... any?
         function(self, message, ...)
+            if Test.silent then return end
             message = message or '';
             local combined = string.format('%s :: %s', self.header, message);
             printf(combined, ...);

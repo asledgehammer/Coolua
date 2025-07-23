@@ -29,6 +29,4 @@ local test = Test.new('SimpleClass',
     end
 );
 
-test:run();
-
 return test;

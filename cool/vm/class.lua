@@ -277,21 +277,19 @@ end
 
 --- @cast API VMClassModule
 
---- Defined for all classes so that __eq actually fires.
---- Reference: http://lua-users.org/wiki/MetatableEvents
----
---- @param a Object
---- @param b any
----
---- @return boolean result
-function API.equals(a, b)
-    return a:getClass():getStruct().__middleMethods['equals'](a, b);
-end
-
 -- For internal / bottom-level classes, this will aid in providing methods for what's needed.
 local function createPseudoClassInstance(def)
     -- Prevent infinite loops.
-    local __class__ = { getStruct = function() return def; end };
+    local __class__ = {
+        __struct__ = def,
+        __type__ = 'lua.lang.Class',
+        getStruct = function()
+            return def;
+        end,
+        isAssignableFromType = function()
+            return false;
+        end
+    };
     local mt = {};
     function mt.__tostring()
         return '(Pseudo-Class): ' .. def.name;
@@ -576,6 +574,7 @@ function API.newClass(classInput, outer)
         local o = {
             __type__ = classStruct.path,
             __class__ = __class__,
+            __struct__ = classStruct
         };
 
         -- For native Lua table identity. Helps prevent infinite loops when checking self literally.

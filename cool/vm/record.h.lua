@@ -206,15 +206,6 @@ local RecordInstance = {};
 --- @class VMRecordModule: VMModule
 local API = {};
 
---- Defined for all records so that __eq actually fires.
---- Reference: http://lua-users.org/wiki/MetatableEvents
----
---- @param a Object
---- @param b any
----
---- @return boolean result
-function API.equals(a, b) end
-
 --- @param input RecordStructInput
 ---
 --- @return RecordStruct

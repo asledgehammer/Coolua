@@ -56,7 +56,7 @@ Object:addMethod({
     scope = 'public',
     name = 'equals',
     parameters = {
-        { name = 'other', type = 'lua.lang.Class' }
+        { name = 'other', type = 'any' }
     },
     returnTypes = 'boolean',
 

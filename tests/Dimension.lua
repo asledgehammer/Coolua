@@ -89,7 +89,6 @@ local Dimension = class 'Dimension' (public) {
     }
 };
 
--- print('\n\n # RESULT #\n');
--- print(dump(scaffolding.constructors, { pretty = true, label = true }));
+Dimension:finalize();
 
 return Dimension;

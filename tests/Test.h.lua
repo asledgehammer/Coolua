@@ -1,6 +1,7 @@
 --- @meta
 
 --- @class TestDefinition: ObjectDefinition
+--- @field silent boolean (Default: false) If true, test-prints will not occur.
 local TestDefinition = {};
 
 --- @param name string

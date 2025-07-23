@@ -48,6 +48,4 @@ local test = Test.new('AbstractClass-Basic',
     end
 );
 
-test:run();
-
 return test;
